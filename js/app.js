@@ -2,11 +2,7 @@ import { config } from './config.js';
 import { createSVG, createColorGroups, createPath } from './svgUtils.js';
 import { validateBouwkampCode, generateSingleSerpentineLine, areRectanglesAdjacent } from './bouwkampUtils.js';
 
-/**
- * Default Bouwkamp code representing a perfect squared rectangle.
- * @type {number[]}
- */
-const bouwkampCode = [17, 403, 285, 148, 111, 144, 75, 36, 3, 141, 39, 58, 37, 53, 21, 16, 15, 99, 84, 79];
+import { DrawingConfig } from './DrawingConfig.js';
 
 /**
  * Manages color selection and adjacency tracking
@@ -78,16 +74,16 @@ class ColorManager {
  * @param {number[]} code - The Bouwkamp code to draw
  * @returns {SVGElement} The generated SVG element
  */
-function drawBouwkampCode(code) {
-    const order = code[0];
-    const width = code[1];
-    const height = code[2];
-    const squares = code.slice(3);
+function drawBouwkampCode(drawingConfig) {
+    const order = drawingConfig.code[0];
+    const width = drawingConfig.code[1];
+    const height = drawingConfig.code[2];
+    const squares = drawingConfig.code.slice(3);
 
-    const svg = createSVG(config.paper.width, config.paper.height, width, height);
+    const svg = createSVG(drawingConfig.paper.width, drawingConfig.paper.height, width, height);
 
-    const colorGroups = createColorGroups(svg, config.colorPalette);
-    const colorManager = new ColorManager(config.colorPalette);
+    const colorGroups = createColorGroups(svg, drawingConfig.colorPalette);
+    const colorManager = new ColorManager(drawingConfig.colorPalette);
 
     const helper = new Array(900).fill(0);
 
@@ -126,21 +122,18 @@ function drawBouwkampCode(code) {
 /**
  * Generates and displays the SVG visualization
  */
-export function generateSVG() {
+export function generateSVG(drawingConfig = null) {
     try {
-        validateBouwkampCode(bouwkampCode);
-        const svg = drawBouwkampCode(bouwkampCode);
+        // Use default config if none provided
+        const activeConfig = drawingConfig || new DrawingConfig(bouwkampCode, config);
+        validateBouwkampCode(activeConfig.code);
+        const svg = drawBouwkampCode(activeConfig);
         if (!svg) {
             throw new Error('Failed to generate SVG');
         }
-        document.body.appendChild(svg);
+        return svg;
     } catch (error) {
         console.error('Error generating visualization:', error);
-        // Create an error message element
-        const errorDiv = document.createElement('div');
-        errorDiv.style.color = 'red';
-        errorDiv.style.padding = '20px';
-        errorDiv.textContent = `Error: ${error.message}`;
-        document.body.appendChild(errorDiv);
+        throw error;
     }
 }

@@ -28,7 +28,7 @@ import { config } from './config.js';
 
 export function generateSingleSerpentineLine(rect, lineWidth) {
     const points = [];
-    const spacing = config.line.spacing;
+    const spacing = rect.spacing || config.line.spacing;
     let direction = 1;
 
     const adjustedRect = {
