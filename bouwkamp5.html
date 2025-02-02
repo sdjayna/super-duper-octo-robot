@@ -25,16 +25,52 @@
 </head>
 <body>
     <script>
-        // Default Bouwkamp code
+        // Configuration object
+        const config = {
+            // Paper size in millimeters (A3)
+            paper: {
+                width: 420,
+                height: 297
+            },
+            // Line drawing parameters
+            line: {
+                width: 2.5,      // Width of serpentine line in mm
+                spacing: 2.5,    // Spacing between lines in mm
+                strokeWidth: 0.1  // SVG stroke width
+            }
+        };
+
+        /**
+         * Default Bouwkamp code representing a perfect squared square.
+         * A Bouwkamp code is an array where:
+         * - First number (n): count of squares minus 3
+         * - Second number: width of the containing square
+         * - Third number: height of the containing square (should equal width)
+         * - Remaining n numbers: sizes of the component squares
+         * This example creates a 21x21 square subdivided into 17 unequal squares.
+         */
         const bouwkampCode = [17, 403, 285, 148, 111, 144, 75, 36, 3, 141, 39, 58, 37, 53, 21, 16, 15, 99, 84, 79];
 
-        // Function to validate the Bouwkamp code
+        /**
+         * Validates a Bouwkamp code array.
+         * @param {number[]} code - The Bouwkamp code to validate
+         * @throws {Error} If the code is invalid
+         */
         function validateBouwkampCode(code) {
+            if (!Array.isArray(code)) {
+                throw new Error("Invalid Bouwkamp code: Must be an array.");
+            }
             if (!code || code.length === 0) {
                 throw new Error("Invalid Bouwkamp code: The code is empty.");
             }
             if (code.length - 3 !== code[0]) {
                 throw new Error("Invalid Bouwkamp code: The code has the wrong length.");
+            }
+            if (code[1] !== code[2]) {
+                throw new Error("Invalid Bouwkamp code: Width and height must be equal.");
+            }
+            if (!code.every(num => Number.isInteger(num) && num > 0)) {
+                throw new Error("Invalid Bouwkamp code: All values must be positive integers.");
             }
         }
 
@@ -135,8 +171,8 @@
 
             const svgNS = "http://www.w3.org/2000/svg";
             const svg = document.createElementNS(svgNS, "svg");
-            svg.setAttribute("width", "420mm"); // A3 width
-            svg.setAttribute("height", "297mm"); // A3 height
+            svg.setAttribute("width", `${config.paper.width}mm`);
+            svg.setAttribute("height", `${config.paper.height}mm`);
             svg.setAttribute("viewBox", `0 0 ${width} ${width}`);
             svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
             svg.setAttribute("xmlns:svg", "http://www.w3.org/2000/svg");
@@ -177,7 +213,7 @@
                 };
 
                 // Generate the serpentine line points
-                const points = generateSingleSerpentineLine(rectData, 2.5); // 2.5mm line width
+                const points = generateSingleSerpentineLine(rectData, config.line.width);
 
                 // Create a path element for the serpentine line
                 const pathElement = document.createElementNS(svgNS, "path");
@@ -188,7 +224,7 @@
                 pathElement.setAttribute("d", pathData);
                 pathElement.setAttribute("fill", "none");
                 const color = getNextColor();
-                pathElement.setAttribute("stroke-width", "0.1");
+                pathElement.setAttribute("stroke-width", config.line.strokeWidth.toString());
 
                 colorGroups[color].appendChild(pathElement);
 
