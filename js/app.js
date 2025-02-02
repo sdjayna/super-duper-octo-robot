@@ -74,12 +74,8 @@ class ColorManager {
  * @returns {SVGElement} The generated SVG element
  */
 function drawBouwkampCode(drawingConfig) {
-    const order = drawingConfig.code[0];
-    const width = drawingConfig.code[1];
-    const height = drawingConfig.code[2];
-    const squares = drawingConfig.code.slice(3);
-
-    const svg = createSVG(drawingConfig, width, height);
+    const bouwkamp = drawingConfig.drawingData;
+    const svg = createSVG(drawingConfig, bouwkamp.width, bouwkamp.height);
 
     const colorGroups = createColorGroups(svg, drawingConfig.colorPalette);
     const colorManager = new ColorManager(drawingConfig.colorPalette);
@@ -126,10 +122,20 @@ export function generateSVG(drawingConfig) {
         if (!drawingConfig) {
             throw new Error('Drawing configuration is required');
         }
-        console.log('Drawing config:', drawingConfig); // Debug
-        console.log('Code:', drawingConfig.code); // Debug
-        validateBouwkampCode(drawingConfig.code);
-        const svg = drawBouwkampCode(drawingConfig);
+
+        let svg;
+        switch (drawingConfig.type) {
+            case 'bouwkamp':
+                validateBouwkampCode(drawingConfig.drawingData.toArray());
+                svg = drawBouwkampCode(drawingConfig);
+                break;
+            case 'delaunay':
+                svg = drawDelaunayTriangulation(drawingConfig);
+                break;
+            default:
+                throw new Error(`Unsupported drawing type: ${drawingConfig.type}`);
+        }
+
         if (!svg) {
             throw new Error('Failed to generate SVG');
         }
@@ -138,4 +144,11 @@ export function generateSVG(drawingConfig) {
         console.error('Error generating visualization:', error);
         throw error;
     }
+}
+
+function drawDelaunayTriangulation(drawingConfig) {
+    const delaunay = drawingConfig.drawingData;
+    const svg = createSVG(drawingConfig, delaunay.width, delaunay.height);
+    // ... implement delaunay drawing logic
+    return svg;
 }

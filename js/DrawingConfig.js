@@ -1,18 +1,39 @@
+import { BouwkampConfig } from './BouwkampConfig.js';
+import { DelaunayConfig } from './DelaunayConfig.js';
+
 export class DrawingConfig {
-    constructor(name, code, options = {}) {
+    constructor(name, params) {
+        // Basic drawing info
         this.name = name;
-        this.code = code;
+        this.type = params.type;
+
+        // Drawing-specific configurations
+        switch (params.type) {
+            case 'bouwkamp':
+                this.drawingData = new BouwkampConfig(params.code);
+                break;
+            case 'delaunay':
+                this.drawingData = new DelaunayConfig(params.triangulation);
+                break;
+            default:
+                throw new Error(`Unsupported drawing type: ${params.type}`);
+        }
+
+        // Paper configuration
         this.paper = {
-            width: options.width || 420,
-            height: options.height || 297,
-            margin: options.margin || 12.5  // Default 1.25cm margin
+            width: params.paper?.width || 420,
+            height: params.paper?.height || 297,
+            margin: params.paper?.margin || 12.5
         };
+
+        // Line configuration
         this.line = {
-            width: 0.3,
-            spacing: 2.5,
-            strokeWidth: 0.45,
-            vertexGap: 0.5
+            width: params.line?.width || 0.3,
+            spacing: params.line?.spacing || 2.5,
+            strokeWidth: params.line?.strokeWidth || 0.45,
+            vertexGap: params.line?.vertexGap || 0.5
         };
-        this.colorPalette = options.colorPalette;
+
+        this.colorPalette = params.colorPalette;
     }
 }
