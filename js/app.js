@@ -1,4 +1,3 @@
-import { config } from './config.js';
 import { createSVG, createColorGroups, createPath } from './svgUtils.js';
 import { validateBouwkampCode, generateSingleSerpentineLine, areRectanglesAdjacent } from './bouwkampUtils.js';
 
@@ -97,7 +96,7 @@ function drawBouwkampCode(drawingConfig) {
 
         const position = { x: i, y: helper[i] };
         const size = squares[rect];
-        const vertexGap = config.line.vertexGap;
+        const vertexGap = drawingConfig.line.vertexGap;
         const rectData = { 
             x: position.x + vertexGap, 
             y: position.y + vertexGap, 
