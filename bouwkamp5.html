@@ -36,8 +36,9 @@
         const bouwkampCode = [17, 403, 285, 148, 111, 144, 75, 36, 3, 141, 39, 58, 37, 53, 21, 16, 15, 99, 84, 79];
 
 
-        // Track placed rectangles and their colors
+        // Track placed rectangles, their colors, and unused colors
         const placedRectangles = [];
+        const unusedColors = new Set(colorPalette);
 
         // Function to get a valid color that's not adjacent to neighbors
         function getValidColor(newRect) {
@@ -49,14 +50,29 @@
                 }
             }
             
-            // Find first available color that's not adjacent
+            // First try to use an unused color that's not adjacent
+            for (const color of unusedColors) {
+                if (!adjacentColors.has(color)) {
+                    unusedColors.delete(color);
+                    return color;
+                }
+            }
+            
+            // If no unused colors are available, try any non-adjacent color
             for (const color of colorPalette) {
                 if (!adjacentColors.has(color)) {
                     return color;
                 }
             }
             
-            // If all colors are adjacent (shouldn't happen with 9 colors), return first color
+            // If all colors are adjacent, prefer an unused color if any remain
+            if (unusedColors.size > 0) {
+                const color = unusedColors.values().next().value;
+                unusedColors.delete(color);
+                return color;
+            }
+            
+            // Last resort: return first non-adjacent color or first color in palette
             return colorPalette[0];
         }
 
