@@ -24,8 +24,10 @@
     </style>
 </head>
 <body>
-    <script>
-        // Configuration object
+    <script type="module">
+        import { config, colorPalette } from './js/config.js';
+        import { createSVG, createColorGroups, createPath } from './js/svgUtils.js';
+        import { validateBouwkampCode, generateSingleSerpentineLine } from './js/bouwkampUtils.js';
         const config = {
             // Paper size in millimeters (A3)
             paper: {
@@ -166,27 +168,8 @@
             const width = code[1];
             const squares = code.slice(3); // Extract the square sizes
 
-            const svgNS = "http://www.w3.org/2000/svg";
-            const svg = document.createElementNS(svgNS, "svg");
-            svg.setAttribute("width", `${config.paper.width}mm`);
-            svg.setAttribute("height", `${config.paper.height}mm`);
-            svg.setAttribute("viewBox", `0 0 ${width} ${width}`);
-            svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-            svg.setAttribute("xmlns:svg", "http://www.w3.org/2000/svg");
-            svg.setAttribute("xmlns:inkscape", "http://www.inkscape.org/namespaces/inkscape");
-
-            // Create groups for each color
-            const colorGroups = {};
-            colorPalette.forEach((color, index) => {
-                const group = document.createElementNS(svgNS, "g");
-                group.setAttribute("stroke", color);
-                group.setAttribute("inkscape:groupmode", "layer");
-                // Extract color name from the hex value using the index from colorPalette array
-                const colorName = ["orange", "brown", "red", "pink", "purple", "green", "blue", "black", "sepia"][index];
-                group.setAttribute("inkscape:label", `${index}-${colorName}`);
-                colorGroups[color] = group;
-                svg.appendChild(group);
-            });
+            const svg = createSVG(config.paper.width, config.paper.height, `0 0 ${width} ${width}`);
+            const colorGroups = createColorGroups(svg, colorPalette);
 
             const helper = new Array(900).fill(0); // Helper array to track positions
 
@@ -212,17 +195,9 @@
                 // Generate the serpentine line points
                 const points = generateSingleSerpentineLine(rectData, config.line.width);
 
-                // Create a path element for the serpentine line
-                const pathElement = document.createElementNS(svgNS, "path");
-                let pathData = `M ${points[0].x} ${points[0].y}`; // Start at the first point
-                for (let i = 1; i < points.length; i++) {
-                    pathData += ` L ${points[i].x} ${points[i].y}`; // Draw lines to subsequent points
-                }
-                pathElement.setAttribute("d", pathData);
-                pathElement.setAttribute("fill", "none");
-                const color = getNextColor();
+                const pathElement = createPath(points);
                 pathElement.setAttribute("stroke-width", config.line.strokeWidth.toString());
-
+                const color = getNextColor();
                 colorGroups[color].appendChild(pathElement);
 
                 // Update the helper array
