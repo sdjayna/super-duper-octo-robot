@@ -405,21 +405,16 @@
             // Toggle between portrait and landscape
             const isRotated = contentGroup.getAttribute('transform')?.includes('rotate');
             
-            // Scale up dimensions for portrait mode while maintaining aspect ratio
-            const scale = 2.0; // Double the size
-            svg.setAttribute('width', parseFloat(height) * scale);
-            svg.setAttribute('height', parseFloat(width) * scale);
+            // Swap dimensions
+            svg.setAttribute('width', height);
+            svg.setAttribute('height', width);
             svg.setAttribute('viewBox', `0 0 ${height} ${width}`);
             
-            // Toggle rotation with proper centering
+            // Toggle rotation
             if (isRotated) {
                 contentGroup.removeAttribute('transform');
             } else {
-                const w = parseFloat(width);
-                const h = parseFloat(height);
-                // Rotate around center and translate to maintain position
-                contentGroup.setAttribute('transform', 
-                    `translate(${h} 0) rotate(90) translate(${-w} 0)`);
+                contentGroup.setAttribute('transform', 'rotate(90)');
             }
             
             // Update button text
