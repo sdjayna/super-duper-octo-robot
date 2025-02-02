@@ -34,6 +34,7 @@ export function createSVG(width, height, contentWidth, contentHeight) {
 export function createColorGroups(svg, colorPalette) {
     const groups = {};
     let index = 0;
+
     for (const [key, color] of Object.entries(colorPalette)) {
         const group = document.createElementNS(svgNS, "g");
         group.setAttribute("stroke", color.hex);
