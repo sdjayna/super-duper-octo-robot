@@ -19,12 +19,13 @@ class PlotterHandler(SimpleHTTPRequestHandler):
                 post_data = self.rfile.read(content_length)
                 data = json.loads(post_data.decode('utf-8'))
                 
-                # Create output directory if it doesn't exist
-                os.makedirs('output', exist_ok=True)
+                # Create output directory and drawing-specific subdirectory
+                output_dir = os.path.join('output', data['name'])
+                os.makedirs(output_dir, exist_ok=True)
                 
                 # Generate filename with timestamp
                 timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
-                filename = f"output/{data['name']}-{timestamp}.svg"
+                filename = os.path.join(output_dir, f"{timestamp}.svg")
                 
                 # Write the SVG file
                 with open(filename, 'w') as f:
