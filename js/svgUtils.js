@@ -10,15 +10,21 @@ export const svgNS = "http://www.w3.org/2000/svg";
  */
 export function createSVG(width, height, contentWidth, contentHeight) {
     const svg = document.createElementNS(svgNS, "svg");
-    svg.setAttribute("width", `${width}mm`);
-    svg.setAttribute("height", `${height}mm`);
+    const margin = 15; // 1.5cm = 15mm margin
     
-    // Calculate centering offsets
-    const offsetX = (width - contentWidth) / 2;
-    const offsetY = (height - contentHeight) / 2;
+    // Add margin to overall dimensions
+    const totalWidth = width + (2 * margin);
+    const totalHeight = height + (2 * margin);
     
-    // Set viewBox to include the offset
-    svg.setAttribute("viewBox", `${-offsetX} ${-offsetY} ${width} ${height}`);
+    svg.setAttribute("width", `${totalWidth}mm`);
+    svg.setAttribute("height", `${totalHeight}mm`);
+    
+    // Calculate centering offsets including margin
+    const offsetX = ((totalWidth - contentWidth) / 2);
+    const offsetY = ((totalHeight - contentHeight) / 2);
+    
+    // Set viewBox to include the offset and margin
+    svg.setAttribute("viewBox", `${-offsetX} ${-offsetY} ${totalWidth} ${totalHeight}`);
     svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
     svg.setAttribute("xmlns:svg", "http://www.w3.org/2000/svg");
     svg.setAttribute("xmlns:inkscape", "http://www.inkscape.org/namespaces/inkscape");
