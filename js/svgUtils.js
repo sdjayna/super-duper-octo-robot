@@ -8,9 +8,9 @@ export const svgNS = "http://www.w3.org/2000/svg";
  * @param {number} contentHeight - Height of the content to be centered
  * @returns {SVGElement} The created SVG element
  */
-export function createSVG(width, height, contentWidth, contentHeight) {
+export function createSVG(drawingConfig, contentWidth, contentHeight) {
     const svg = document.createElementNS(svgNS, "svg");
-    const margin = 15; // 1.5cm = 15mm margin
+    const { width, height, margin } = drawingConfig.paper;
     
     // Add margin to overall dimensions
     const totalWidth = width + (2 * margin);

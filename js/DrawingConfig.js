@@ -4,7 +4,8 @@ export class DrawingConfig {
         this.code = code;
         this.paper = {
             width: options.width || 420,
-            height: options.height || 297
+            height: options.height || 297,
+            margin: options.margin || 15  // Default 1.5cm margin
         };
         this.line = {
             width: 0.3,
