@@ -50,9 +50,10 @@
         function drawBouwkampCode(code) {
             const order = code[0];
             const width = code[1];
+            const height = code[2];  // Get the actual height from the code
             const squares = code.slice(3); // Extract the square sizes
 
-            const svg = createSVG(config.paper.width, config.paper.height, width, width);
+            const svg = createSVG(config.paper.width, config.paper.height, width, height);
             const colorGroups = createColorGroups(svg, colorPalette);
 
             const helper = new Array(900).fill(0); // Helper array to track positions
