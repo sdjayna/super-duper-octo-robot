@@ -416,9 +416,9 @@
             } else {
                 const w = parseFloat(width);
                 const h = parseFloat(height);
-                // Rotate around the center of the original width
+                // Rotate around center and translate to maintain position
                 contentGroup.setAttribute('transform', 
-                    `rotate(90 ${w/2} ${w/2})`);
+                    `translate(${h} 0) rotate(90) translate(${-w} 0)`);
             }
             
             // Update button text
