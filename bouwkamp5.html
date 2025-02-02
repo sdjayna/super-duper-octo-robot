@@ -36,13 +36,28 @@
         const bouwkampCode = [17, 403, 285, 148, 111, 144, 75, 36, 3, 141, 39, 58, 37, 53, 21, 16, 15, 99, 84, 79];
 
 
-        let currentColorIndex = 0;
+        // Track placed rectangles and their colors
+        const placedRectangles = [];
 
-        // Function to get the next color from the palette
-        function getNextColor() {
-            const color = colorPalette[currentColorIndex];
-            currentColorIndex = (currentColorIndex + 1) % colorPalette.length;
-            return color;
+        // Function to get a valid color that's not adjacent to neighbors
+        function getValidColor(newRect) {
+            // Find adjacent rectangles
+            const adjacentColors = new Set();
+            for (const placed of placedRectangles) {
+                if (areRectanglesAdjacent(newRect, placed.rect)) {
+                    adjacentColors.add(placed.color);
+                }
+            }
+            
+            // Find first available color that's not adjacent
+            for (const color of colorPalette) {
+                if (!adjacentColors.has(color)) {
+                    return color;
+                }
+            }
+            
+            // If all colors are adjacent (shouldn't happen with 9 colors), return first color
+            return colorPalette[0];
         }
 
 
@@ -82,7 +97,9 @@
 
                 const pathElement = createPath(points);
                 pathElement.setAttribute("stroke-width", config.line.strokeWidth.toString());
-                const color = getNextColor();
+                // Store the rectangle for future adjacency checks
+                const color = getValidColor(rectData);
+                placedRectangles.push({ rect: rectData, color });
                 colorGroups[color].appendChild(pathElement);
 
                 // Update the helper array
