@@ -40,11 +40,20 @@
         #saveSvg:hover {
             background-color: #45a049;
         }
+        #layerSelect {
+            padding: 5px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            margin-left: 10px;
+        }
     </style>
 </head>
 <body>
     <div id="controls">
         <select id="drawingSelect"></select>
+        <select id="layerSelect">
+            <option value="all">Show All Layers</option>
+        </select>
         <button id="saveSvg">Save SVG</button>
         <span id="lastRefresh"></span>
     </div>
@@ -93,6 +102,49 @@
             }
         }
 
+        function updateLayerVisibility() {
+            const svg = container.querySelector('svg');
+            if (!svg) return;
+
+            const selectedLayer = document.getElementById('layerSelect').value;
+            const layers = svg.querySelectorAll('g[inkscape\\:groupmode="layer"]');
+            
+            layers.forEach(layer => {
+                if (selectedLayer === 'all' || layer.getAttribute('inkscape:label').startsWith(selectedLayer)) {
+                    layer.style.display = '';
+                } else {
+                    layer.style.display = 'none';
+                }
+            });
+        }
+
+        function populateLayerSelect() {
+            const svg = container.querySelector('svg');
+            if (!svg) return;
+
+            const layerSelect = document.getElementById('layerSelect');
+            const layers = svg.querySelectorAll('g[inkscape\\:groupmode="layer"]');
+            
+            // Get unique color indices
+            const colorIndices = new Set();
+            layers.forEach(layer => {
+                const label = layer.getAttribute('inkscape:label');
+                const colorIndex = label.split('-')[0];
+                colorIndices.add(colorIndex);
+            });
+
+            // Clear existing options except "Show All Layers"
+            layerSelect.innerHTML = '<option value="all">Show All Layers</option>';
+            
+            // Add an option for each unique color
+            Array.from(colorIndices).sort((a, b) => Number(a) - Number(b)).forEach(index => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = `Show Layer ${index}`;
+                layerSelect.appendChild(option);
+            });
+        }
+
         async function draw() {
             try {
                 // Reload the modules fresh each time
@@ -112,6 +164,8 @@
                 container.innerHTML = '';
                 const svg = generateSVG(selectedDrawing);
                 container.appendChild(svg);
+                populateLayerSelect();
+                updateLayerVisibility();
                 lastRefreshSpan.textContent = new Date().toLocaleTimeString();
             } catch (error) {
                 console.error('Error:', error);
@@ -124,6 +178,7 @@
 
         // Handle drawing selection changes
         select.addEventListener('change', draw);
+        document.getElementById('layerSelect').addEventListener('change', updateLayerVisibility);
         saveButton.addEventListener('click', saveSvg);
     </script>
 </body>
