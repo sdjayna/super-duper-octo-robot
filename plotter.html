@@ -305,11 +305,12 @@
                         .join('');
                 }
 
-                // Draw the selected configuration
+                // Store current states
                 const selectedDrawing = drawings[select.value];
                 logDebug(`Generating drawing: ${selectedDrawing.name}`);
                 const currentLayer = document.getElementById('layerSelect').value;
-                const isLandscape = document.getElementById('toggleOrientation').textContent === 'Portrait';
+                const orientationButton = document.getElementById('toggleOrientation');
+                const isLandscape = orientationButton.textContent === 'Landscape';
                 container.innerHTML = '';
                 const svg = generateSVG(selectedDrawing);
                 
@@ -408,6 +409,7 @@
             // Update button text
             const button = document.getElementById('toggleOrientation');
             button.textContent = isRotated ? 'Portrait' : 'Landscape';
+            logDebug(`Set orientation to ${button.textContent}`);
             
             logDebug(`Switched to ${button.textContent} orientation`);
         }
