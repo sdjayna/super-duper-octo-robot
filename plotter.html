@@ -329,10 +329,15 @@
                     svg.setAttribute('width', height);
                     svg.setAttribute('height', width);
                     
-                    // Apply rotation
-                    const centerX = parseFloat(height) / 2;
-                    const centerY = parseFloat(width) / 2;
-                    contentGroup.setAttribute('transform', `rotate(90 ${centerX} ${centerY})`);
+                    // Calculate dimensions and offsets for centering
+                    const centerX = parseFloat(width) / 2;
+                    const centerY = parseFloat(height) / 2;
+                    const translateX = (parseFloat(height) - parseFloat(width)) / 2;
+                    const translateY = (parseFloat(width) - parseFloat(height)) / 2;
+                
+                    // Apply rotation and translation to center
+                    contentGroup.setAttribute('transform', 
+                        `translate(${translateX} ${translateY}) rotate(90 ${centerX} ${centerY})`);
                 }
                 container.appendChild(svg);
                 populateLayerSelect();
