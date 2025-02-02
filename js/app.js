@@ -127,6 +127,8 @@ export function generateSVG(drawingConfig) {
         if (!drawingConfig) {
             throw new Error('Drawing configuration is required');
         }
+        console.log('Drawing config:', drawingConfig); // Debug
+        console.log('Code:', drawingConfig.code); // Debug
         validateBouwkampCode(drawingConfig.code);
         const svg = drawBouwkampCode(drawingConfig);
         if (!svg) {
