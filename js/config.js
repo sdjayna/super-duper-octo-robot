@@ -35,7 +35,8 @@ export const config = {
     signalBlack: { hex: '#000000', name: 'Signal Black' },
     neonPink: { hex: '#eb5692', name: 'Neon Pink' },
     lilacPastel: { hex: '#cca9d0', name: 'Lilac Pastel' }
+    }
 };
 
 // Get array of hex values for backward compatibility
-export const colorPaletteArray = Object.values(colorPalette).map(color => color.hex);
+export const colorPaletteArray = Object.values(config.colorPalette).map(color => color.hex);
