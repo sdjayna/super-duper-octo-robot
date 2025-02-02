@@ -122,12 +122,13 @@ function drawBouwkampCode(drawingConfig) {
 /**
  * Generates and displays the SVG visualization
  */
-export function generateSVG(drawingConfig = null) {
+export function generateSVG(drawingConfig) {
     try {
-        // Use default config if none provided
-        const activeConfig = drawingConfig || new DrawingConfig(bouwkampCode, config);
-        validateBouwkampCode(activeConfig.code);
-        const svg = drawBouwkampCode(activeConfig);
+        if (!drawingConfig) {
+            throw new Error('Drawing configuration is required');
+        }
+        validateBouwkampCode(drawingConfig.code);
+        const svg = drawBouwkampCode(drawingConfig);
         if (!svg) {
             throw new Error('Failed to generate SVG');
         }
