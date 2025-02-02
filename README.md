@@ -132,10 +132,159 @@ The project uses ESLint with specific rules. See `.eslintrc.json` for the comple
 
 ### Adding New Drawing Types
 
-1. Create a configuration class (like `BouwkampConfig.js`)
-2. Add the type to `DrawingConfig.js`
-3. Implement the drawing function in `app.js`
-4. Add example configurations to `drawings.js`
+To add a new drawing type to the system, follow these steps:
+
+1. Create a new configuration class in `js/MyNewConfig.js`:
+```javascript
+export class MyNewConfig {
+    constructor(params) {
+        // Define the properties needed for your drawing
+        this.width = params.width;
+        this.height = params.height;
+        // Add any other required properties
+    }
+}
+```
+
+2. Create a new drawing module in `js/drawings/myNew.js`:
+```javascript
+import { createSVG, createColorGroups, createPath } from '../svgUtils.js';
+import { ColorManager } from '../ColorManager.js';
+
+export function drawMyNewType(drawingConfig) {
+    const myDrawing = drawingConfig.drawingData;
+    const svg = createSVG(drawingConfig, myDrawing.width, myDrawing.height);
+    
+    const colorGroups = createColorGroups(svg, drawingConfig.colorPalette);
+    const colorManager = new ColorManager(drawingConfig.colorPalette);
+    
+    // Implement your drawing logic here
+    // Use colorGroups for different pen colors
+    // Use colorManager.getValidColor() for color selection
+    
+    return svg;
+}
+```
+
+3. Update `DrawingConfig.js` to include your new type:
+```javascript
+import { MyNewConfig } from './MyNewConfig.js';
+
+export class DrawingConfig {
+    createDrawingData(params) {
+        const configs = {
+            bouwkamp: () => new BouwkampConfig(params.code),
+            delaunay: () => new DelaunayConfig(params.triangulation),
+            mynew: () => new MyNewConfig(params.myParams)  // Add your type
+        };
+        
+        const creator = configs[params.type];
+        if (!creator) {
+            throw new Error(`Unsupported drawing type: ${params.type}`);
+        }
+        return creator();
+    }
+}
+```
+
+4. Update `app.js` to handle the new drawing type:
+```javascript
+import { drawMyNewType } from './drawings/myNew.js';
+
+export function generateSVG(drawingConfig) {
+    try {
+        let svg;
+        switch (drawingConfig.type) {
+            case 'bouwkamp':
+                validateBouwkampCode(drawingConfig.drawingData.toArray());
+                svg = drawBouwkampCode(drawingConfig);
+                break;
+            case 'delaunay':
+                svg = drawDelaunayTriangulation(drawingConfig);
+                break;
+            case 'mynew':
+                svg = drawMyNewType(drawingConfig);  // Add your case
+                break;
+            default:
+                throw new Error(`Unsupported drawing type: ${drawingConfig.type}`);
+        }
+        return svg;
+    } catch (error) {
+        console.error('Error generating visualization:', error);
+        throw error;
+    }
+}
+```
+
+5. Add an example configuration in `drawings.js`:
+```javascript
+myNewExample: new DrawingConfig(
+    'My New Drawing Type',
+    {
+        type: 'mynew',
+        myParams: {
+            width: 200,
+            height: 200,
+            // Add any other parameters your drawing needs
+        },
+        paper: {
+            width: 420,
+            height: 297,
+            margin: 12.5
+        },
+        line: {
+            width: 0.3,
+            spacing: 2.5,
+            strokeWidth: 0.45,
+            vertexGap: 0.5
+        },
+        colorPalette
+    }
+)
+```
+
+### Drawing Type Guidelines
+
+When creating a new drawing type:
+
+1. **Configuration Class**
+   - Keep drawing-specific parameters separate from general configuration
+   - Use clear parameter names
+   - Document the expected parameter formats
+
+2. **Drawing Function**
+   - Use the provided SVG utilities (`createSVG`, `createPath`)
+   - Implement color separation using `colorGroups`
+   - Use `colorManager` for smart color selection
+   - Scale output to fit the paper size
+   - Center the drawing appropriately
+
+3. **Color Management**
+   - Use the `ColorManager` class for color selection
+   - Define shapes with proper bounds for adjacency checking
+   - Consider color distribution in your pattern
+
+4. **SVG Output**
+   - Ensure paths are properly closed
+   - Use appropriate stroke widths
+   - Consider pen movement optimization
+   - Add any necessary metadata to layers
+
+### Example Drawing Types
+
+The project includes two reference implementations:
+
+1. **Bouwkamp** (`js/drawings/bouwkamp.js`)
+   - Demonstrates perfect square subdivisions
+   - Shows how to handle complex geometry
+   - Includes utility functions for pattern generation
+
+2. **Delaunay** (`js/drawings/delaunay.js`)
+   - Shows point-based drawing
+   - Demonstrates scaling and centering
+   - Implements triangle-based patterns
+
+Use these as references when implementing your own drawing types.
 
 ## Color System
 
