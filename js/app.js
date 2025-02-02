@@ -68,16 +68,16 @@ function drawBouwkampCode(drawingConfig) {
 
     const helper = new Array(900).fill(0);
 
-    for (let rect = 0; rect < order; rect++) {
+    for (let rect = 0; rect < bouwkamp.order; rect++) {
         let i = 0;
-        for (let j = 1; j < width; j++) {
+        for (let j = 1; j < bouwkamp.width; j++) {
             if (helper[j] < helper[i]) {
                 i = j;
             }
         }
 
         const position = { x: i, y: helper[i] };
-        const size = squares[rect];
+        const size = bouwkamp.squares[rect];
         const vertexGap = drawingConfig.line.vertexGap;
         const rectData = { 
             x: position.x + vertexGap, 
