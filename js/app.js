@@ -139,12 +139,19 @@ function drawDelaunayTriangulation(drawingConfig) {
     const colorGroups = createColorGroups(svg, drawingConfig.colorPalette);
     const colorManager = new ColorManager(drawingConfig.colorPalette);
     
-    // Scale points to paper size
+    // Calculate scaling to fit within paper size while maintaining aspect ratio
     const scaleX = drawingConfig.paper.width / delaunay.width;
     const scaleY = drawingConfig.paper.height / delaunay.height;
+    const scale = Math.min(scaleX, scaleY) * 0.8; // Use 80% of available space
+    
+    // Calculate centering offsets
+    const offsetX = (drawingConfig.paper.width - (delaunay.width * scale)) / 2;
+    const offsetY = (drawingConfig.paper.height - (delaunay.height * scale)) / 2;
+    
+    // Scale and center points
     const scaledPoints = delaunay.points.map(p => ({
-        x: p.x * scaleX,
-        y: p.y * scaleY
+        x: (p.x * scale) + offsetX,
+        y: (p.y * scale) + offsetY
     }));
     
     const triangles = [];
@@ -152,7 +159,7 @@ function drawDelaunayTriangulation(drawingConfig) {
     
     // Create triangles using different combinations of points
     for (let i = 0; i < numPoints; i++) {
-        for (let j = 1; j < 4; j++) {  // Create 3 triangles for each starting point
+        for (let j = 1; j < 4; j++) {
             const p1 = scaledPoints[i];
             const p2 = scaledPoints[(i + j) % numPoints];
             const p3 = scaledPoints[(i + j + 1) % numPoints];
