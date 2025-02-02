@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bouwkamp Code SVG</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f0f0f0;
+        }
+        svg {
+            display: block;
+            margin: 0 auto;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <script>
+        // Default Bouwkamp code
+        const bouwkampCode = [17, 403, 285, 148, 111, 144, 75, 36, 3, 141, 39, 58, 37, 53, 21, 16, 15, 99, 84, 79];
+
+        // Function to validate the Bouwkamp code
+        function validateBouwkampCode(code) {
+            if (!code || code.length === 0) {
+                throw new Error("Invalid Bouwkamp code: The code is empty.");
+            }
+            if (code.length - 3 !== code[0]) {
+                throw new Error("Invalid Bouwkamp code: The code has the wrong length.");
+            }
+        }
+
+        // Function to generate a random color
+        function getRandomColor() {
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+
+        // Function to generate a serpentine line for a rectangle, including perimeter tracing
+        function generateSingleSerpentineLine(rect, lineWidth) {
+            const points = []; // Array to store the points of the line
+            const spacing = lineWidth; // Spacing between lines
+            let direction = 1; // Direction of the lines (1 for downward, -1 for upward)
+
+            // Adjust the rectangle dimensions to account for the stroke width
+            const adjustedRect = {
+                x: rect.x + lineWidth / 2,
+                y: rect.y + lineWidth / 2,
+                width: rect.width - lineWidth,
+                height: rect.height - lineWidth,
+            };
+
+            // Adjust the top and bottom points to account for the stroke width
+            const topY = adjustedRect.y; // Top Y coordinate (no offset, flat top)
+            const bottomY = adjustedRect.y + adjustedRect.height - lineWidth / 2; // Bottom Y coordinate (offset by half the stroke width)
+
+            // Loop to create points for the serpentine line
+            for (let x = adjustedRect.x; x <= adjustedRect.x + adjustedRect.width; x += spacing) {
+                if (direction === 1) {
+                    // Add a point at the top of the rectangle (flat top)
+                    points.push({ x, y: topY });
+                    // Add a point at the bottom of the rectangle (offset)
+                    points.push({ x, y: bottomY });
+                } else {
+                    // Add a point at the bottom of the rectangle (offset)
+                    points.push({ x, y: bottomY });
+                    // Add a point at the top of the rectangle (flat top)
+                    points.push({ x, y: topY });
+                }
+                direction *= -1; // Reverse the direction for the next segment
+            }
+
+            // Trace the perimeter of the rectangle to ensure a clean edge
+            if (points.length > 0) {
+                const lastPoint = points[points.length - 1];
+                // Move to the bottom-right corner
+                points.push({ x: adjustedRect.x + adjustedRect.width, y: bottomY });
+                // Move to the top-right corner
+                points.push({ x: adjustedRect.x + adjustedRect.width, y: topY });
+                // Move to the top-left corner
+                points.push({ x: adjustedRect.x, y: topY });
+                // Move back to the starting point (bottom-left corner)
+                points.push({ x: adjustedRect.x, y: bottomY });
+            }
+
+            return points; // Return the array of points
+        }
+
+        // Function to draw the Bouwkamp code as SVG paths
+        function drawBouwkampCode(code) {
+            const order = code[0];
+            const width = code[1];
+            const squares = code.slice(3); // Extract the square sizes
+
+            const svgNS = "http://www.w3.org/2000/svg";
+            const svg = document.createElementNS(svgNS, "svg");
+            svg.setAttribute("width", "420mm"); // A3 width
+            svg.setAttribute("height", "297mm"); // A3 height
+            svg.setAttribute("viewBox", `0 0 ${width} ${width}`);
+
+            const helper = new Array(900).fill(0); // Helper array to track positions
+
+            for (let rect = 0; rect < order; rect++) {
+                let i = 0;
+                for (let j = 1; j < width; j++) {
+                    if (helper[j] < helper[i]) {
+                        i = j;
+                    }
+                }
+
+                const position = { x: i, y: helper[i] };
+                const size = squares[rect];
+
+                // Define the rectangle
+                const rectData = {
+                    x: position.x,
+                    y: position.y,
+                    width: size,
+                    height: size,
+                };
+
+                // Generate the serpentine line points
+                const points = generateSingleSerpentineLine(rectData, 2.5); // 2.5mm line width
+
+                // Create a path element for the serpentine line
+                const pathElement = document.createElementNS(svgNS, "path");
+                let pathData = `M ${points[0].x} ${points[0].y}`; // Start at the first point
+                for (let i = 1; i < points.length; i++) {
+                    pathData += ` L ${points[i].x} ${points[i].y}`; // Draw lines to subsequent points
+                }
+                pathElement.setAttribute("d", pathData);
+                pathElement.setAttribute("fill", "none");
+                pathElement.setAttribute("stroke", getRandomColor());
+                pathElement.setAttribute("stroke-width", "0.1");
+
+                svg.appendChild(pathElement);
+
+                // Update the helper array
+                for (let j = 0; j < size; j++) {
+                    helper[i + j] += size;
+                }
+            }
+
+            return svg;
+        }
+
+        // Main function to generate and display the SVG
+        function generateSVG() {
+            try {
+                validateBouwkampCode(bouwkampCode);
+                const svg = drawBouwkampCode(bouwkampCode);
+                document.body.appendChild(svg);
+            } catch (error) {
+                console.error(error.message);
+            }
+        }
+
+        // Generate the SVG on page load
+        window.onload = generateSVG;
+    </script>
+</body>
+</html>
