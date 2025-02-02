@@ -197,7 +197,10 @@
         // Pause refresh when layer select is open
         document.getElementById('layerSelect').addEventListener('focus', stopRefresh);
         document.getElementById('layerSelect').addEventListener('blur', startRefresh);
-        document.getElementById('layerSelect').addEventListener('change', updateLayerVisibility);
+        document.getElementById('layerSelect').addEventListener('change', (e) => {
+            updateLayerVisibility();
+            e.target.blur();
+        });
         saveButton.addEventListener('click', saveSvg);
     </script>
 </body>
