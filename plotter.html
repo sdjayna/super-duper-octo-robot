@@ -73,11 +73,15 @@
                         type: selectedDrawing.type,
                         // Handle different drawing types correctly
                         ...(selectedDrawing.type === 'bouwkamp' 
-                            ? { code: selectedDrawing.drawingData.toArray() }
-                            : { triangulation: selectedDrawing.drawingData }),
-                        paper: selectedDrawing.paper,
-                        line: selectedDrawing.line,
-                        colorPalette: selectedDrawing.colorPalette
+                            ? { code: [...selectedDrawing.drawingData.toArray()] } // Create new array
+                            : { triangulation: {
+                                points: selectedDrawing.drawingData.points.map(p => ({...p})), // Deep copy points
+                                width: selectedDrawing.drawingData.width,
+                                height: selectedDrawing.drawingData.height
+                            }}),
+                        paper: {...selectedDrawing.paper},
+                        line: {...selectedDrawing.line},
+                        colorPalette: {...selectedDrawing.colorPalette}
                     }
                 );
                 
