@@ -8,6 +8,7 @@ export function generateSVG(drawingConfig) {
             throw new Error('Drawing configuration is required');
         }
 
+        console.log(`Generating SVG for ${drawingConfig.name}`);
         let svg;
         switch (drawingConfig.type) {
             case 'bouwkamp':

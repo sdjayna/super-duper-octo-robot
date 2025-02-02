@@ -224,6 +224,7 @@
 
         async function draw() {
             try {
+                logDebug('Reloading modules...');
                 // Reload the modules fresh each time
                 const { generateSVG } = await import('./js/app.js?v=' + Date.now());
                 const { drawings } = await import('./js/drawings.js?v=' + Date.now());
@@ -238,6 +239,7 @@
 
                 // Draw the selected configuration
                 const selectedDrawing = drawings[select.value];
+                logDebug(`Generating drawing: ${selectedDrawing.name}`);
                 const currentLayer = document.getElementById('layerSelect').value;
                 container.innerHTML = '';
                 const svg = generateSVG(selectedDrawing);
@@ -255,12 +257,14 @@
         let refreshInterval;
 
         function startRefresh() {
+            logDebug('Starting automatic refresh');
             draw();
             refreshInterval = setInterval(draw, 1000);
         }
 
         function stopRefresh() {
             if (refreshInterval) {
+                logDebug('Pausing automatic refresh');
                 clearInterval(refreshInterval);
                 refreshInterval = null;
             }
