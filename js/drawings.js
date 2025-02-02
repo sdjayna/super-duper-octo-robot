@@ -28,12 +28,19 @@ export const drawings = {
             type: 'delaunay',
             triangulation: {
                 points: [
-                    { x: 10, y: 10 },
-                    { x: 90, y: 10 },
-                    { x: 90, y: 90 },
-                    { x: 10, y: 90 },
-                    { x: 50, y: 50 },
-                    { x: 30, y: 30 }
+                    { x: 10, y: 10 },   // Top left
+                    { x: 90, y: 10 },   // Top right
+                    { x: 90, y: 90 },   // Bottom right
+                    { x: 10, y: 90 },   // Bottom left
+                    { x: 50, y: 50 },   // Center
+                    { x: 30, y: 30 },   // Upper left quadrant
+                    { x: 70, y: 30 },   // Upper right quadrant
+                    { x: 70, y: 70 },   // Lower right quadrant
+                    { x: 30, y: 70 },   // Lower left quadrant
+                    { x: 50, y: 20 },   // Top middle
+                    { x: 80, y: 50 },   // Right middle
+                    { x: 50, y: 80 },   // Bottom middle
+                    { x: 20, y: 50 }    // Left middle
                 ],
                 width: 100,
                 height: 100
