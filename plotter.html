@@ -42,100 +42,41 @@
     <div id="svgContainer"></div>
 
     <script type="module">
-        import { generateSVG } from './js/app.js';
-        import { drawings } from './js/drawings.js';
-        import { DrawingConfig } from './js/DrawingConfig.js';
-
         const select = document.getElementById('drawingSelect');
         const container = document.getElementById('svgContainer');
-        const autoRefreshCheckbox = document.getElementById('autoRefresh');
         const lastRefreshSpan = document.getElementById('lastRefresh');
-        
-        let refreshInterval = null;
 
-        // Populate select options
-        select.innerHTML = Object.entries(drawings)
-            .map(([key, drawing]) => 
-                `<option value="${key}">${drawing.name}</option>`)
-            .join('');
-
-        // Set auto-refresh checkbox to checked by default
-        autoRefreshCheckbox.checked = true;
-
-        function updateDrawing() {
+        async function draw() {
             try {
-                // Force recreation of the drawing
-                const selectedDrawing = drawings[select.value];
-                // Create a new instance of the drawing to ensure fresh state
-                const freshDrawing = new DrawingConfig(
-                    selectedDrawing.name,
-                    {
-                        type: selectedDrawing.type,
-                        // Handle different drawing types correctly
-                        ...(selectedDrawing.type === 'bouwkamp' 
-                            ? { code: [...selectedDrawing.drawingData.toArray()] } // Create new array
-                            : { triangulation: {
-                                points: selectedDrawing.drawingData.points.map(p => ({...p})), // Deep copy points
-                                width: selectedDrawing.drawingData.width,
-                                height: selectedDrawing.drawingData.height
-                            }}),
-                        paper: {...selectedDrawing.paper},
-                        line: {...selectedDrawing.line},
-                        colorPalette: {...selectedDrawing.colorPalette}
-                    }
-                );
+                // Reload the modules fresh each time
+                const { generateSVG } = await import('./js/app.js?v=' + Date.now());
+                const { drawings } = await import('./js/drawings.js?v=' + Date.now());
                 
+                // First time only: populate select options
+                if (!select.options.length) {
+                    select.innerHTML = Object.entries(drawings)
+                        .map(([key, drawing]) => 
+                            `<option value="${key}">${drawing.name}</option>`)
+                        .join('');
+                }
+
+                // Draw the selected configuration
+                const selectedDrawing = drawings[select.value];
                 container.innerHTML = '';
-                const svg = generateSVG(freshDrawing);
+                const svg = generateSVG(selectedDrawing);
                 container.appendChild(svg);
                 lastRefreshSpan.textContent = new Date().toLocaleTimeString();
             } catch (error) {
-                console.error('Error updating drawing:', error);
-                stopAutoRefresh(); // Stop refresh if there's an error
+                console.error('Error:', error);
             }
         }
 
-        function startAutoRefresh() {
-            stopAutoRefresh(); // Clear any existing interval
-            refreshInterval = setInterval(updateDrawing, 1000);
-            console.log('Auto-refresh started');
-        }
+        // Draw immediately and start refresh
+        draw();
+        setInterval(draw, 1000);
 
-        function stopAutoRefresh() {
-            if (refreshInterval) {
-                clearInterval(refreshInterval);
-                refreshInterval = null;
-                console.log('Auto-refresh stopped');
-            }
-        }
-
-        select.addEventListener('change', () => {
-            updateDrawing();
-            if (autoRefreshCheckbox.checked) {
-                startAutoRefresh(); // Restart refresh with new selection
-            }
-        });
-
-        // Auto-refresh functionality
-        autoRefreshCheckbox.addEventListener('change', (e) => {
-            if (e.target.checked) {
-                startAutoRefresh();
-            } else {
-                stopAutoRefresh();
-            }
-        });
-
-        // Initial drawing and auto-refresh start
-        window.addEventListener('load', () => {
-            updateDrawing();
-            startAutoRefresh(); // Start auto-refresh immediately
-            console.log('Initial drawing complete and auto-refresh started');
-        });
-
-        // Clean up on page unload
-        window.addEventListener('unload', () => {
-            stopAutoRefresh();
-        });
+        // Handle drawing selection changes
+        select.addEventListener('change', draw);
     </script>
 </body>
 </html>
