@@ -1,4 +1,4 @@
-import { config, colorPalette } from './config.js';
+import { config } from './config.js';
 import { createSVG, createColorGroups, createPath } from './svgUtils.js';
 import { validateBouwkampCode, generateSingleSerpentineLine, areRectanglesAdjacent } from './bouwkampUtils.js';
 

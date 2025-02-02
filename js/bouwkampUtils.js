@@ -24,9 +24,11 @@ export function validateBouwkampCode(code) {
  * @param {number} lineWidth - Width of the serpentine line
  * @returns {Array<{x: number, y: number}>} Array of points defining the pattern
  */
+import { config } from './config.js';
+
 export function generateSingleSerpentineLine(rect, lineWidth) {
     const points = [];
-    const spacing = lineWidth;
+    const spacing = config.line.spacing;
     let direction = 1;
 
     const adjustedRect = {

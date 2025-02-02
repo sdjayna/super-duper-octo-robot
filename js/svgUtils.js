@@ -4,7 +4,8 @@ export const svgNS = "http://www.w3.org/2000/svg";
  * Creates an SVG element with standard attributes
  * @param {number} width - Width in mm
  * @param {number} height - Height in mm
- * @param {string} viewBox - ViewBox attribute value
+ * @param {number} contentWidth - Width of the content to be centered
+ * @param {number} contentHeight - Height of the content to be centered
  * @returns {SVGElement} The created SVG element
  */
 export function createSVG(width, height, contentWidth, contentHeight) {
