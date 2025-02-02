@@ -1,6 +1,6 @@
 # Plotter Art Generator
 
-A web-based tool for generating algorithmic art optimized for pen plotters. This project creates SVG files with separated layers for multi-pen plotting, featuring perfect square subdivisions (Bouwkamp codes) and Delaunay triangulations.
+A web-based tool for generating algorithmic art optimized for pen plotters. This project creates SVG files with separated layers for multi-pen plotting, featuring perfect square subdivisions (Bouwkamp codes) and Delaunay triangulations. It includes live preview, automatic file saving, and color separation for plotter-ready output.
 
 ## Features
 
@@ -8,6 +8,11 @@ A web-based tool for generating algorithmic art optimized for pen plotters. This
   - Bouwkamp codes (perfect square subdivisions)
   - Delaunay triangulations
 - Real-time preview with automatic refresh
+- Automatic SVG file saving:
+  - Organized directory structure
+  - Timestamp-based filenames
+  - Pretty-printed SVG output
+  - Configuration preserved in file comments
 - Multi-pen plotting support:
   - Automatic color separation into layers
   - Smart color selection to avoid adjacent same-color shapes
@@ -34,9 +39,9 @@ git clone https://github.com/yourusername/plotter-art.git
 cd plotter-art
 ```
 
-2. Start the Python development server:
+2. Start the Python server:
 ```bash
-python3 -m http.server 8000
+python3 server.py
 ```
 
 3. Open your browser and navigate to:
@@ -51,7 +56,24 @@ http://localhost:8000/plotter.html
 1. Open `plotter.html` in your browser
 2. Select a drawing type from the dropdown menu
 3. The preview updates automatically
-4. Save the SVG for use with your plotter
+4. Click "Save SVG" to save the current drawing
+
+### File Output
+
+SVG files are automatically saved to an `output` directory, organized by drawing type:
+```
+output/
+    simplePerfectRectangle/
+        20231124-153022.svg
+    delaunayExample/
+        20231124-153024.svg
+```
+
+Each SVG file includes:
+- Pretty-printed SVG code
+- Configuration details in comments
+- Inkscape-compatible layer names
+- Timestamp-based filename
 
 ### Creating Custom Drawings
 
