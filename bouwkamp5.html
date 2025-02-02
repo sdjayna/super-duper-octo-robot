@@ -139,6 +139,15 @@
             svg.setAttribute("height", "297mm"); // A3 height
             svg.setAttribute("viewBox", `0 0 ${width} ${width}`);
 
+            // Create groups for each color
+            const colorGroups = {};
+            colorPalette.forEach(color => {
+                const group = document.createElementNS(svgNS, "g");
+                group.setAttribute("stroke", color);
+                colorGroups[color] = group;
+                svg.appendChild(group);
+            });
+
             const helper = new Array(900).fill(0); // Helper array to track positions
 
             for (let rect = 0; rect < order; rect++) {
@@ -171,10 +180,10 @@
                 }
                 pathElement.setAttribute("d", pathData);
                 pathElement.setAttribute("fill", "none");
-                pathElement.setAttribute("stroke", getNextColor());
+                const color = getNextColor();
                 pathElement.setAttribute("stroke-width", "0.1");
 
-                svg.appendChild(pathElement);
+                colorGroups[color].appendChild(pathElement);
 
                 // Update the helper array
                 for (let j = 0; j < size; j++) {
