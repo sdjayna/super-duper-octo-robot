@@ -29,11 +29,23 @@
             gap: 10px;
             align-items: center;
         }
+        #saveSvg {
+            padding: 5px 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #saveSvg:hover {
+            background-color: #45a049;
+        }
     </style>
 </head>
 <body>
     <div id="controls">
         <select id="drawingSelect"></select>
+        <button id="saveSvg">Save SVG</button>
         <span id="lastRefresh"></span>
     </div>
     <div id="svgContainer"></div>
@@ -42,6 +54,39 @@
         const select = document.getElementById('drawingSelect');
         const container = document.getElementById('svgContainer');
         const lastRefreshSpan = document.getElementById('lastRefresh');
+        const saveButton = document.getElementById('saveSvg');
+
+        async function saveSvg() {
+            const svg = container.querySelector('svg');
+            if (!svg) {
+                return;
+            }
+
+            try {
+                // Serialize SVG
+                const svgData = new XMLSerializer().serializeToString(svg);
+                
+                // Send to server
+                const response = await fetch('http://localhost:8000/save-svg', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: select.value,
+                        svg: svgData
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.status === 'success') {
+                    console.log(`SVG saved to ${result.filename}`);
+                    lastRefreshSpan.textContent = `Saved: ${result.filename}`;
+                }
+            } catch (error) {
+                console.error('Error saving SVG:', error);
+            }
+        }
 
         async function draw() {
             try {
@@ -74,6 +119,7 @@
 
         // Handle drawing selection changes
         select.addEventListener('change', draw);
+        saveButton.addEventListener('click', saveSvg);
     </script>
 </body>
 </html>
