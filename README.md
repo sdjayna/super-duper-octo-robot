@@ -4,6 +4,32 @@ A web-based tool for generating algorithmic art optimized for pen plotters. This
 
 ![Plotter Art UI](ui-screenshot.png)
 
+## Contents
+
+- [Features](#features)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+- [Usage](#usage)
+  - [Basic Usage](#basic-usage)
+  - [File Output](#file-output)
+  - [Creating Custom Drawings](#creating-custom-drawings)
+- [Project Structure](#project-structure)
+- [Development](#development)
+  - [Code Style](#code-style)
+  - [Adding New Drawing Types](#adding-new-drawing-types)
+  - [Drawing Type Guidelines](#drawing-type-guidelines)
+  - [Example Drawing Types](#example-drawing-types)
+- [Color System](#color-system)
+- [Changelog](#changelog)
+- [Contributing](#contributing)
+  - [Development Guidelines](#development-guidelines)
+- [License](#license)
+- [Support](#support)
+- [Roadmap](#roadmap)
+- [Acknowledgments](#acknowledgments)
+- [Authors](#authors)
+
 ## Features
 
 - Multiple drawing algorithms:
