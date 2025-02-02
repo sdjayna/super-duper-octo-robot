@@ -38,13 +38,24 @@
             }
         }
 
-        // Function to generate a random color
-        function getRandomColor() {
-            const letters = '0123456789ABCDEF';
-            let color = '#';
-            for (let i = 0; i < 6; i++) {
-                color += letters[Math.floor(Math.random() * 16)];
-            }
+        // Fixed color palette
+        const colorPalette = [
+            '#FFA500', // orange
+            '#8B4513', // brown
+            '#FF0000', // red
+            '#FFC0CB', // pink
+            '#800080', // purple
+            '#008000', // green
+            '#0000FF', // blue
+            '#000000', // black
+            '#704214'  // sepia
+        ];
+        let currentColorIndex = 0;
+
+        // Function to get the next color from the palette
+        function getNextColor() {
+            const color = colorPalette[currentColorIndex];
+            currentColorIndex = (currentColorIndex + 1) % colorPalette.length;
             return color;
         }
 
@@ -160,7 +171,7 @@
                 }
                 pathElement.setAttribute("d", pathData);
                 pathElement.setAttribute("fill", "none");
-                pathElement.setAttribute("stroke", getRandomColor());
+                pathElement.setAttribute("stroke", getNextColor());
                 pathElement.setAttribute("stroke-width", "0.1");
 
                 svg.appendChild(pathElement);
