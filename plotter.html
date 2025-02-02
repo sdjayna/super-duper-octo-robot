@@ -161,10 +161,12 @@
 
                 // Draw the selected configuration
                 const selectedDrawing = drawings[select.value];
+                const currentLayer = document.getElementById('layerSelect').value;
                 container.innerHTML = '';
                 const svg = generateSVG(selectedDrawing);
                 container.appendChild(svg);
                 populateLayerSelect();
+                document.getElementById('layerSelect').value = currentLayer;
                 updateLayerVisibility();
                 lastRefreshSpan.textContent = new Date().toLocaleTimeString();
             } catch (error) {
