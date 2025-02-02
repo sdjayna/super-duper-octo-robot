@@ -416,10 +416,11 @@
                 // Calculate center points and offset
                 const w = parseFloat(width);
                 const h = parseFloat(height);
-                const translateX = (h - w) / 2;
+                const translateX = h/2 - w/2;
+                const translateY = w/2 - h/2;
                 
                 contentGroup.setAttribute('transform', 
-                    `translate(${translateX} 0) rotate(90 ${w/2} ${w/2})`);
+                    `translate(${translateX} ${translateY}) rotate(90 ${w/2} ${h/2})`);
             }
             
             // Update button text
