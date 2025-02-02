@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bouwkamp Code SVG</title>
+    <title>plotter.art</title>
     <style>
         body, html {
             margin: 0;
@@ -25,7 +25,7 @@
 </head>
 <body>
     <select id="drawingSelect">
-        <option value="bouwkamp5">Bouwkamp 5</option>
+        <option value="simplePerfectRectangle">Simple Perfect Rectangle</option>
         <option value="smallSquare">Small Square</option>
     </select>
     <div id="svgContainer"></div>
@@ -45,7 +45,7 @@
 
         // Initial drawing
         window.onload = () => {
-            const svg = generateSVG(drawings.bouwkamp5);
+            const svg = generateSVG(drawings.simplePerfectRectangle);
             container.appendChild(svg);
         };
     </script>
