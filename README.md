@@ -1,103 +1,174 @@
 # Plotter Art Generator
 
-## Color Palette
+A web-based tool for generating algorithmic art optimized for pen plotters. This project creates SVG files with separated layers for multi-pen plotting, featuring perfect square subdivisions (Bouwkamp codes) and Delaunay triangulations.
 
-The project includes a comprehensive color palette based on common plotter pen colors. Colors are defined in `js/colorPalette.js` and include:
+## Features
 
-- Standard colors (black, white)
-- Metallic colors (gold, silver, metallic blue)
-- Neon/fluorescent colors
-- Pastel shades
-- Nature-inspired colors
+- Multiple drawing algorithms:
+  - Bouwkamp codes (perfect square subdivisions)
+  - Delaunay triangulations
+- Real-time preview with automatic refresh
+- Multi-pen plotting support:
+  - Automatic color separation into layers
+  - Smart color selection to avoid adjacent same-color shapes
+  - Inkscape-compatible layer naming
+- Configurable drawing parameters:
+  - Paper sizes and margins
+  - Line widths and spacing
+  - Vertex gaps for clean pen lifts
+- Live development environment with hot reload
 
-Each color is defined with both a hex value and a human-readable name:
+## Getting Started
 
-```javascript
-{
-    hex: '#7a9b7a',
-    name: 'Amazonas Light'
-}
+### Prerequisites
+
+- Python 3.x (for the development server)
+- Modern web browser (Chrome, Firefox, Safari)
+- Git
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/plotter-art.git
+cd plotter-art
 ```
 
-### Using Colors
-
-Colors are automatically:
-- Separated into different SVG layers for multi-pen plotting
-- Named with index numbers for easy ordering
-- Given Inkscape-compatible layer names
-- Managed to avoid adjacent shapes having the same color
-
-### Available Colors
-
-The palette includes over 40 colors commonly available for plotting pens, including:
-- Amazonas Light
-- Blue Grey (Dark and Light)
-- Burgundy
-- Metallic variants
-- Neon Fluorescent colors
-- And many more
-
-See `js/colorPalette.js` for the complete list of available colors.
-
-## Drawing Types
-
-### Bouwkamp Codes
-
-Bouwkamp codes represent perfect square subdivisions of rectangles. Each code is an array of numbers where:
-- First number (order) indicates how many squares are used
-- Second number is the width of the rectangle
-- Third number is the height of the rectangle
-- Remaining numbers represent the sizes of the squares used
-
-Example:
-```javascript
-[4, 100, 100, 50, 50, 25, 25]  // 4 squares forming a 100x100 rectangle
+2. Start the Python development server:
+```bash
+python3 -m http.server 8000
 ```
 
-This creates a pattern where:
-- Two 50x50 squares form the left side
-- Two 25x25 squares form the right side
-- The result is a perfect subdivision with no gaps or overlaps
-
-### Delaunay Triangulation
-
-A Delaunay triangulation creates a pattern of triangles from a set of points where:
-- No point lies inside the circumcircle of any triangle
-- The minimum angle of all triangles is maximized
-- The triangulation is unique for points in general position
-
-Our implementation:
-- Takes a set of 2D points as input
-- Creates triangles using point combinations
-- Applies color rules to avoid adjacent same-color triangles
-- Scales and centers the pattern on the paper
-
-Example configuration:
-```javascript
-{
-    points: [
-        { x: 10, y: 10 },   // Points defining the triangulation
-        { x: 90, y: 10 },
-        { x: 50, y: 86.6 }
-    ],
-    width: 100,    // Bounding box width
-    height: 100    // Bounding box height
-}
+3. Open your browser and navigate to:
+```
+http://localhost:8000/plotter.html
 ```
 
-## Example Outputs
+## Usage
 
-[Would include images here showing example outputs from both drawing types]
+### Basic Usage
 
-## Paper Sizes and Configuration
+1. Open `plotter.html` in your browser
+2. Select a drawing type from the dropdown menu
+3. The preview updates automatically
+4. Save the SVG for use with your plotter
 
-The project supports any paper size, with defaults set to common formats:
-- A3: 420x297mm (default)
-- A4: 297x210mm
-- Custom sizes via configuration
+### Creating Custom Drawings
 
-Margins and drawing parameters can be adjusted for different pen types and plotting needs:
-- Line width: Matches your pen width
-- Spacing: Controls density of fill patterns
-- Vertex gap: Prevents pen damage at direction changes
-- Stroke width: Fine-tunes the SVG output
+Add new drawings in `js/drawings.js`:
+
+```javascript
+myNewDrawing: new DrawingConfig(
+    'My New Drawing',
+    {
+        type: 'bouwkamp',  // or 'delaunay'
+        code: [...],       // for bouwkamp
+        // or
+        triangulation: {   // for delaunay
+            points: [{x: 0, y: 0}, ...],
+            width: 100,
+            height: 100
+        },
+        paper: {
+            width: 420,    // A3 width in mm
+            height: 297,   // A3 height in mm
+            margin: 12.5   // margin in mm
+        },
+        line: {
+            width: 0.3,      // line width in mm
+            spacing: 2.5,    // space between lines
+            strokeWidth: 0.45,// SVG stroke width
+            vertexGap: 0.5   // gap at vertices
+        },
+        colorPalette      // imported from colorPalette.js
+    }
+)
+```
+
+## Project Structure
+
+```
+├── js/
+│   ├── app.js              # Main application logic
+│   ├── DrawingConfig.js    # Drawing configuration classes
+│   ├── BouwkampConfig.js   # Bouwkamp-specific configuration
+│   ├── DelaunayConfig.js   # Delaunay-specific configuration
+│   ├── drawings.js         # Drawing definitions
+│   ├── svgUtils.js         # SVG creation utilities
+│   ├── bouwkampUtils.js    # Bouwkamp-specific utilities
+│   └── colorPalette.js     # Color definitions
+├── plotter.html           # Main application page
+├── .eslintrc.json        # ESLint configuration
+└── README.md
+```
+
+## Development
+
+### Code Style
+
+The project uses ESLint with specific rules. See `.eslintrc.json` for the complete configuration.
+
+### Adding New Drawing Types
+
+1. Create a configuration class (like `BouwkampConfig.js`)
+2. Add the type to `DrawingConfig.js`
+3. Implement the drawing function in `app.js`
+4. Add example configurations to `drawings.js`
+
+## Color System
+
+The project includes a comprehensive color palette based on common plotter pen colors. See the [Color Documentation](docs/colors.md) for details about:
+- Available colors
+- Layer separation
+- Color selection algorithm
+- Adding new colors
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+### Development Guidelines
+
+- Follow the ESLint configuration
+- Maintain modular code structure
+- Add JSDoc comments for new functions
+- Update documentation for new features
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Support
+
+For support:
+1. Check existing [Issues](https://github.com/yourusername/plotter-art/issues)
+2. Open a new issue with:
+   - Browser version
+   - Complete error message
+   - Steps to reproduce
+   - Example configuration (if applicable)
+
+## Roadmap
+
+- [ ] Add more drawing algorithms
+- [ ] Implement true Delaunay triangulation
+- [ ] Add export options for different plotter types
+- [ ] Create a configuration UI
+- [ ] Add SVG optimization options
+- [ ] Support for curved lines and bezier paths
+
+## Acknowledgments
+
+- Inspired by the work of C.J. Bouwkamp on perfect square subdivisions
+- Built for use with pen plotters
+- Color palette inspired by common plotter pen sets
+
+## Authors
+
+- **Your Name** - *Initial work* - [YourGithub](https://github.com/yourusername)
+
+See also the list of [contributors](https://github.com/yourusername/plotter-art/contributors) who participated in this project.
