@@ -405,9 +405,10 @@
             // Toggle between portrait and landscape
             const isRotated = contentGroup.getAttribute('transform')?.includes('rotate');
             
-            // Always swap dimensions and viewBox
-            svg.setAttribute('width', height);
-            svg.setAttribute('height', width);
+            // Scale up dimensions for portrait mode while maintaining aspect ratio
+            const scale = 1.4; // Increase size by 40%
+            svg.setAttribute('width', parseFloat(height) * scale);
+            svg.setAttribute('height', parseFloat(width) * scale);
             svg.setAttribute('viewBox', `0 0 ${height} ${width}`);
             
             // Toggle rotation with proper centering
