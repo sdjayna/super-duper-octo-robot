@@ -30,7 +30,10 @@ export const drawings = {
                 points: [
                     { x: 0, y: 0 },
                     { x: 100, y: 0 },
-                    { x: 50, y: 86.6 }
+                    { x: 50, y: 86.6 },
+                    { x: 25, y: 43.3 },
+                    { x: 75, y: 43.3 },
+                    { x: 50, y: 25 }
                 ],
                 width: 100,
                 height: 86.6

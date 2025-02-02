@@ -135,6 +135,38 @@ export function generateSVG(drawingConfig) {
 function drawDelaunayTriangulation(drawingConfig) {
     const delaunay = drawingConfig.drawingData;
     const svg = createSVG(drawingConfig, delaunay.width, delaunay.height);
-    // ... implement delaunay drawing logic
+    
+    const colorGroups = createColorGroups(svg, drawingConfig.colorPalette);
+    const colorManager = new ColorManager(drawingConfig.colorPalette);
+    
+    // Create triangles from the points
+    const points = delaunay.points;
+    const triangles = [];
+    
+    // Create as many triangles as we have colors
+    const numColors = Object.keys(drawingConfig.colorPalette).length;
+    for (let i = 0; i < numColors && i < points.length - 2; i++) {
+        // Create a triangle using three consecutive points
+        const triangle = {
+            points: [
+                points[i % points.length],
+                points[(i + 1) % points.length],
+                points[(i + 2) % points.length]
+            ]
+        };
+        triangles.push(triangle);
+    }
+    
+    // Draw each triangle
+    triangles.forEach(triangle => {
+        const points = [...triangle.points, triangle.points[0]]; // Close the triangle
+        const pathElement = createPath(points);
+        pathElement.setAttribute('stroke-width', drawingConfig.line.strokeWidth.toString());
+        
+        // Get a color for this triangle
+        const color = colorManager.getValidColor(triangle);
+        colorGroups[color].appendChild(pathElement);
+    });
+    
     return svg;
 }
