@@ -140,18 +140,22 @@ function drawDelaunayTriangulation(drawingConfig) {
     const colorManager = new ColorManager(drawingConfig.colorPalette);
     
     // Calculate scaling to fit within paper size while maintaining aspect ratio
-    const scaleX = drawingConfig.paper.width / delaunay.width;
-    const scaleY = drawingConfig.paper.height / delaunay.height;
+    const scaleX = (drawingConfig.paper.width - 2 * drawingConfig.paper.margin) / delaunay.width;
+    const scaleY = (drawingConfig.paper.height - 2 * drawingConfig.paper.margin) / delaunay.height;
     const scale = Math.min(scaleX, scaleY) * 0.8; // Use 80% of available space
     
-    // Calculate centering offsets
-    const offsetX = (drawingConfig.paper.width - (delaunay.width * scale)) / 2;
-    const offsetY = (drawingConfig.paper.height - (delaunay.height * scale)) / 2;
+    // Calculate the center of the paper
+    const paperCenterX = drawingConfig.paper.width / 2;
+    const paperCenterY = drawingConfig.paper.height / 2;
     
-    // Scale and center points
+    // Calculate the center of the delaunay points
+    const delaunayCenterX = (delaunay.width / 2);
+    const delaunayCenterY = (delaunay.height / 2);
+    
+    // Scale and center points relative to paper center
     const scaledPoints = delaunay.points.map(p => ({
-        x: (p.x * scale) + offsetX,
-        y: (p.y * scale) + offsetY
+        x: paperCenterX + (p.x - delaunayCenterX) * scale,
+        y: paperCenterY + (p.y - delaunayCenterY) * scale
     }));
     
     const triangles = [];
