@@ -148,24 +148,26 @@ function drawDelaunayTriangulation(drawingConfig) {
     }));
     
     const triangles = [];
-    const numColors = Object.keys(drawingConfig.colorPalette).length;
+    const numPoints = scaledPoints.length;
     
-    // Create triangles using scaled points
-    for (let i = 0; i < numColors && i < scaledPoints.length - 2; i++) {
-        const triPoints = [
-            scaledPoints[i % scaledPoints.length],
-            scaledPoints[(i + 1) % scaledPoints.length],
-            scaledPoints[(i + 2) % scaledPoints.length]
-        ];
-        
-        const triangle = {
-            points: triPoints,
-            x: Math.min(...triPoints.map(p => p.x)),
-            y: Math.min(...triPoints.map(p => p.y)),
-            width: Math.max(...triPoints.map(p => p.x)) - Math.min(...triPoints.map(p => p.x)),
-            height: Math.max(...triPoints.map(p => p.y)) - Math.min(...triPoints.map(p => p.y))
-        };
-        triangles.push(triangle);
+    // Create triangles using different combinations of points
+    for (let i = 0; i < numPoints; i++) {
+        for (let j = 1; j < 4; j++) {  // Create 3 triangles for each starting point
+            const p1 = scaledPoints[i];
+            const p2 = scaledPoints[(i + j) % numPoints];
+            const p3 = scaledPoints[(i + j + 1) % numPoints];
+            
+            const triPoints = [p1, p2, p3];
+            
+            const triangle = {
+                points: triPoints,
+                x: Math.min(...triPoints.map(p => p.x)),
+                y: Math.min(...triPoints.map(p => p.y)),
+                width: Math.max(...triPoints.map(p => p.x)) - Math.min(...triPoints.map(p => p.x)),
+                height: Math.max(...triPoints.map(p => p.y)) - Math.min(...triPoints.map(p => p.y))
+            };
+            triangles.push(triangle);
+        }
     }
     
     // Draw triangles
@@ -176,12 +178,6 @@ function drawDelaunayTriangulation(drawingConfig) {
         
         const color = colorManager.getValidColor(triangle);
         colorGroups[color].appendChild(pathElement);
-        
-        console.log('Drawing triangle:', {
-            points: triangle.points,
-            color: color,
-            bbox: { x: triangle.x, y: triangle.y, width: triangle.width, height: triangle.height }
-        });
     });
     
     return svg;
