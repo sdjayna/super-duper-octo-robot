@@ -401,13 +401,18 @@
             const centerX = parseFloat(currentHeight) / 2;
             const centerY = parseFloat(currentWidth) / 2;
             
+            // Calculate translation to keep centered
+            const translateX = (parseFloat(currentHeight) - parseFloat(currentWidth)) / 2;
+            const translateY = (parseFloat(currentWidth) - parseFloat(currentHeight)) / 2;
+            
             // Toggle rotation
             const currentTransform = contentGroup.getAttribute('transform') || '';
             if (currentTransform.includes('rotate')) {
                 contentGroup.setAttribute('transform', '');
                 contentGroup.setAttribute('transform-origin', '');
             } else {
-                contentGroup.setAttribute('transform', `rotate(90 ${centerX} ${centerY})`);
+                contentGroup.setAttribute('transform', 
+                    `translate(${translateX} ${translateY}) rotate(90 ${centerX} ${centerY})`);
             }
             
             // Update button text
