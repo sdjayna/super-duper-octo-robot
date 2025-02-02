@@ -102,10 +102,29 @@
         #toggleRefresh.paused:hover {
             background-color: #F57C00;
         }
+        #toggleDebug {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #9E9E9E;
+            z-index: 1000;
+        }
+        #toggleDebug:hover {
+            background-color: #757575;
+        }
+        .debug-panel.hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
     <div class="layout">
+        <button id="toggleDebug">Hide Debug</button>
         <div class="canvas-area">
             <div id="controls">
                 <select id="drawingSelect"></select>
@@ -299,6 +318,14 @@
             }
         }
 
+        // Toggle debug panel visibility
+        function toggleDebugPanel() {
+            const debugPanel = document.querySelector('.debug-panel');
+            const toggleButton = document.getElementById('toggleDebug');
+            debugPanel.classList.toggle('hidden');
+            toggleButton.textContent = debugPanel.classList.contains('hidden') ? 'Show Debug' : 'Hide Debug';
+        }
+
         // Draw immediately and start refresh
         startRefresh();
 
@@ -314,6 +341,7 @@
         });
         saveButton.addEventListener('click', saveSvg);
         document.getElementById('toggleRefresh').addEventListener('click', toggleRefresh);
+        document.getElementById('toggleDebug').addEventListener('click', toggleDebugPanel);
     </script>
 </body>
 </html>
