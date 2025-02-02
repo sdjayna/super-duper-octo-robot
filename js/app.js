@@ -16,6 +16,8 @@ class ColorManager {
         this.palette = palette;
         this.placedRectangles = [];
         this.colorUsage = new Map(Object.values(palette).map(color => [color.hex, 0]));
+        this.recentColors = [];  // Track recently used colors
+        this.maxRecentColors = 3;  // How many recent colors to avoid
     }
 
     /**
@@ -30,22 +32,43 @@ class ColorManager {
                 adjacentColors.add(placed.color);
             }
         }
-        
-        const availableColors = Object.values(this.palette)
+
+        // Get all available colors that aren't adjacent
+        let availableColors = Object.values(this.palette)
             .map(color => color.hex)
-            .filter(hex => !adjacentColors.has(hex))
-            .sort((a, b) => this.colorUsage.get(a) - this.colorUsage.get(b));
-        
+            .filter(hex => !adjacentColors.has(hex));
+
+        // Further filter out recently used colors if possible
+        const nonRecentColors = availableColors.filter(color => !this.recentColors.includes(color));
+        if (nonRecentColors.length > 0) {
+            availableColors = nonRecentColors;
+        }
+
+        // Score each available color based on usage and recency
+        const colorScores = availableColors.map(color => ({
+            color,
+            score: this.colorUsage.get(color) * 2 + 
+                   (this.recentColors.includes(color) ? 1 : 0)
+        }));
+
         let selectedColor;
-        if (availableColors.length > 0) {
-            selectedColor = availableColors[0];
+        if (colorScores.length > 0) {
+            // Choose the color with the lowest score
+            selectedColor = colorScores.sort((a, b) => a.score - b.score)[0].color;
         } else {
+            // If no valid colors, choose the least used color overall
             selectedColor = Array.from(this.colorUsage.entries())
                 .sort(([, a], [, b]) => a - b)[0][0];
         }
 
+        // Update tracking
         this.colorUsage.set(selectedColor, this.colorUsage.get(selectedColor) + 1);
+        this.recentColors.unshift(selectedColor);
+        if (this.recentColors.length > this.maxRecentColors) {
+            this.recentColors.pop();
+        }
         this.placedRectangles.push({ rect: newRect, color: selectedColor });
+        
         return selectedColor;
     }
 }
