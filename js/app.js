@@ -101,7 +101,13 @@ function drawBouwkampCode(code) {
 
         const position = { x: i, y: helper[i] };
         const size = squares[rect];
-        const rectData = { x: position.x, y: position.y, width: size, height: size };
+        const vertexGap = config.line.vertexGap;
+        const rectData = { 
+            x: position.x + vertexGap, 
+            y: position.y + vertexGap, 
+            width: size - (2 * vertexGap), 
+            height: size - (2 * vertexGap)
+        };
         const points = generateSingleSerpentineLine(rectData, config.line.width);
         
         const pathElement = createPath(points);
