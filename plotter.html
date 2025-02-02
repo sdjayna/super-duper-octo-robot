@@ -24,10 +24,7 @@
     </style>
 </head>
 <body>
-    <select id="drawingSelect">
-        <option value="simplePerfectRectangle">Simple Perfect Rectangle</option>
-        <option value="smallSquare">Small Square</option>
-    </select>
+    <select id="drawingSelect"></select>
     <div id="svgContainer"></div>
 
     <script type="module">
@@ -36,6 +33,12 @@
 
         const select = document.getElementById('drawingSelect');
         const container = document.getElementById('svgContainer');
+
+        // Populate select options
+        select.innerHTML = Object.entries(drawings)
+            .map(([key, drawing]) => 
+                `<option value="${key}">${drawing.name}</option>`)
+            .join('');
 
         select.addEventListener('change', (e) => {
             container.innerHTML = '';
