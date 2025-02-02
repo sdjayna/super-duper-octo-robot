@@ -136,13 +136,23 @@
             // Clear existing options except "Show All Layers"
             layerSelect.innerHTML = '<option value="all">Show All Layers</option>';
             
-            // Add an option for each unique color
-            Array.from(colorIndices).sort((a, b) => Number(a) - Number(b)).forEach(index => {
-                const option = document.createElement('option');
-                option.value = index;
-                option.textContent = `Show Layer ${index}`;
-                layerSelect.appendChild(option);
+            // Get all unique labels and their indices
+            const layerInfo = new Map();
+            layers.forEach(layer => {
+                const label = layer.getAttribute('inkscape:label');
+                const index = label.split('-')[0];
+                layerInfo.set(index, label);
             });
+
+            // Add an option for each layer
+            Array.from(layerInfo.entries())
+                .sort(([a], [b]) => Number(a) - Number(b))
+                .forEach(([index, label]) => {
+                    const option = document.createElement('option');
+                    option.value = index;
+                    option.textContent = label;
+                    layerSelect.appendChild(option);
+                });
         }
 
         async function draw() {
