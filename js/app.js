@@ -139,23 +139,27 @@ function drawDelaunayTriangulation(drawingConfig) {
     const colorGroups = createColorGroups(svg, drawingConfig.colorPalette);
     const colorManager = new ColorManager(drawingConfig.colorPalette);
     
-    // Create triangles from the points
-    const points = delaunay.points;
-    const triangles = [];
+    // Scale points to paper size
+    const scaleX = drawingConfig.paper.width / delaunay.width;
+    const scaleY = drawingConfig.paper.height / delaunay.height;
+    const scaledPoints = delaunay.points.map(p => ({
+        x: p.x * scaleX,
+        y: p.y * scaleY
+    }));
     
-    // Create as many triangles as we have colors
+    const triangles = [];
     const numColors = Object.keys(drawingConfig.colorPalette).length;
-    for (let i = 0; i < numColors && i < points.length - 2; i++) {
+    
+    // Create triangles using scaled points
+    for (let i = 0; i < numColors && i < scaledPoints.length - 2; i++) {
         const triPoints = [
-            points[i % points.length],
-            points[(i + 1) % points.length],
-            points[(i + 2) % points.length]
+            scaledPoints[i % scaledPoints.length],
+            scaledPoints[(i + 1) % scaledPoints.length],
+            scaledPoints[(i + 2) % scaledPoints.length]
         ];
         
-        // Create a triangle using three consecutive points
         const triangle = {
             points: triPoints,
-            // Add bounding box for color manager
             x: Math.min(...triPoints.map(p => p.x)),
             y: Math.min(...triPoints.map(p => p.y)),
             width: Math.max(...triPoints.map(p => p.x)) - Math.min(...triPoints.map(p => p.x)),
@@ -164,17 +168,15 @@ function drawDelaunayTriangulation(drawingConfig) {
         triangles.push(triangle);
     }
     
-    // Draw each triangle
+    // Draw triangles
     triangles.forEach(triangle => {
-        const pathPoints = [...triangle.points, triangle.points[0]]; // Close the triangle
+        const pathPoints = [...triangle.points, triangle.points[0]];
         const pathElement = createPath(pathPoints);
         pathElement.setAttribute('stroke-width', drawingConfig.line.strokeWidth.toString());
         
-        // Get a color for this triangle
         const color = colorManager.getValidColor(triangle);
         colorGroups[color].appendChild(pathElement);
         
-        // Add some debug output
         console.log('Drawing triangle:', {
             points: triangle.points,
             color: color,
