@@ -5,7 +5,7 @@ export class DrawingConfig {
         this.paper = {
             width: options.width || 420,
             height: options.height || 297,
-            margin: options.margin || 15  // Default 1.5cm margin
+            margin: options.margin || 12.5  // Default 1.25cm margin
         };
         this.line = {
             width: 0.3,

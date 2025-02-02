@@ -13,7 +13,6 @@ export const drawings = {
         { 
             width: 200,
             height: 200,
-            margin: 20,  // 2cm margin
             colorPalette 
         }
     )
