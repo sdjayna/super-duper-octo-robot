@@ -1,0 +1,40 @@
+{
+    "env": {
+        "browser": true,
+        "es2021": true
+    },
+    "extends": "eslint:recommended",
+    "parserOptions": {
+        "ecmaVersion": "latest",
+        "sourceType": "module"
+    },
+    "rules": {
+        "indent": ["error", 4],
+        "linebreak-style": ["error", "unix"],
+        "quotes": ["error", "single"],
+        "semi": ["error", "always"],
+        "no-unused-vars": ["error"],
+        "space-before-function-paren": ["error", "never"],
+        "keyword-spacing": ["error", { "before": true, "after": true }],
+        "space-infix-ops": "error",
+        "comma-spacing": ["error", { "before": false, "after": true }],
+        "brace-style": ["error", "1tbs"],
+        "curly": ["error", "all"],
+        "object-curly-spacing": ["error", "always"],
+        "array-bracket-spacing": ["error", "never"],
+        "space-before-blocks": ["error", "always"],
+        "no-multiple-empty-lines": ["error", { "max": 1 }],
+        "eol-last": ["error", "always"],
+        "no-trailing-spaces": "error",
+        "camelcase": "error",
+        "max-len": ["error", { "code": 100 }],
+        "jsdoc/require-jsdoc": ["error", {
+            "require": {
+                "FunctionDeclaration": true,
+                "MethodDefinition": true,
+                "ClassDeclaration": true
+            }
+        }]
+    },
+    "plugins": ["jsdoc"]
+}
