@@ -296,6 +296,10 @@ The project includes a comprehensive color palette based on common plotter pen c
 - Color selection algorithm
 - Adding new colors
 
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for a list of changes and versions.
+
 ## Contributing
 
 1. Fork the repository
