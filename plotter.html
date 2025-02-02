@@ -332,15 +332,10 @@
 		    logDebug(width);
 		    logDebug(height);
                     
-                    // Calculate dimensions and offsets for centering
-                    const centerX = parseFloat(width) / 2;
-                    const centerY = parseFloat(height) / 2;
-                    const translateX = (parseFloat(height) - parseFloat(width)) / 2;
-                    const translateY = (parseFloat(width) - parseFloat(height)) / 2;
-                
-                    // Apply rotation and translation to center
+                    const w = parseFloat(width);
+                    // Rotate around the center of the original width
                     contentGroup.setAttribute('transform', 
-                        `translate(${translateX} ${translateY}) rotate(90 ${centerX} ${centerY})`);
+                        `rotate(90 ${w/2} ${w/2})`);
                 }
                 container.appendChild(svg);
                 populateLayerSelect();
@@ -413,14 +408,11 @@
             if (isRotated) {
                 contentGroup.removeAttribute('transform');
             } else {
-                // Calculate center points and offset
                 const w = parseFloat(width);
                 const h = parseFloat(height);
-                const translateX = h/2 - w/2;
-                const translateY = w/2 - h/2;
-                
+                // Rotate around the center of the original width
                 contentGroup.setAttribute('transform', 
-                    `translate(${translateX} ${translateY}) rotate(90 ${w/2} ${h/2})`);
+                    `rotate(90 ${w/2} ${w/2})`);
             }
             
             // Update button text
