@@ -52,7 +52,7 @@
             const width = code[1];
             const squares = code.slice(3); // Extract the square sizes
 
-            const svg = createSVG(config.paper.width, config.paper.height, `0 0 ${width} ${width}`);
+            const svg = createSVG(config.paper.width, config.paper.height, width, width);
             const colorGroups = createColorGroups(svg, colorPalette);
 
             const helper = new Array(900).fill(0); // Helper array to track positions

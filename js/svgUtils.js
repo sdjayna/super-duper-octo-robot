@@ -7,11 +7,17 @@ export const svgNS = "http://www.w3.org/2000/svg";
  * @param {string} viewBox - ViewBox attribute value
  * @returns {SVGElement} The created SVG element
  */
-export function createSVG(width, height, viewBox) {
+export function createSVG(width, height, contentWidth, contentHeight) {
     const svg = document.createElementNS(svgNS, "svg");
     svg.setAttribute("width", `${width}mm`);
     svg.setAttribute("height", `${height}mm`);
-    svg.setAttribute("viewBox", viewBox);
+    
+    // Calculate centering offsets
+    const offsetX = (width - contentWidth) / 2;
+    const offsetY = (height - contentHeight) / 2;
+    
+    // Set viewBox to include the offset
+    svg.setAttribute("viewBox", `${-offsetX} ${-offsetY} ${width} ${height}`);
     svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
     svg.setAttribute("xmlns:svg", "http://www.w3.org/2000/svg");
     svg.setAttribute("xmlns:inkscape", "http://www.inkscape.org/namespaces/inkscape");
