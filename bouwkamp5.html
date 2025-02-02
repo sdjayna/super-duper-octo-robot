@@ -28,63 +28,14 @@
         import { config, colorPalette } from './js/config.js';
         import { createSVG, createColorGroups, createPath } from './js/svgUtils.js';
         import { validateBouwkampCode, generateSingleSerpentineLine } from './js/bouwkampUtils.js';
-        const config = {
-            // Paper size in millimeters (A3)
-            paper: {
-                width: 420,
-                height: 297
-            },
-            // Line drawing parameters
-            line: {
-                width: 2.5,      // Width of serpentine line in mm
-                spacing: 2.5,    // Spacing between lines in mm
-                strokeWidth: 0.1  // SVG stroke width
-            }
-        };
 
         /**
-         * Default Bouwkamp code representing a perfect squared square.
-         * A Bouwkamp code is an array where:
-         * - First number (n): count of squares minus 3
-         * - Second number: width of the containing square
-         * - Third number: height of the containing rectangle
-         * - Remaining n numbers: sizes of the component squares
-         * This example creates a 403x285 rectangle subdivided into 17 unequal squares.
+         * Default Bouwkamp code representing a perfect squared rectangle.
+         * @type {number[]}
          */
         const bouwkampCode = [17, 403, 285, 148, 111, 144, 75, 36, 3, 141, 39, 58, 37, 53, 21, 16, 15, 99, 84, 79];
 
-        /**
-         * Validates a Bouwkamp code array.
-         * @param {number[]} code - The Bouwkamp code to validate
-         * @throws {Error} If the code is invalid
-         */
-        function validateBouwkampCode(code) {
-            if (!Array.isArray(code)) {
-                throw new Error("Invalid Bouwkamp code: Must be an array.");
-            }
-            if (!code || code.length === 0) {
-                throw new Error("Invalid Bouwkamp code: The code is empty.");
-            }
-            if (code.length - 3 !== code[0]) {
-                throw new Error("Invalid Bouwkamp code: The code has the wrong length.");
-            }
-            if (!code.every(num => Number.isInteger(num) && num > 0)) {
-                throw new Error("Invalid Bouwkamp code: All values must be positive integers.");
-            }
-        }
 
-        // Fixed color palette
-        const colorPalette = [
-            '#FFA500', // orange
-            '#8B4513', // brown
-            '#FF0000', // red
-            '#FFC0CB', // pink
-            '#800080', // purple
-            '#008000', // green
-            '#0000FF', // blue
-            '#000000', // black
-            '#704214'  // sepia
-        ];
         let currentColorIndex = 0;
 
         // Function to get the next color from the palette
@@ -94,73 +45,6 @@
             return color;
         }
 
-        // Function to generate a serpentine line for a rectangle, including perimeter tracing
-        function generateSingleSerpentineLine(rect, lineWidth) {
-            const points = []; // Array to store the points of the line
-            const spacing = lineWidth; // Spacing between lines
-            let direction = 1; // Direction of the lines (1 for downward, -1 for upward)
-
-            // Adjust the rectangle dimensions to account for the stroke width
-            const adjustedRect = {
-                x: rect.x + lineWidth / 2,
-                y: rect.y + lineWidth / 2,
-                width: rect.width - lineWidth,
-                height: rect.height - lineWidth,
-            };
-
-            // Adjust the top and bottom points to account for the stroke width
-            const topY = adjustedRect.y; // Top Y coordinate (no offset, flat top)
-            const bottomY = adjustedRect.y + adjustedRect.height - lineWidth / 2; // Bottom Y coordinate (offset by half the stroke width)
-
-            // Loop to create points for the serpentine line
-            for (let x = adjustedRect.x; x <= adjustedRect.x + adjustedRect.width; x += spacing) {
-                if (direction === 1) {
-                    // Add a point at the top of the rectangle (flat top)
-                    points.push({ x, y: topY });
-                    // Add a point at the bottom of the rectangle (offset)
-                    points.push({ x, y: bottomY });
-                } else {
-                    // Add a point at the bottom of the rectangle (offset)
-                    points.push({ x, y: bottomY });
-                    // Add a point at the top of the rectangle (flat top)
-                    points.push({ x, y: topY });
-                }
-                direction *= -1; // Reverse the direction for the next segment
-            }
-
-            // Complete the perimeter of the rectangle to ensure all edges are covered
-            if (points.length > 0) {
-                const lastPoint = points[points.length - 1];
-                const corners = [
-                    { x: adjustedRect.x + adjustedRect.width, y: bottomY }, // bottom-right
-                    { x: adjustedRect.x + adjustedRect.width, y: topY },    // top-right
-                    { x: adjustedRect.x, y: topY },                         // top-left
-                    { x: adjustedRect.x, y: bottomY }                       // bottom-left
-                ];
-                
-                // Find the closest corner to the last serpentine point
-                let closestCornerIndex = 0;
-                let minDistance = Number.MAX_VALUE;
-                corners.forEach((corner, index) => {
-                    const distance = Math.hypot(corner.x - lastPoint.x, corner.y - lastPoint.y);
-                    if (distance < minDistance) {
-                        minDistance = distance;
-                        closestCornerIndex = index;
-                    }
-                });
-                
-                // Add corners in clockwise order starting from the closest one
-                for (let i = 0; i < 4; i++) {
-                    const cornerIndex = (closestCornerIndex + i) % 4;
-                    points.push(corners[cornerIndex]);
-                }
-                
-                // Return to the first corner to close the shape
-                points.push(corners[closestCornerIndex]);
-            }
-
-            return points; // Return the array of points
-        }
 
         // Function to draw the Bouwkamp code as SVG paths
         function drawBouwkampCode(code) {
