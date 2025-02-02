@@ -9,10 +9,10 @@ export const config = {
     },
     // Line drawing parameters
     line: {
-        width: 0.30,      // Width of serpentine line in mm
-        spacing: 3.0,     // Spacing between lines in mm
-        strokeWidth: 2.5, // SVG stroke width
-        vertexGap: 0.5    // Gap between shapes at vertices in mm
+        width: 0.3,      // Width of serpentine line in mm
+        spacing: 2.5,     // Spacing between lines in mm
+        strokeWidth: 0.45, // SVG stroke width
+        vertexGap: 1.25,
     },
     // Color palette for the visualization
     colorPalette: {
