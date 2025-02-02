@@ -329,12 +329,14 @@
                     const height = svg.getAttribute('height');
                     svg.setAttribute('width', height);
                     svg.setAttribute('height', width);
+		    logDebug(width);
+		    logDebug(height);
                     
                     // Calculate dimensions and offsets for centering
                     const centerX = parseFloat(width) / 2;
                     const centerY = parseFloat(height) / 2;
-                    const translateX = (parseFloat(height) - parseFloat(width)) / 2 + parseFloat(width) / 2;
-                    const translateY = (parseFloat(width) - parseFloat(height)) / 2;
+                    const translateX = -40;
+                    const translateY = -0;
                 
                     // Apply rotation and translation to center
                     contentGroup.setAttribute('transform', 
@@ -409,7 +411,7 @@
             
             // Toggle rotation
             contentGroup.setAttribute('transform', isRotated ? '' : 
-                `translate(${height/2} ${0}) rotate(90 ${0} ${width/2})`);
+                `translate(${height} ${0}) rotate(90 ${0} ${width})`);
             
             // Update button text
             const button = document.getElementById('toggleOrientation');
