@@ -25,6 +25,7 @@
             padding: 20px;
             min-width: min-content;
             height: 100%;
+            margin: 0 auto;
         }
         .debug-panel {
             flex: 1;
@@ -117,6 +118,31 @@
         }
         #toggleDebug:hover {
             background-color: #757575;
+        }
+        #saveSvg, #toggleRefresh, #toggleOrientation {
+            padding: 5px 10px;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #saveSvg {
+            background-color: #4CAF50;
+        }
+        #saveSvg:hover {
+            background-color: #45a049;
+        }
+        #toggleRefresh {
+            background-color: #2196F3;
+        }
+        #toggleRefresh:hover {
+            background-color: #1976D2;
+        }
+        #toggleRefresh.paused {
+            background-color: #FF9800;
+        }
+        #toggleRefresh.paused:hover {
+            background-color: #F57C00;
         }
         #toggleOrientation {
             background-color: #673AB7;
