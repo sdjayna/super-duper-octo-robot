@@ -343,15 +343,39 @@
             const currentWidth = svg.getAttribute('width');
             const currentHeight = svg.getAttribute('height');
             
+            // Get the content group or create one if it doesn't exist
+            let contentGroup = svg.querySelector('g.content-group');
+            if (!contentGroup) {
+                contentGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                contentGroup.setAttribute('class', 'content-group');
+                while (svg.firstChild) {
+                    contentGroup.appendChild(svg.firstChild);
+                }
+                svg.appendChild(contentGroup);
+            }
+            
             // Swap width and height
             svg.setAttribute('width', currentHeight);
             svg.setAttribute('height', currentWidth);
+            
+            // Calculate center point for rotation
+            const centerX = parseFloat(currentHeight) / 2;
+            const centerY = parseFloat(currentWidth) / 2;
+            
+            // Toggle rotation
+            const currentTransform = contentGroup.getAttribute('transform') || '';
+            if (currentTransform.includes('rotate')) {
+                contentGroup.setAttribute('transform', '');
+                contentGroup.setAttribute('transform-origin', '');
+            } else {
+                contentGroup.setAttribute('transform', `rotate(90 ${centerX} ${centerY})`);
+            }
             
             // Update button text
             const button = document.getElementById('toggleOrientation');
             button.textContent = currentWidth > currentHeight ? 'Portrait' : 'Landscape';
             
-            logDebug(`Switched to ${button.textContent} orientation`);
+            logDebug(`Switched to ${button.textContent} orientation with rotation`);
         }
 
         // Toggle debug panel visibility
