@@ -103,10 +103,10 @@ function drawBouwkampCode(drawingConfig) {
             width: size - (2 * vertexGap), 
             height: size - (2 * vertexGap)
         };
-        const points = generateSingleSerpentineLine(rectData, config.line.width);
+        const points = generateSingleSerpentineLine(rectData, drawingConfig.line.width);
         
         const pathElement = createPath(points);
-        pathElement.setAttribute('stroke-width', config.line.strokeWidth.toString());
+        pathElement.setAttribute('stroke-width', drawingConfig.line.strokeWidth.toString());
         
         const color = colorManager.getValidColor(rectData);
         colorGroups[color].appendChild(pathElement);
