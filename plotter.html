@@ -44,13 +44,14 @@
     <script type="module">
         import { generateSVG } from './js/app.js';
         import { drawings } from './js/drawings.js';
+        import { DrawingConfig } from './js/DrawingConfig.js';
 
         const select = document.getElementById('drawingSelect');
         const container = document.getElementById('svgContainer');
         const autoRefreshCheckbox = document.getElementById('autoRefresh');
         const lastRefreshSpan = document.getElementById('lastRefresh');
         
-        let refreshInterval = null;  // Initialize to null
+        let refreshInterval = null;
 
         // Populate select options
         select.innerHTML = Object.entries(drawings)
@@ -60,30 +61,50 @@
 
         function updateDrawing() {
             try {
+                // Force recreation of the drawing
+                const selectedDrawing = drawings[select.value];
+                // Create a new instance of the drawing to ensure fresh state
+                const freshDrawing = new DrawingConfig(
+                    selectedDrawing.name,
+                    {
+                        type: selectedDrawing.type,
+                        code: selectedDrawing.drawingData.toArray?.() || selectedDrawing.drawingData,
+                        paper: selectedDrawing.paper,
+                        line: selectedDrawing.line,
+                        colorPalette: selectedDrawing.colorPalette
+                    }
+                );
+                
                 container.innerHTML = '';
-                const svg = generateSVG(drawings[select.value]);
+                const svg = generateSVG(freshDrawing);
                 container.appendChild(svg);
                 lastRefreshSpan.textContent = new Date().toLocaleTimeString();
             } catch (error) {
                 console.error('Error updating drawing:', error);
+                stopAutoRefresh(); // Stop refresh if there's an error
             }
         }
 
         function startAutoRefresh() {
-            if (refreshInterval) {
-                clearInterval(refreshInterval);  // Clear any existing interval
-            }
+            stopAutoRefresh(); // Clear any existing interval
             refreshInterval = setInterval(updateDrawing, 1000);
+            console.log('Auto-refresh started');
         }
 
         function stopAutoRefresh() {
             if (refreshInterval) {
                 clearInterval(refreshInterval);
                 refreshInterval = null;
+                console.log('Auto-refresh stopped');
             }
         }
 
-        select.addEventListener('change', updateDrawing);
+        select.addEventListener('change', () => {
+            updateDrawing();
+            if (autoRefreshCheckbox.checked) {
+                startAutoRefresh(); // Restart refresh with new selection
+            }
+        });
 
         // Auto-refresh functionality
         autoRefreshCheckbox.addEventListener('change', (e) => {
@@ -97,6 +118,7 @@
         // Initial drawing
         window.addEventListener('load', () => {
             updateDrawing();
+            console.log('Initial drawing complete');
         });
 
         // Clean up on page unload
