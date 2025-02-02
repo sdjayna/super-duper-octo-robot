@@ -110,7 +110,9 @@
             const layers = svg.querySelectorAll('g[inkscape\\:groupmode="layer"]');
             
             layers.forEach(layer => {
-                if (selectedLayer === 'all' || layer.getAttribute('inkscape:label').startsWith(selectedLayer)) {
+                const label = layer.getAttribute('inkscape:label');
+                const layerIndex = label.split('-')[0];
+                if (selectedLayer === 'all' || layerIndex === selectedLayer) {
                     layer.style.display = '';
                 } else {
                     layer.style.display = 'none';
