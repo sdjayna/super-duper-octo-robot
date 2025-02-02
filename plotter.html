@@ -50,7 +50,7 @@
         const autoRefreshCheckbox = document.getElementById('autoRefresh');
         const lastRefreshSpan = document.getElementById('lastRefresh');
         
-        let refreshInterval;
+        let refreshInterval = null;  // Initialize to null
 
         // Populate select options
         select.innerHTML = Object.entries(drawings)
@@ -59,10 +59,28 @@
             .join('');
 
         function updateDrawing() {
-            container.innerHTML = '';
-            const svg = generateSVG(drawings[select.value]);
-            container.appendChild(svg);
-            lastRefreshSpan.textContent = new Date().toLocaleTimeString();
+            try {
+                container.innerHTML = '';
+                const svg = generateSVG(drawings[select.value]);
+                container.appendChild(svg);
+                lastRefreshSpan.textContent = new Date().toLocaleTimeString();
+            } catch (error) {
+                console.error('Error updating drawing:', error);
+            }
+        }
+
+        function startAutoRefresh() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);  // Clear any existing interval
+            }
+            refreshInterval = setInterval(updateDrawing, 1000);
+        }
+
+        function stopAutoRefresh() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+                refreshInterval = null;
+            }
         }
 
         select.addEventListener('change', updateDrawing);
@@ -70,16 +88,21 @@
         // Auto-refresh functionality
         autoRefreshCheckbox.addEventListener('change', (e) => {
             if (e.target.checked) {
-                refreshInterval = setInterval(updateDrawing, 1000); // Refresh every second
+                startAutoRefresh();
             } else {
-                clearInterval(refreshInterval);
+                stopAutoRefresh();
             }
         });
 
         // Initial drawing
-        window.onload = () => {
+        window.addEventListener('load', () => {
             updateDrawing();
-        };
+        });
+
+        // Clean up on page unload
+        window.addEventListener('unload', () => {
+            stopAutoRefresh();
+        });
     </script>
 </body>
 </html>
