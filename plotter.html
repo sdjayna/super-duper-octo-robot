@@ -118,6 +118,21 @@
         #toggleDebug:hover {
             background-color: #757575;
         }
+        #toggleOrientation {
+            position: fixed;
+            top: 50px;
+            right: 10px;
+            padding: 5px 10px;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #673AB7;
+            z-index: 1000;
+        }
+        #toggleOrientation:hover {
+            background-color: #5E35B1;
+        }
         .debug-panel.hidden {
             display: none;
         }
@@ -126,6 +141,7 @@
 <body>
     <div class="layout">
         <button id="toggleDebug">Hide Debug</button>
+        <button id="toggleOrientation">Portrait</button>
         <div class="canvas-area">
             <div id="controls">
                 <select id="drawingSelect"></select>
@@ -319,6 +335,25 @@
             }
         }
 
+        // Handle orientation toggle
+        function toggleOrientation() {
+            const svg = container.querySelector('svg');
+            if (!svg) return;
+            
+            const currentWidth = svg.getAttribute('width');
+            const currentHeight = svg.getAttribute('height');
+            
+            // Swap width and height
+            svg.setAttribute('width', currentHeight);
+            svg.setAttribute('height', currentWidth);
+            
+            // Update button text
+            const button = document.getElementById('toggleOrientation');
+            button.textContent = currentWidth > currentHeight ? 'Portrait' : 'Landscape';
+            
+            logDebug(`Switched to ${button.textContent} orientation`);
+        }
+
         // Toggle debug panel visibility
         function toggleDebugPanel() {
             const debugPanel = document.querySelector('.debug-panel');
@@ -343,6 +378,7 @@
         saveButton.addEventListener('click', saveSvg);
         document.getElementById('toggleRefresh').addEventListener('click', toggleRefresh);
         document.getElementById('toggleDebug').addEventListener('click', toggleDebugPanel);
+        document.getElementById('toggleOrientation').addEventListener('click', toggleOrientation);
     </script>
 </body>
 </html>
