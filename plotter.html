@@ -406,7 +406,7 @@
             const isRotated = contentGroup.getAttribute('transform')?.includes('rotate');
             
             // Scale up dimensions for portrait mode while maintaining aspect ratio
-            const scale = 1.4; // Increase size by 40%
+            const scale = 2.0; // Double the size
             svg.setAttribute('width', parseFloat(height) * scale);
             svg.setAttribute('height', parseFloat(width) * scale);
             svg.setAttribute('viewBox', `0 0 ${height} ${width}`);
