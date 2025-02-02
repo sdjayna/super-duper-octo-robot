@@ -2,6 +2,8 @@
 
 A web-based tool for generating algorithmic art optimized for pen plotters. This project creates SVG files with separated layers for multi-pen plotting, featuring perfect square subdivisions (Bouwkamp codes) and Delaunay triangulations. It includes live preview, automatic file saving, and color separation for plotter-ready output.
 
+![Plotter Art UI](ui-screenshot.png)
+
 ## Features
 
 - Multiple drawing algorithms:
