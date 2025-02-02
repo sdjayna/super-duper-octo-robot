@@ -24,9 +24,30 @@
     </style>
 </head>
 <body>
+    <select id="drawingSelect">
+        <option value="bouwkamp5">Bouwkamp 5</option>
+        <option value="smallSquare">Small Square</option>
+    </select>
+    <div id="svgContainer"></div>
+
     <script type="module">
         import { generateSVG } from './js/app.js';
-        window.onload = generateSVG;
+        import { drawings } from './js/drawings.js';
+
+        const select = document.getElementById('drawingSelect');
+        const container = document.getElementById('svgContainer');
+
+        select.addEventListener('change', (e) => {
+            container.innerHTML = '';
+            const svg = generateSVG(drawings[e.target.value]);
+            container.appendChild(svg);
+        });
+
+        // Initial drawing
+        window.onload = () => {
+            const svg = generateSVG(drawings.bouwkamp5);
+            container.appendChild(svg);
+        };
     </script>
 </body>
 </html>
