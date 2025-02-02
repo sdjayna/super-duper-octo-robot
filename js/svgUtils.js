@@ -28,19 +28,21 @@ export function createSVG(width, height, contentWidth, contentHeight) {
 /**
  * Creates color-grouped layers in the SVG
  * @param {SVGElement} svg - The SVG element to add groups to
- * @param {string[]} colors - Array of color values
- * @returns {Object} Map of colors to their group elements
+ * @param {Object} colorPalette - Dictionary of color objects with hex and name properties
+ * @returns {Object} Map of hex colors to their group elements
  */
 export function createColorGroups(svg, colorPalette) {
     const groups = {};
-    Object.entries(colorPalette).forEach(([key, color], index) => {
+    let index = 0;
+    for (const [key, color] of Object.entries(colorPalette)) {
         const group = document.createElementNS(svgNS, "g");
         group.setAttribute("stroke", color.hex);
         group.setAttribute("inkscape:groupmode", "layer");
         group.setAttribute("inkscape:label", `${index}-${color.name}`);
         groups[color.hex] = group;
         svg.appendChild(group);
-    });
+        index++;
+    }
     return groups;
 }
 
