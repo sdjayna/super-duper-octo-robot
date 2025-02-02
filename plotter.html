@@ -335,8 +335,8 @@
                     // Calculate dimensions and offsets for centering
                     const centerX = parseFloat(width) / 2;
                     const centerY = parseFloat(height) / 2;
-                    const translateX = -40;
-                    const translateY = -0;
+                    const translateX = (parseFloat(height) - parseFloat(width)) / 2;
+                    const translateY = (parseFloat(width) - parseFloat(height)) / 2;
                 
                     // Apply rotation and translation to center
                     contentGroup.setAttribute('transform', 
