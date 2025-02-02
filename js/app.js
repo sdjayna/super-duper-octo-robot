@@ -15,7 +15,7 @@ class ColorManager {
     constructor(palette) {
         this.palette = palette;
         this.placedRectangles = [];
-        this.colorUsage = new Map(palette.map(color => [color, 0]));
+        this.colorUsage = new Map(Object.values(palette).map(color => [color.hex, 0]));
     }
 
     /**
@@ -31,8 +31,9 @@ class ColorManager {
             }
         }
         
-        const availableColors = Array.from(this.palette)
-            .filter(color => !adjacentColors.has(color))
+        const availableColors = Object.values(this.palette)
+            .map(color => color.hex)
+            .filter(hex => !adjacentColors.has(hex))
             .sort((a, b) => this.colorUsage.get(a) - this.colorUsage.get(b));
         
         let selectedColor;
@@ -61,7 +62,7 @@ function drawBouwkampCode(code) {
     const squares = code.slice(3);
 
     const svg = createSVG(config.paper.width, config.paper.height, width, height);
-    const colorGroups = createColorGroups(svg, colorPalette);
+    const colorGroups = createColorGroups(svg, config.colorPalette);
     const colorManager = new ColorManager(colorPalette);
 
     const helper = new Array(900).fill(0);

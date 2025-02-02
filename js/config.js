@@ -15,55 +15,28 @@ export const config = {
     }
 };
 
-export const colorPalette = [
-    '#fff713', // Zinc Yellow
-    '#fcc253', // Sahara Beige Pastel
-    '#be3218', // Lobster
-    '#d51023', // Traffic Red
-    '#81b5c0', // Lago Blue Pastel
-    '#004470', // Petrol
-    '#56407e', // Currant
-    '#1e1056', // Violet Dark
-    '#ee7620', // DARE Orange
-    '#6a192c', // Burgundy
-    '#391602', // Hazelnut Brown
-    '#00632e', // MISTER Green
-    '#ffeb91', // Vanilla Pastel
-    '#f9a97e', // Peach Pastel
-    '#004811', // Future Green
-    '#ffffff', // Signal White
-    '#00a2e2', // Shock Blue Middle
-    '#000000', // Signal Black
-    '#eb5692', // Neon Pink
-    '#cca9d0', // Lilac Pastel
-    '#66b8eb', // Ceramic Light Pastel
-    '#808a94', // Cool Grey Pastel
-    '#004b9a', // True Blue
-    '#7a9b7a', // Amazonas Light
-    '#009994', // Lagoon Blue
-    '#f8c1b8', // Powder Pastel
-    '#d68307', // Ocher Brown Light
-    '#739ad1', // Blue Violet Pastel
-    '#ff32a6', // Neon Pink Fluorescent
-    '#ff6d1e', // Neon Orange Fluorescent
-    '#79f237', // Neon Green Fluorescent
-    '#fffc00', // Neon Yellow Fluorescent
-    '#b1cc35', // Grasshopper
-    '#49ae41', // KACAO77 Green
-    '#000000', // Metallic Black
-    '#148cc8', // Metallic Blue
-    '#b446aa', // Metallic Pink
-    '#6ea064', // Metallic Light Green
-    '#bebebe', // Metallic Silver
-    '#a59253', // Metallic Gold
-    '#faf4e3', // Nature White
-    '#0083ba', // Shock Blue
-    '#d36aa2', // Fuchsia Pink
-    '#b71d5b', // Magenta
-    '#74324a', // Purple Violet
-    '#74bd8b', // Calypso Middle
-    '#00794d', // Turquoise
-    '#dedd2e', // Poison Green
-    '#bdbcbb', // Blue Grey Light
-    '#6e7172'  // Blue Grey Dark
-];
+export const colorPalette = {
+    zincYellow: { hex: '#fff713', name: 'Zinc Yellow' },
+    saharaBeige: { hex: '#fcc253', name: 'Sahara Beige Pastel' },
+    lobster: { hex: '#be3218', name: 'Lobster' },
+    trafficRed: { hex: '#d51023', name: 'Traffic Red' },
+    lagoBlue: { hex: '#81b5c0', name: 'Lago Blue Pastel' },
+    petrol: { hex: '#004470', name: 'Petrol' },
+    currant: { hex: '#56407e', name: 'Currant' },
+    violetDark: { hex: '#1e1056', name: 'Violet Dark' },
+    dareOrange: { hex: '#ee7620', name: 'DARE Orange' },
+    burgundy: { hex: '#6a192c', name: 'Burgundy' },
+    hazelnutBrown: { hex: '#391602', name: 'Hazelnut Brown' },
+    misterGreen: { hex: '#00632e', name: 'MISTER Green' },
+    vanillaPastel: { hex: '#ffeb91', name: 'Vanilla Pastel' },
+    peachPastel: { hex: '#f9a97e', name: 'Peach Pastel' },
+    futureGreen: { hex: '#004811', name: 'Future Green' },
+    signalWhite: { hex: '#ffffff', name: 'Signal White' },
+    shockBlueMiddle: { hex: '#00a2e2', name: 'Shock Blue Middle' },
+    signalBlack: { hex: '#000000', name: 'Signal Black' },
+    neonPink: { hex: '#eb5692', name: 'Neon Pink' },
+    lilacPastel: { hex: '#cca9d0', name: 'Lilac Pastel' }
+};
+
+// Get array of hex values for backward compatibility
+export const colorPaletteArray = Object.values(colorPalette).map(color => color.hex);

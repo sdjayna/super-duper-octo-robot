@@ -30,15 +30,14 @@ export function createSVG(width, height, contentWidth, contentHeight) {
  * @param {string[]} colors - Array of color values
  * @returns {Object} Map of colors to their group elements
  */
-export function createColorGroups(svg, colors) {
+export function createColorGroups(svg, colorPalette) {
     const groups = {};
-    colors.forEach((color, index) => {
+    Object.entries(colorPalette).forEach(([key, color], index) => {
         const group = document.createElementNS(svgNS, "g");
-        group.setAttribute("stroke", color);
+        group.setAttribute("stroke", color.hex);
         group.setAttribute("inkscape:groupmode", "layer");
-        const colorName = ["orange", "brown", "red", "pink", "purple", "green", "blue", "black", "sepia"][index];
-        group.setAttribute("inkscape:label", `${index}-${colorName}`);
-        groups[color] = group;
+        group.setAttribute("inkscape:label", `${index}-${color.name}`);
+        groups[color.hex] = group;
         svg.appendChild(group);
     });
     return groups;
