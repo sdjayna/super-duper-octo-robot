@@ -36,9 +36,9 @@
         const bouwkampCode = [17, 403, 285, 148, 111, 144, 75, 36, 3, 141, 39, 58, 37, 53, 21, 16, 15, 99, 84, 79];
 
 
-        // Track placed rectangles, their colors, and unused colors
+        // Track placed rectangles and color usage
         const placedRectangles = [];
-        const unusedColors = new Set(colorPalette);
+        const colorUsage = new Map(colorPalette.map(color => [color, 0]));
 
         // Function to get a valid color that's not adjacent to neighbors
         function getValidColor(newRect) {
@@ -50,30 +50,22 @@
                 }
             }
             
-            // First try to use an unused color that's not adjacent
-            for (const color of unusedColors) {
-                if (!adjacentColors.has(color)) {
-                    unusedColors.delete(color);
-                    return color;
-                }
-            }
+            // Get available colors sorted by usage count
+            const availableColors = Array.from(colorPalette)
+                .filter(color => !adjacentColors.has(color))
+                .sort((a, b) => colorUsage.get(a) - colorUsage.get(b));
             
-            // If no unused colors are available, try any non-adjacent color
-            for (const color of colorPalette) {
-                if (!adjacentColors.has(color)) {
-                    return color;
-                }
-            }
-            
-            // If all colors are adjacent, prefer an unused color if any remain
-            if (unusedColors.size > 0) {
-                const color = unusedColors.values().next().value;
-                unusedColors.delete(color);
+            if (availableColors.length > 0) {
+                const color = availableColors[0];
+                colorUsage.set(color, colorUsage.get(color) + 1);
                 return color;
             }
             
-            // Last resort: return first non-adjacent color or first color in palette
-            return colorPalette[0];
+            // If all colors are adjacent, use the least used color
+            const leastUsedColor = Array.from(colorUsage.entries())
+                .sort(([, a], [, b]) => a - b)[0][0];
+            colorUsage.set(leastUsedColor, colorUsage.get(leastUsedColor) + 1);
+            return leastUsedColor;
         }
 
 
