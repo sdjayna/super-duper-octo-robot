@@ -138,12 +138,19 @@
             svg.setAttribute("width", "420mm"); // A3 width
             svg.setAttribute("height", "297mm"); // A3 height
             svg.setAttribute("viewBox", `0 0 ${width} ${width}`);
+            svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+            svg.setAttribute("xmlns:svg", "http://www.w3.org/2000/svg");
+            svg.setAttribute("xmlns:inkscape", "http://www.inkscape.org/namespaces/inkscape");
 
             // Create groups for each color
             const colorGroups = {};
-            colorPalette.forEach(color => {
+            colorPalette.forEach((color, index) => {
                 const group = document.createElementNS(svgNS, "g");
                 group.setAttribute("stroke", color);
+                group.setAttribute("inkscape:groupmode", "layer");
+                // Extract color name from the hex value using the index from colorPalette array
+                const colorName = ["orange", "brown", "red", "pink", "purple", "green", "blue", "black", "sepia"][index];
+                group.setAttribute("inkscape:label", `${index}-${colorName}`);
                 colorGroups[color] = group;
                 svg.appendChild(group);
             });
