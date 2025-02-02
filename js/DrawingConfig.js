@@ -10,7 +10,7 @@ export class DrawingConfig {
             width: 0.3,
             spacing: 2.5,
             strokeWidth: 0.45,
-            vertexGap: 1.25
+            vertexGap: 0.5
         };
         this.colorPalette = options.colorPalette;
     }
