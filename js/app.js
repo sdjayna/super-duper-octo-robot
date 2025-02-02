@@ -91,7 +91,6 @@ function drawBouwkampCode(code) {
             helper[i + j] += size;
         }
     }
-    console.log('ddddd');
     return svg;
 }
 
@@ -100,13 +99,19 @@ function drawBouwkampCode(code) {
  */
 export function generateSVG() {
     try {
-	console.log('okay');
         validateBouwkampCode(bouwkampCode);
-		console.log('okay2');
         const svg = drawBouwkampCode(bouwkampCode);
-		console.log('okay3');
+        if (!svg) {
+            throw new Error('Failed to generate SVG');
+        }
         document.body.appendChild(svg);
     } catch (error) {
-        console.error(error.message);
+        console.error('Error generating visualization:', error);
+        // Create an error message element
+        const errorDiv = document.createElement('div');
+        errorDiv.style.color = 'red';
+        errorDiv.style.padding = '20px';
+        errorDiv.textContent = `Error: ${error.message}`;
+        document.body.appendChild(errorDiv);
     }
 }
