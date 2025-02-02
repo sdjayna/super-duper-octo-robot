@@ -119,16 +119,7 @@
             background-color: #757575;
         }
         #toggleOrientation {
-            position: fixed;
-            top: 50px;
-            right: 10px;
-            padding: 5px 10px;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
             background-color: #673AB7;
-            z-index: 1000;
         }
         #toggleOrientation:hover {
             background-color: #5E35B1;
@@ -141,7 +132,6 @@
 <body>
     <div class="layout">
         <button id="toggleDebug">Hide Debug</button>
-        <button id="toggleOrientation">Portrait</button>
         <div class="canvas-area">
             <div id="controls">
                 <select id="drawingSelect"></select>
@@ -150,6 +140,7 @@
                 </select>
                 <button id="saveSvg">Save SVG</button>
                 <button id="toggleRefresh">Pause Refresh</button>
+                <button id="toggleOrientation">Portrait</button>
                 <span id="lastRefresh"></span>
             </div>
             <div id="svgContainer"></div>
@@ -292,8 +283,30 @@
                 const selectedDrawing = drawings[select.value];
                 logDebug(`Generating drawing: ${selectedDrawing.name}`);
                 const currentLayer = document.getElementById('layerSelect').value;
+                const isLandscape = document.getElementById('toggleOrientation').textContent === 'Portrait';
                 container.innerHTML = '';
                 const svg = generateSVG(selectedDrawing);
+                
+                // Restore orientation if needed
+                if (isLandscape) {
+                    const contentGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                    contentGroup.setAttribute('class', 'content-group');
+                    while (svg.firstChild) {
+                        contentGroup.appendChild(svg.firstChild);
+                    }
+                    svg.appendChild(contentGroup);
+                    
+                    // Swap dimensions
+                    const width = svg.getAttribute('width');
+                    const height = svg.getAttribute('height');
+                    svg.setAttribute('width', height);
+                    svg.setAttribute('height', width);
+                    
+                    // Apply rotation
+                    const centerX = parseFloat(height) / 2;
+                    const centerY = parseFloat(width) / 2;
+                    contentGroup.setAttribute('transform', `rotate(90 ${centerX} ${centerY})`);
+                }
                 container.appendChild(svg);
                 populateLayerSelect();
                 document.getElementById('layerSelect').value = currentLayer;
