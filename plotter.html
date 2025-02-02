@@ -21,10 +21,24 @@
             background-color: white;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
+        #controls {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
     </style>
 </head>
 <body>
-    <select id="drawingSelect"></select>
+    <div id="controls">
+        <select id="drawingSelect"></select>
+        <label>
+            <input type="checkbox" id="autoRefresh"> Auto-refresh
+        </label>
+        <span id="lastRefresh"></span>
+    </div>
     <div id="svgContainer"></div>
 
     <script type="module">
@@ -33,6 +47,10 @@
 
         const select = document.getElementById('drawingSelect');
         const container = document.getElementById('svgContainer');
+        const autoRefreshCheckbox = document.getElementById('autoRefresh');
+        const lastRefreshSpan = document.getElementById('lastRefresh');
+        
+        let refreshInterval;
 
         // Populate select options
         select.innerHTML = Object.entries(drawings)
@@ -40,16 +58,27 @@
                 `<option value="${key}">${drawing.name}</option>`)
             .join('');
 
-        select.addEventListener('change', (e) => {
+        function updateDrawing() {
             container.innerHTML = '';
-            const svg = generateSVG(drawings[e.target.value]);
+            const svg = generateSVG(drawings[select.value]);
             container.appendChild(svg);
+            lastRefreshSpan.textContent = new Date().toLocaleTimeString();
+        }
+
+        select.addEventListener('change', updateDrawing);
+
+        // Auto-refresh functionality
+        autoRefreshCheckbox.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                refreshInterval = setInterval(updateDrawing, 1000); // Refresh every second
+            } else {
+                clearInterval(refreshInterval);
+            }
         });
 
         // Initial drawing
         window.onload = () => {
-            const svg = generateSVG(drawings.simplePerfectRectangle);
-            container.appendChild(svg);
+            updateDrawing();
         };
     </script>
 </body>
