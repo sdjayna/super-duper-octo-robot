@@ -59,6 +59,9 @@
                 `<option value="${key}">${drawing.name}</option>`)
             .join('');
 
+        // Set auto-refresh checkbox to checked by default
+        autoRefreshCheckbox.checked = true;
+
         function updateDrawing() {
             try {
                 // Force recreation of the drawing
@@ -118,10 +121,11 @@
             }
         });
 
-        // Initial drawing
+        // Initial drawing and auto-refresh start
         window.addEventListener('load', () => {
             updateDrawing();
-            console.log('Initial drawing complete');
+            startAutoRefresh(); // Start auto-refresh immediately
+            console.log('Initial drawing complete and auto-refresh started');
         });
 
         // Clean up on page unload
