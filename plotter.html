@@ -324,18 +324,23 @@
                     }
                     svg.appendChild(contentGroup);
                     
-                    // Swap dimensions
+                    // Get original dimensions
                     const width = svg.getAttribute('width');
                     const height = svg.getAttribute('height');
+                    const w = parseFloat(width);
+                    const h = parseFloat(height);
+                    
+                    // Swap dimensions
                     svg.setAttribute('width', height);
                     svg.setAttribute('height', width);
-		    logDebug(width);
-		    logDebug(height);
                     
-                    const w = parseFloat(width);
-                    // Rotate around the center of the original width
+                    // Calculate translation to maintain size and center
+                    const translateX = (h - w) / 2;
+                    const translateY = (w - h) / 2;
+                    
+                    // Rotate around origin and translate to center
                     contentGroup.setAttribute('transform', 
-                        `rotate(90 ${w/2} ${w/2})`);
+                        `translate(${h/2} ${w/2}) rotate(90) translate(${-w/2} ${-h/2})`);
                 }
                 container.appendChild(svg);
                 populateLayerSelect();
