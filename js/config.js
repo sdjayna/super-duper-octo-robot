@@ -12,10 +12,9 @@ export const config = {
         width: 0.30,      // Width of serpentine line in mm
         spacing: 1.25,    // Spacing between lines in mm
         strokeWidth: .45  // SVG stroke width
-    }
-};
-
-export const colorPalette = {
+    },
+    // Color palette for the visualization
+    colorPalette: {
     zincYellow: { hex: '#fff713', name: 'Zinc Yellow' },
     saharaBeige: { hex: '#fcc253', name: 'Sahara Beige Pastel' },
     lobster: { hex: '#be3218', name: 'Lobster' },
