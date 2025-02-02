@@ -28,15 +28,15 @@ export const drawings = {
             type: 'delaunay',
             triangulation: {
                 points: [
-                    { x: 0, y: 0 },
-                    { x: 100, y: 0 },
-                    { x: 50, y: 86.6 },
-                    { x: 25, y: 43.3 },
-                    { x: 75, y: 43.3 },
-                    { x: 50, y: 25 }
+                    { x: 10, y: 10 },
+                    { x: 90, y: 10 },
+                    { x: 90, y: 90 },
+                    { x: 10, y: 90 },
+                    { x: 50, y: 50 },
+                    { x: 30, y: 30 }
                 ],
                 width: 100,
-                height: 86.6
+                height: 100
             },
             paper: {
                 width: 200,

@@ -146,26 +146,40 @@ function drawDelaunayTriangulation(drawingConfig) {
     // Create as many triangles as we have colors
     const numColors = Object.keys(drawingConfig.colorPalette).length;
     for (let i = 0; i < numColors && i < points.length - 2; i++) {
+        const triPoints = [
+            points[i % points.length],
+            points[(i + 1) % points.length],
+            points[(i + 2) % points.length]
+        ];
+        
         // Create a triangle using three consecutive points
         const triangle = {
-            points: [
-                points[i % points.length],
-                points[(i + 1) % points.length],
-                points[(i + 2) % points.length]
-            ]
+            points: triPoints,
+            // Add bounding box for color manager
+            x: Math.min(...triPoints.map(p => p.x)),
+            y: Math.min(...triPoints.map(p => p.y)),
+            width: Math.max(...triPoints.map(p => p.x)) - Math.min(...triPoints.map(p => p.x)),
+            height: Math.max(...triPoints.map(p => p.y)) - Math.min(...triPoints.map(p => p.y))
         };
         triangles.push(triangle);
     }
     
     // Draw each triangle
     triangles.forEach(triangle => {
-        const points = [...triangle.points, triangle.points[0]]; // Close the triangle
-        const pathElement = createPath(points);
+        const pathPoints = [...triangle.points, triangle.points[0]]; // Close the triangle
+        const pathElement = createPath(pathPoints);
         pathElement.setAttribute('stroke-width', drawingConfig.line.strokeWidth.toString());
         
         // Get a color for this triangle
         const color = colorManager.getValidColor(triangle);
         colorGroups[color].appendChild(pathElement);
+        
+        // Add some debug output
+        console.log('Drawing triangle:', {
+            points: triangle.points,
+            color: color,
+            bbox: { x: triangle.x, y: triangle.y, width: triangle.width, height: triangle.height }
+        });
     });
     
     return svg;
