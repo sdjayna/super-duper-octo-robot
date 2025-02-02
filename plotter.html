@@ -174,12 +174,29 @@
             }
         }
 
+        let refreshInterval;
+
+        function startRefresh() {
+            draw();
+            refreshInterval = setInterval(draw, 1000);
+        }
+
+        function stopRefresh() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+                refreshInterval = null;
+            }
+        }
+
         // Draw immediately and start refresh
-        draw();
-        setInterval(draw, 1000);
+        startRefresh();
 
         // Handle drawing selection changes
         select.addEventListener('change', draw);
+        
+        // Pause refresh when layer select is open
+        document.getElementById('layerSelect').addEventListener('focus', stopRefresh);
+        document.getElementById('layerSelect').addEventListener('blur', startRefresh);
         document.getElementById('layerSelect').addEventListener('change', updateLayerVisibility);
         saveButton.addEventListener('click', saveSvg);
     </script>
