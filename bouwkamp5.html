@@ -45,9 +45,9 @@
          * A Bouwkamp code is an array where:
          * - First number (n): count of squares minus 3
          * - Second number: width of the containing square
-         * - Third number: height of the containing square (should equal width)
+         * - Third number: height of the containing rectangle
          * - Remaining n numbers: sizes of the component squares
-         * This example creates a 21x21 square subdivided into 17 unequal squares.
+         * This example creates a 403x285 rectangle subdivided into 17 unequal squares.
          */
         const bouwkampCode = [17, 403, 285, 148, 111, 144, 75, 36, 3, 141, 39, 58, 37, 53, 21, 16, 15, 99, 84, 79];
 
@@ -65,9 +65,6 @@
             }
             if (code.length - 3 !== code[0]) {
                 throw new Error("Invalid Bouwkamp code: The code has the wrong length.");
-            }
-            if (code[1] !== code[2]) {
-                throw new Error("Invalid Bouwkamp code: Width and height must be equal.");
             }
             if (!code.every(num => Number.isInteger(num) && num > 0)) {
                 throw new Error("Invalid Bouwkamp code: All values must be positive integers.");
