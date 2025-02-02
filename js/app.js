@@ -62,6 +62,7 @@ function drawBouwkampCode(code) {
     const squares = code.slice(3);
 
     const svg = createSVG(config.paper.width, config.paper.height, width, height);
+
     const colorGroups = createColorGroups(svg, config.colorPalette);
     const colorManager = new ColorManager(config.colorPalette);
 
@@ -90,7 +91,7 @@ function drawBouwkampCode(code) {
             helper[i + j] += size;
         }
     }
-
+    console.log('ddddd');
     return svg;
 }
 
@@ -99,8 +100,11 @@ function drawBouwkampCode(code) {
  */
 export function generateSVG() {
     try {
+	console.log('okay');
         validateBouwkampCode(bouwkampCode);
+		console.log('okay2');
         const svg = drawBouwkampCode(bouwkampCode);
+		console.log('okay3');
         document.body.appendChild(svg);
     } catch (error) {
         console.error(error.message);
