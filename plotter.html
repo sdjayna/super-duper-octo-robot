@@ -10,10 +10,49 @@
             padding: 0;
             overflow: hidden;
             height: 100%;
+            background-color: #f0f0f0;
+        }
+        .layout {
+            display: flex;
+            height: 100%;
+        }
+        .canvas-area {
+            flex: 1;
             display: flex;
             justify-content: center;
             align-items: center;
-            background-color: #f0f0f0;
+            min-width: 0;
+        }
+        .debug-panel {
+            width: 300px;
+            background: white;
+            border-left: 1px solid #ccc;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        .debug-panel h3 {
+            margin: 0 0 10px 0;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #eee;
+        }
+        #debugLog {
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .debug-entry {
+            margin: 2px 0;
+            padding: 2px 4px;
+            border-radius: 2px;
+        }
+        .debug-info { color: #333; }
+        .debug-error { 
+            color: #d32f2f;
+            background: #ffebee;
         }
         svg {
             display: block;
@@ -49,17 +88,38 @@
     </style>
 </head>
 <body>
-    <div id="controls">
-        <select id="drawingSelect"></select>
-        <select id="layerSelect">
-            <option value="all">Show All Layers</option>
-        </select>
-        <button id="saveSvg">Save SVG</button>
-        <span id="lastRefresh"></span>
+    <div class="layout">
+        <div class="canvas-area">
+            <div id="controls">
+                <select id="drawingSelect"></select>
+                <select id="layerSelect">
+                    <option value="all">Show All Layers</option>
+                </select>
+                <button id="saveSvg">Save SVG</button>
+                <span id="lastRefresh"></span>
+            </div>
+            <div id="svgContainer"></div>
+        </div>
+        <div class="debug-panel">
+            <h3>Debug Log</h3>
+            <div id="debugLog"></div>
+        </div>
     </div>
-    <div id="svgContainer"></div>
 
     <script type="module">
+        function logDebug(message, type = 'info') {
+            const debugLog = document.getElementById('debugLog');
+            const entry = document.createElement('div');
+            entry.className = `debug-entry debug-${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            debugLog.appendChild(entry);
+            debugLog.scrollTop = debugLog.scrollHeight;
+            
+            // Keep only last 100 messages
+            while (debugLog.children.length > 100) {
+                debugLog.removeChild(debugLog.firstChild);
+            }
+        }
         const select = document.getElementById('drawingSelect');
         const container = document.getElementById('svgContainer');
         const lastRefreshSpan = document.getElementById('lastRefresh');
@@ -96,9 +156,11 @@
                 if (result.status === 'success') {
                     console.log(`SVG saved to ${result.filename}`);
                     lastRefreshSpan.textContent = `Saved: ${result.filename}`;
+                    logDebug(`SVG saved to ${result.filename}`);
                 }
             } catch (error) {
                 console.error('Error saving SVG:', error);
+                logDebug('Error saving SVG: ' + error.message, 'error');
             }
         }
 
@@ -183,6 +245,7 @@
                 lastRefreshSpan.textContent = new Date().toLocaleTimeString();
             } catch (error) {
                 console.error('Error:', error);
+                logDebug('Error generating SVG: ' + error.message, 'error');
             }
         }
 
