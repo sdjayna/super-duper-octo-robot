@@ -68,7 +68,10 @@
                     selectedDrawing.name,
                     {
                         type: selectedDrawing.type,
-                        code: selectedDrawing.drawingData.toArray?.() || selectedDrawing.drawingData,
+                        // Handle different drawing types correctly
+                        ...(selectedDrawing.type === 'bouwkamp' 
+                            ? { code: selectedDrawing.drawingData.toArray() }
+                            : { triangulation: selectedDrawing.drawingData }),
                         paper: selectedDrawing.paper,
                         line: selectedDrawing.line,
                         colorPalette: selectedDrawing.colorPalette
