@@ -63,9 +63,13 @@
             }
 
             try {
+                // Get the current drawing configuration
+                const { drawings } = await import('./js/drawings.js?v=' + Date.now());
+                const currentConfig = drawings[select.value];
+        
                 // Serialize SVG
                 const svgData = new XMLSerializer().serializeToString(svg);
-                
+        
                 // Send to server
                 const response = await fetch('http://localhost:8000/save-svg', {
                     method: 'POST',
@@ -74,7 +78,12 @@
                     },
                     body: JSON.stringify({
                         name: select.value,
-                        svg: svgData
+                        svg: svgData,
+                        config: {
+                            type: currentConfig.type,
+                            paper: currentConfig.paper,
+                            line: currentConfig.line
+                        }
                     })
                 });
                 
