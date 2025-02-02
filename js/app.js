@@ -63,7 +63,7 @@ function drawBouwkampCode(code) {
 
     const svg = createSVG(config.paper.width, config.paper.height, width, height);
     const colorGroups = createColorGroups(svg, config.colorPalette);
-    const colorManager = new ColorManager(colorPalette);
+    const colorManager = new ColorManager(config.colorPalette);
 
     const helper = new Array(900).fill(0);
 
