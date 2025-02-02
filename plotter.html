@@ -409,9 +409,18 @@
             svg.setAttribute('width', height);
             svg.setAttribute('height', width);
             
-            // Toggle rotation
-            contentGroup.setAttribute('transform', isRotated ? '' : 
-                `translate(${height} ${0}) rotate(90 ${0} ${width})`);
+            // Toggle rotation with proper centering
+            if (isRotated) {
+                contentGroup.removeAttribute('transform');
+            } else {
+                // Calculate center points and offset
+                const w = parseFloat(width);
+                const h = parseFloat(height);
+                const translateX = (h - w) / 2;
+                
+                contentGroup.setAttribute('transform', 
+                    `translate(${translateX} 0) rotate(90 ${w/2} ${w/2})`);
+            }
             
             // Update button text
             const button = document.getElementById('toggleOrientation');
