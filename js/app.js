@@ -11,60 +11,46 @@ class ColorManager {
         this.palette = palette;
         this.placedRectangles = [];
         this.colorUsage = new Map(Object.values(palette).map(color => [color.hex, 0]));
-        this.recentColors = [];  // Track recently used colors
-        this.maxRecentColors = 3;  // How many recent colors to avoid
+        this.recentColors = [];
+        this.maxRecentColors = 3;
     }
 
-    /**
-     * Gets a valid color for a new rectangle
-     * @param {Object} newRect - The new rectangle to color
-     * @returns {string} The selected color
-     */
     getValidColor(newRect) {
-        const adjacentColors = new Set();
-        for (const placed of this.placedRectangles) {
-            if (areRectanglesAdjacent(newRect, placed.rect)) {
-                adjacentColors.add(placed.color);
-            }
+        const colorScores = Object.values(this.palette)
+            .map(color => ({
+                color: color.hex,
+                score: this.getColorScore(color.hex, newRect)
+            }))
+            .filter(({score}) => score !== -Infinity)
+            .sort((a, b) => a.score - b.score);
+
+        const selectedColor = colorScores[0]?.color || this.getLeastUsedColor();
+        this.updateTracking(selectedColor, newRect);
+        return selectedColor;
+    }
+
+    getColorScore(color, newRect) {
+        const isAdjacent = this.placedRectangles.some(placed => 
+            areRectanglesAdjacent(newRect, placed.rect) && placed.color === color);
+        if (isAdjacent) {
+            return -Infinity;
         }
+        return this.colorUsage.get(color) * 2 + 
+               (this.recentColors.includes(color) ? 1 : 0);
+    }
 
-        // Get all available colors that aren't adjacent
-        let availableColors = Object.values(this.palette)
-            .map(color => color.hex)
-            .filter(hex => !adjacentColors.has(hex));
+    getLeastUsedColor() {
+        return Array.from(this.colorUsage.entries())
+            .sort(([, a], [, b]) => a - b)[0][0];
+    }
 
-        // Further filter out recently used colors if possible
-        const nonRecentColors = availableColors.filter(color => !this.recentColors.includes(color));
-        if (nonRecentColors.length > 0) {
-            availableColors = nonRecentColors;
-        }
-
-        // Score each available color based on usage and recency
-        const colorScores = availableColors.map(color => ({
-            color,
-            score: this.colorUsage.get(color) * 2 + 
-                   (this.recentColors.includes(color) ? 1 : 0)
-        }));
-
-        let selectedColor;
-        if (colorScores.length > 0) {
-            // Choose the color with the lowest score
-            selectedColor = colorScores.sort((a, b) => a.score - b.score)[0].color;
-        } else {
-            // If no valid colors, choose the least used color overall
-            selectedColor = Array.from(this.colorUsage.entries())
-                .sort(([, a], [, b]) => a - b)[0][0];
-        }
-
-        // Update tracking
-        this.colorUsage.set(selectedColor, this.colorUsage.get(selectedColor) + 1);
-        this.recentColors.unshift(selectedColor);
+    updateTracking(color, rect) {
+        this.colorUsage.set(color, this.colorUsage.get(color) + 1);
+        this.recentColors.unshift(color);
         if (this.recentColors.length > this.maxRecentColors) {
             this.recentColors.pop();
         }
-        this.placedRectangles.push({ rect: newRect, color: selectedColor });
-        
-        return selectedColor;
+        this.placedRectangles.push({ rect, color });
     }
 }
 

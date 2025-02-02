@@ -2,38 +2,38 @@ import { BouwkampConfig } from './BouwkampConfig.js';
 import { DelaunayConfig } from './DelaunayConfig.js';
 
 export class DrawingConfig {
+    static defaultPaper = {
+        width: 420,
+        height: 297,
+        margin: 12.5
+    };
+
+    static defaultLine = {
+        width: 0.3,
+        spacing: 2.5,
+        strokeWidth: 0.45,
+        vertexGap: 0.5
+    };
+
     constructor(name, params) {
-        // Basic drawing info
         this.name = name;
         this.type = params.type;
-
-        // Drawing-specific configurations
-        switch (params.type) {
-            case 'bouwkamp':
-                this.drawingData = new BouwkampConfig(params.code);
-                break;
-            case 'delaunay':
-                this.drawingData = new DelaunayConfig(params.triangulation);
-                break;
-            default:
-                throw new Error(`Unsupported drawing type: ${params.type}`);
-        }
-
-        // Paper configuration
-        this.paper = {
-            width: params.paper?.width || 420,
-            height: params.paper?.height || 297,
-            margin: params.paper?.margin || 12.5
-        };
-
-        // Line configuration
-        this.line = {
-            width: params.line?.width || 0.3,
-            spacing: params.line?.spacing || 2.5,
-            strokeWidth: params.line?.strokeWidth || 0.45,
-            vertexGap: params.line?.vertexGap || 0.5
-        };
-
+        this.drawingData = this.createDrawingData(params);
+        this.paper = { ...DrawingConfig.defaultPaper, ...params.paper };
+        this.line = { ...DrawingConfig.defaultLine, ...params.line };
         this.colorPalette = params.colorPalette;
+    }
+
+    createDrawingData(params) {
+        const configs = {
+            bouwkamp: () => new BouwkampConfig(params.code),
+            delaunay: () => new DelaunayConfig(params.triangulation)
+        };
+        
+        const creator = configs[params.type];
+        if (!creator) {
+            throw new Error(`Unsupported drawing type: ${params.type}`);
+        }
+        return creator();
     }
 }

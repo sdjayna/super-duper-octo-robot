@@ -26,59 +26,54 @@ export function validateBouwkampCode(code) {
  */
 
 export function generateSingleSerpentineLine(rect, lineWidth) {
-    const points = [];
     const spacing = rect.spacing || 2.5;
-    let direction = 1;
+    const adjustedRect = adjustRectForLineWidth(rect, lineWidth);
+    const points = generateSerpentinePoints(adjustedRect, spacing);
+    return [...points, ...generateClosingPath(points[points.length - 1], adjustedRect)];
+}
 
-    const adjustedRect = {
+function adjustRectForLineWidth(rect, lineWidth) {
+    return {
         x: rect.x + lineWidth / 2,
         y: rect.y + lineWidth / 2,
         width: rect.width - lineWidth,
-        height: rect.height - lineWidth,
+        height: rect.height - lineWidth
     };
+}
 
-    const topY = adjustedRect.y;
-    const bottomY = adjustedRect.y + adjustedRect.height - lineWidth / 2;
-
-    for (let x = adjustedRect.x; x <= adjustedRect.x + adjustedRect.width; x += spacing) {
-        if (direction === 1) {
-            points.push({ x, y: topY });
-            points.push({ x, y: bottomY });
-        } else {
-            points.push({ x, y: bottomY });
-            points.push({ x, y: topY });
-        }
+function generateSerpentinePoints(rect, spacing) {
+    const points = [];
+    const topY = rect.y;
+    const bottomY = rect.y + rect.height;
+    
+    for (let x = rect.x, direction = 1; x <= rect.x + rect.width; x += spacing) {
+        points.push(
+            { x, y: direction === 1 ? topY : bottomY },
+            { x, y: direction === 1 ? bottomY : topY }
+        );
         direction *= -1;
     }
-
-    if (points.length > 0) {
-        const lastPoint = points[points.length - 1];
-        const corners = [
-            { x: adjustedRect.x + adjustedRect.width, y: bottomY },
-            { x: adjustedRect.x + adjustedRect.width, y: topY },
-            { x: adjustedRect.x, y: topY },
-            { x: adjustedRect.x, y: bottomY }
-        ];
-        
-        let closestCornerIndex = 0;
-        let minDistance = Number.MAX_VALUE;
-        corners.forEach((corner, index) => {
-            const distance = Math.hypot(corner.x - lastPoint.x, corner.y - lastPoint.y);
-            if (distance < minDistance) {
-                minDistance = distance;
-                closestCornerIndex = index;
-            }
-        });
-        
-        for (let i = 0; i < 4; i++) {
-            const cornerIndex = (closestCornerIndex + i) % 4;
-            points.push(corners[cornerIndex]);
-        }
-        
-        points.push(corners[closestCornerIndex]);
-    }
-
     return points;
+}
+
+function generateClosingPath(lastPoint, rect) {
+    const corners = [
+        { x: rect.x + rect.width, y: rect.y + rect.height },
+        { x: rect.x + rect.width, y: rect.y },
+        { x: rect.x, y: rect.y },
+        { x: rect.x, y: rect.y + rect.height }
+    ];
+    
+    const closestCornerIndex = corners.reduce((closest, corner, index) => {
+        const distance = Math.hypot(corner.x - lastPoint.x, corner.y - lastPoint.y);
+        return distance < closest.distance ? { index, distance } : closest;
+    }, { index: 0, distance: Infinity }).index;
+
+    return [
+        ...corners.slice(closestCornerIndex),
+        ...corners.slice(0, closestCornerIndex),
+        corners[closestCornerIndex]
+    ];
 }
 
 /**
