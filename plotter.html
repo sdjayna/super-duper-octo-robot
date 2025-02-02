@@ -77,16 +77,30 @@
             border: 1px solid #ccc;
             margin-right: 10px;
         }
-        #saveSvg {
+        #saveSvg, #toggleRefresh {
             padding: 5px 10px;
-            background-color: #4CAF50;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
         }
+        #saveSvg {
+            background-color: #4CAF50;
+        }
         #saveSvg:hover {
             background-color: #45a049;
+        }
+        #toggleRefresh {
+            background-color: #2196F3;
+        }
+        #toggleRefresh:hover {
+            background-color: #1976D2;
+        }
+        #toggleRefresh.paused {
+            background-color: #FF9800;
+        }
+        #toggleRefresh.paused:hover {
+            background-color: #F57C00;
         }
     </style>
 </head>
@@ -99,6 +113,7 @@
                     <option value="all">Show All Layers</option>
                 </select>
                 <button id="saveSvg">Save SVG</button>
+                <button id="toggleRefresh">Pause Refresh</button>
                 <span id="lastRefresh"></span>
             </div>
             <div id="svgContainer"></div>
@@ -260,6 +275,9 @@
             logDebug('Starting automatic refresh');
             draw();
             refreshInterval = setInterval(draw, 1000);
+            const toggleButton = document.getElementById('toggleRefresh');
+            toggleButton.textContent = 'Pause Refresh';
+            toggleButton.classList.remove('paused');
         }
 
         function stopRefresh() {
@@ -267,6 +285,17 @@
                 logDebug('Pausing automatic refresh');
                 clearInterval(refreshInterval);
                 refreshInterval = null;
+                const toggleButton = document.getElementById('toggleRefresh');
+                toggleButton.textContent = 'Resume Refresh';
+                toggleButton.classList.add('paused');
+            }
+        }
+
+        function toggleRefresh() {
+            if (refreshInterval) {
+                stopRefresh();
+            } else {
+                startRefresh();
             }
         }
 
@@ -284,6 +313,7 @@
             e.target.blur();
         });
         saveButton.addEventListener('click', saveSvg);
+        document.getElementById('toggleRefresh').addEventListener('click', toggleRefresh);
     </script>
 </body>
 </html>
