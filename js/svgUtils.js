@@ -67,22 +67,24 @@ export function createPath(points) {
 }
 
 export function setViewBox(svg, width, height, contentWidth, contentHeight, isPortrait = false) {
-    // Calculate offsets for centering - use smaller offset to prevent over-translation
-    const offsetX = ((width - contentWidth) / 2);
-    const offsetY = ((height - contentHeight) / 2);
-        
-    if (isPortrait){
-    	const viewBox = `${offsetY} ${offsetX} ${height} ${width}`;
-	svg.setAttribute('viewBox', viewBox);
-    }else{
-	// Set viewBox based on orientation
-	const offsetX = ((width - contentWidth) / 2);
-	const offsetY = ((height - contentHeight) / 2);
-	
-	const viewBox = `-${offsetX} -${offsetY} ${width} ${height}`;
-    
-	svg.setAttribute('viewBox', viewBox);
-	
+    // Parse all dimensions to ensure we're working with numbers
+    const w = parseFloat(width);
+    const h = parseFloat(height);
+    const cw = parseFloat(contentWidth);
+    const ch = parseFloat(contentHeight);
+
+    // Calculate centering offsets
+    const offsetX = (w - cw) / 2;
+    const offsetY = (h - ch) / 2;
+
+    if (isPortrait) {
+        // In portrait mode, swap dimensions and adjust offsets for rotation
+        const viewBox = `${-offsetY} ${-offsetX} ${h} ${w}`;
+        svg.setAttribute('viewBox', viewBox);
+    } else {
+        // In landscape mode, use standard centering offsets
+        const viewBox = `${-offsetX} ${-offsetY} ${w} ${h}`;
+        svg.setAttribute('viewBox', viewBox);
     }
 }
 
