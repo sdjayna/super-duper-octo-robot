@@ -77,11 +77,15 @@ export function setViewBox(svg, width, height, contentWidth, contentHeight, isPo
     const offsetX = (w - cw) / 2;
     const offsetY = (h - ch) / 2;
 
+    console.log('setting viewbox with',width,height,contentWidth,contentHeight,isPortrait);
+
     if (isPortrait) {
+	console.log('portrait',offsetY,offsetX);
         // In portrait mode, swap dimensions and adjust offsets for rotation
-        const viewBox = `${-offsetY} ${-offsetX} ${h} ${w}`;
+        const viewBox = `${offsetY} ${-offsetX} ${h} ${w}`;
         svg.setAttribute('viewBox', viewBox);
     } else {
+	console.log('landscape',offsetY,offsetX);
         // In landscape mode, use standard centering offsets
         const viewBox = `${-offsetX} ${-offsetY} ${w} ${h}`;
         svg.setAttribute('viewBox', viewBox);
@@ -108,6 +112,7 @@ export function setOrientation(svg, isPortrait, contentWidth, contentHeight) {
     if (isPortrait) {
         svg.setAttribute('width', height + 'mm');
         svg.setAttribute('height', width + 'mm');
+	console.log('here',width,height,contentWidth,contentHeight,isPortrait);
         setViewBox(svg, width, height, contentWidth, contentHeight, isPortrait);
         contentGroup.setAttribute('transform', `translate(${height} 0) rotate(90)`);
     } else {
