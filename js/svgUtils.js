@@ -70,6 +70,13 @@ export function createPath(points) {
     return pathElement;
 }
 
+export function getViewBoxForOrientation(width, height, isPortrait, offsets = { x: 0, y: 0 }) {
+    if (isPortrait) {
+        return `${offsets.x} ${offsets.y} ${height} ${width}`;
+    }
+    return `${offsets.x} ${offsets.y} ${width} ${height}`;
+}
+
 export function setOrientation(svg, isPortrait) {
     // Get or create content group
     let contentGroup = svg.querySelector('g.content-group');
@@ -86,17 +93,16 @@ export function setOrientation(svg, isPortrait) {
     const width = svg.getAttribute('width').replace('mm', '');
     const height = svg.getAttribute('height').replace('mm', '');
 
+    // Set dimensions and viewBox based on orientation
     if (isPortrait) {
-        // Switch to portrait mode
         svg.setAttribute('width', height + 'mm');
         svg.setAttribute('height', width + 'mm');
-        svg.setAttribute('viewBox', `0 0 ${height} ${width}`);
+        svg.setAttribute('viewBox', getViewBoxForOrientation(width, height, true));
         contentGroup.setAttribute('transform', `translate(${height} 0) rotate(90)`);
     } else {
-        // Switch to landscape mode
         svg.setAttribute('width', width + 'mm');
         svg.setAttribute('height', height + 'mm');
-        svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+        svg.setAttribute('viewBox', getViewBoxForOrientation(width, height, false));
         contentGroup.removeAttribute('transform');
     }
 
