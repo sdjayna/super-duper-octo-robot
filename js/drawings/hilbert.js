@@ -5,7 +5,16 @@ function generateHilbertPoints(n, width, height) {
     const points = [];
     const size = Math.max(width, height);
 
+    // Add safety check for n
+    if (n < 0 || n > 10) { // 10 is a reasonable max level to prevent stack overflow
+        console.warn(`Invalid Hilbert level: ${n}. Using level 8.`);
+        n = 8;
+    }
+
     function hilbert(x0, y0, xi, xj, yi, yj, n) {
+        // Add explicit check for negative n
+        if (n < 0) return;
+        
         if (n <= 0) {
             points.push({ x: x0 + (xi + yi) / 2, y: y0 + (xj + yj) / 2 });
         } else {
