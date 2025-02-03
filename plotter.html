@@ -80,52 +80,36 @@
             border: 1px solid #ccc;
             margin-right: 10px;
         }
-        /* Common button styles */
-        .control-button {
+        /* Common button and select styles */
+        .control-button,
+        button,
+        select {
             padding: 5px 10px;
-            color: white;
-            border: none;
+            border: 1px solid #ccc;
             border-radius: 4px;
             cursor: pointer;
+            background-color: white;
+            color: #333;
         }
 
-        /* Individual button colors */
-        #saveSvg {
-            background-color: #4CAF50;
+        button:hover,
+        select:hover {
+            border-color: #999;
+            background-color: #f5f5f5;
         }
-        #saveSvg:hover {
-            background-color: #45a049;
-        }
-        
-        #toggleRefresh {
-            background-color: #2196F3;
-        }
-        #toggleRefresh:hover {
-            background-color: #1976D2;
-        }
+
+        /* Individual button states */
         #toggleRefresh.paused {
-            background-color: #FF9800;
-        }
-        #toggleRefresh.paused:hover {
-            background-color: #F57C00;
-        }
-        
-        #toggleOrientation {
-            background-color: #673AB7;
-        }
-        #toggleOrientation:hover {
-            background-color: #5E35B1;
+            background-color: #fff3e0;
+            border-color: #ffb74d;
+            color: #e65100;
         }
         
         #toggleDebug {
             position: fixed;
             top: 10px;
             right: 10px;
-            background-color: #9E9E9E;
             z-index: 1000;
-        }
-        #toggleDebug:hover {
-            background-color: #757575;
         }
         .debug-panel.hidden {
             display: none;
