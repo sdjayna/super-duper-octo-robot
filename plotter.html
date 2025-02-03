@@ -320,7 +320,9 @@
                 // Restore orientation if needed
                 if (isLandscape) {
                     const { setOrientation } = await import('./js/svgUtils.js?v=' + Date.now());
-                    setOrientation(svg, true);
+                    const width = svg.getAttribute('width').replace('mm', '');
+                    const height = svg.getAttribute('height').replace('mm', '');
+                    setOrientation(svg, true, parseFloat(width), parseFloat(height));
                 }
                 container.appendChild(svg);
                 populateLayerSelect();
@@ -371,7 +373,9 @@
             
             // Toggle between portrait and landscape
             const isRotated = svg.querySelector('g.content-group')?.getAttribute('transform')?.includes('rotate');
-            setOrientation(svg, !isRotated);
+            const width = svg.getAttribute('width').replace('mm', '');
+            const height = svg.getAttribute('height').replace('mm', '');
+            setOrientation(svg, !isRotated, parseFloat(width), parseFloat(height));
             
             // Update button text
             const button = document.getElementById('toggleOrientation');

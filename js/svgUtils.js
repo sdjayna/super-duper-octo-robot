@@ -86,7 +86,7 @@ export function setViewBox(svg, width, height, contentWidth, contentHeight, isPo
     }
 }
 
-export function setOrientation(svg, isPortrait) {
+export function setOrientation(svg, isPortrait, contentWidth, contentHeight) {
     // Get or create content group
     let contentGroup = svg.querySelector('g.content-group');
     if (!contentGroup) {
@@ -102,14 +102,16 @@ export function setOrientation(svg, isPortrait) {
     const width = svg.getAttribute('width').replace('mm', '');
     const height = svg.getAttribute('height').replace('mm', '');
 
-    // Set dimensions based on orientation
+    // Set dimensions and viewBox based on orientation
     if (isPortrait) {
         svg.setAttribute('width', height + 'mm');
         svg.setAttribute('height', width + 'mm');
+        setViewBox(svg, width, height, contentWidth, contentHeight, true);
         contentGroup.setAttribute('transform', `translate(${height} 0) rotate(90)`);
     } else {
         svg.setAttribute('width', width + 'mm');
         svg.setAttribute('height', height + 'mm');
+        setViewBox(svg, width, height, contentWidth, contentHeight, false);
         contentGroup.removeAttribute('transform');
     }
 
