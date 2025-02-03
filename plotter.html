@@ -391,8 +391,17 @@
 
             // Force redraw if refresh is paused
             if (!refreshInterval) {
+                // Store current layer selection
+                const currentLayer = document.getElementById('layerSelect').value;
+                
+                // Clear and re-append SVG
                 container.innerHTML = '';
                 container.appendChild(svg);
+                
+                // Restore layer visibility
+                populateLayerSelect();
+                document.getElementById('layerSelect').value = currentLayer;
+                updateLayerVisibility();
             }
         }
 
