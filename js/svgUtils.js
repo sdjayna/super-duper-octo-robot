@@ -23,8 +23,8 @@ export function createSVG(drawingConfig, contentWidth, contentHeight) {
     const offsetX = ((totalWidth - contentWidth) / 2);
     const offsetY = ((totalHeight - contentHeight) / 2);
     
-    // Set viewBox to include the offset and margin
-    svg.setAttribute("viewBox", `${-offsetX} ${-offsetY} ${totalWidth} ${totalHeight}`);
+    // Set initial viewBox
+    setViewBox(svg, totalWidth, totalHeight);
     svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
     svg.setAttribute("xmlns:svg", "http://www.w3.org/2000/svg");
     svg.setAttribute("xmlns:inkscape", "http://www.inkscape.org/namespaces/inkscape");
@@ -70,11 +70,17 @@ export function createPath(points) {
     return pathElement;
 }
 
-export function getViewBoxForOrientation(width, height, isPortrait, offsets = { x: 0, y: 0 }) {
-    if (isPortrait) {
-        return `${offsets.x} -${offsets.y} ${height} ${width}`;
-    }
-    return `${offsets.x} ${offsets.y} ${width} ${height}`;
+export function setViewBox(svg, width, height, isPortrait = false) {
+    // Calculate offsets for centering
+    const offsetX = (parseFloat(height) - parseFloat(width)) / 2;
+    const offsetY = (parseFloat(width) - parseFloat(height)) / 2;
+    
+    // Set viewBox based on orientation
+    const viewBox = isPortrait ? 
+        `${offsetX} ${offsetY} ${height} ${width}` :
+        `0 0 ${width} ${height}`;
+    
+    svg.setAttribute('viewBox', viewBox);
 }
 
 export function setOrientation(svg, isPortrait) {
@@ -93,18 +99,19 @@ export function setOrientation(svg, isPortrait) {
     const width = svg.getAttribute('width').replace('mm', '');
     const height = svg.getAttribute('height').replace('mm', '');
 
-    // Set dimensions and viewBox based on orientation
+    // Set dimensions based on orientation
     if (isPortrait) {
         svg.setAttribute('width', height + 'mm');
         svg.setAttribute('height', width + 'mm');
-        svg.setAttribute('viewBox', getViewBoxForOrientation(width, height, true));
         contentGroup.setAttribute('transform', `translate(${height} 0) rotate(90)`);
     } else {
         svg.setAttribute('width', width + 'mm');
         svg.setAttribute('height', height + 'mm');
-        svg.setAttribute('viewBox', getViewBoxForOrientation(width, height, false));
         contentGroup.removeAttribute('transform');
     }
+    
+    // Set viewBox after dimensions are updated
+    setViewBox(svg, width, height, isPortrait);
 
     return contentGroup;
 }
