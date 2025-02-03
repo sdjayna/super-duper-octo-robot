@@ -144,27 +144,89 @@ export const drawings = {
 
 ### Adding New Drawing Types
 
-1. Create a configuration class in `js/configs/`:
+1. Create a configuration class (e.g., `js/MyNewConfig.js`):
 ```javascript
 export class MyNewConfig {
     constructor(params) {
-        this.width = params.width;
-        this.height = params.height;
+        // Initialize with type-specific parameters
+        this.width = 420;
+        this.height = 297;
+    }
+
+    toArray() {
+        // Return array representation of config
+        return [/* config values */];
     }
 }
 ```
 
-2. Create drawing implementation in `js/drawings/`:
+2. Create drawing implementation (e.g., `js/drawings/mynewtype.js`):
 ```javascript
-export function drawMyNewType(config) {
-    const svg = createSVG(config);
-    const colorManager = new ColorManager(config.colorPalette);
-    // Implement drawing logic
+import { createSVG, createColorGroups, createPath } from '../svgUtils.js';
+import { ColorManager } from '../ColorManager.js';
+
+export function drawMyNewType(drawingConfig, isPortrait = false) {
+    const svg = createSVG(drawingConfig, drawingConfig.drawingData.width, drawingConfig.drawingData.height, isPortrait);
+    const colorGroups = createColorGroups(svg, drawingConfig.colorPalette);
+    const colorManager = new ColorManager(drawingConfig.colorPalette);
+    
+    // Implement drawing logic here
+    
     return svg;
 }
 ```
 
-3. Update `DrawingConfig.js` and `app.js` to support the new type
+3. Add type registration to `js/drawings/types.js`:
+```javascript
+import { drawMyNewType } from './mynewtype.js';
+import { MyNewConfig } from '../MyNewConfig.js';
+
+export const drawingTypes = {
+    // ... existing types ...
+    mynewtype: {
+        name: 'My New Drawing Type',
+        configClass: MyNewConfig,
+        drawFunction: drawMyNewType,
+        validator: (config) => {
+            // Optional: Add validation logic
+            return true;
+        }
+    }
+};
+```
+
+4. Add an example drawing to `js/drawings.js`:
+```javascript
+export const drawings = {
+    // ... existing drawings ...
+    myNewDrawing: new DrawingConfig(
+        'My New Drawing',
+        {
+            type: 'mynewtype',
+            // Add type-specific parameters here
+            paper: {
+                width: 420,
+                height: 297,
+                margin: 12.5
+            },
+            line: {
+                spacing: 1.5,
+                strokeWidth: 0.5,
+                vertexGap: 0
+            },
+            colorPalette
+        }
+    )
+};
+```
+
+The framework handles:
+- SVG generation and management
+- Color separation and management
+- Portrait/landscape orientation
+- Real-time preview updates
+- Debug logging
+- Layer visibility controls
 
 ### Code Style
 
