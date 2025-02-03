@@ -90,7 +90,9 @@ export function setOrientation(svg, isPortrait) {
         // Switch to portrait mode
         svg.setAttribute('width', height + 'mm');
         svg.setAttribute('height', width + 'mm');
-        svg.setAttribute('viewBox', `18.5 -21 ${height} ${width}`);
+        const offsetX = (parseFloat(height) - parseFloat(width)) / 2;
+        const offsetY = (parseFloat(width) - parseFloat(height)) / 2;
+        svg.setAttribute('viewBox', `${offsetX} ${offsetY} ${height} ${width}`);
         contentGroup.setAttribute('transform', 'rotate(90)');
     } else {
         // Switch to landscape mode
