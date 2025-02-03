@@ -80,19 +80,23 @@
             border: 1px solid #ccc;
             margin-right: 10px;
         }
-        #saveSvg, #toggleRefresh {
+        /* Common button styles */
+        .control-button {
             padding: 5px 10px;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
         }
+
+        /* Individual button colors */
         #saveSvg {
             background-color: #4CAF50;
         }
         #saveSvg:hover {
             background-color: #45a049;
         }
+        
         #toggleRefresh {
             background-color: #2196F3;
         }
@@ -105,51 +109,23 @@
         #toggleRefresh.paused:hover {
             background-color: #F57C00;
         }
-        #toggleDebug {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            padding: 5px 10px;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            background-color: #9E9E9E;
-            z-index: 1000;
-        }
-        #toggleDebug:hover {
-            background-color: #757575;
-        }
-        #saveSvg, #toggleRefresh, #toggleOrientation {
-            padding: 5px 10px;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        #saveSvg {
-            background-color: #4CAF50;
-        }
-        #saveSvg:hover {
-            background-color: #45a049;
-        }
-        #toggleRefresh {
-            background-color: #2196F3;
-        }
-        #toggleRefresh:hover {
-            background-color: #1976D2;
-        }
-        #toggleRefresh.paused {
-            background-color: #FF9800;
-        }
-        #toggleRefresh.paused:hover {
-            background-color: #F57C00;
-        }
+        
         #toggleOrientation {
             background-color: #673AB7;
         }
         #toggleOrientation:hover {
             background-color: #5E35B1;
+        }
+        
+        #toggleDebug {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background-color: #9E9E9E;
+            z-index: 1000;
+        }
+        #toggleDebug:hover {
+            background-color: #757575;
         }
         .debug-panel.hidden {
             display: none;
