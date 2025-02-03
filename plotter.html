@@ -130,7 +130,8 @@
                 <select id="layerSelect">
                     <option value="all">Show All Layers</option>
                 </select>
-                <button id="saveSvg">Save SVG</button>
+                <button id="updateSvg">Update SVG</button>
+                <button id="exportSvg">Export SVG</button>
                 <button id="toggleRefresh">Pause Refresh</button>
                 <button id="toggleOrientation">Portrait</button>
                 <span id="lastRefresh"></span>
@@ -160,9 +161,15 @@
         const select = document.getElementById('drawingSelect');
         const container = document.getElementById('svgContainer');
         const lastRefreshSpan = document.getElementById('lastRefresh');
-        const saveButton = document.getElementById('saveSvg');
+        const exportButton = document.getElementById('exportSvg');
 
-        async function saveSvg() {
+        async function updateSvg() {
+            stopRefresh();  // Stop auto-refresh
+            await draw();   // Do a single draw
+            logDebug('Manual SVG update triggered');
+        }
+
+        async function exportSvg() {
             const svg = container.querySelector('svg');
             if (!svg) {
                 return;
@@ -414,7 +421,8 @@
             updateLayerVisibility();
             e.target.blur();
         });
-        saveButton.addEventListener('click', saveSvg);
+        exportButton.addEventListener('click', exportSvg);
+        document.getElementById('updateSvg').addEventListener('click', updateSvg);
         document.getElementById('toggleRefresh').addEventListener('click', toggleRefresh);
         document.getElementById('toggleDebug').addEventListener('click', toggleDebugPanel);
         document.getElementById('toggleOrientation').addEventListener('click', toggleOrientation);
