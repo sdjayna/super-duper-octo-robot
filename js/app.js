@@ -1,7 +1,4 @@
-import { drawBouwkampCode } from './drawings/bouwkamp.js';
-import { drawDelaunayTriangulation } from './drawings/delaunay.js';
-import { drawHilbertCurve } from './drawings/hilbert.js';
-import { validateBouwkampCode } from './bouwkampUtils.js';
+import { drawingTypes } from './drawings/types.js';
 
 export function generateSVG(drawingConfig) {
     try {
@@ -10,22 +7,19 @@ export function generateSVG(drawingConfig) {
         }
 
         console.log(`Generating SVG for ${drawingConfig.name}`);
-        let svg;
-        switch (drawingConfig.type) {
-            case 'bouwkamp':
-                validateBouwkampCode(drawingConfig.drawingData.toArray());
-                svg = drawBouwkampCode(drawingConfig);
-                break;
-            case 'delaunay':
-                svg = drawDelaunayTriangulation(drawingConfig);
-                break;
-            case 'hilbert':
-                svg = drawHilbertCurve(drawingConfig);
-                break;
-            default:
-                throw new Error(`Unsupported drawing type: ${drawingConfig.type}`);
+        
+        const typeConfig = drawingTypes[drawingConfig.type];
+        if (!typeConfig) {
+            throw new Error(`Unsupported drawing type: ${drawingConfig.type}`);
         }
 
+        // Run type-specific validation if it exists
+        if (typeConfig.validator) {
+            typeConfig.validator(drawingConfig);
+        }
+
+        const svg = typeConfig.drawFunction(drawingConfig);
+        
         if (!svg) {
             throw new Error('Failed to generate SVG');
         }
