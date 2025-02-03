@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-02-03
+
+### Added
+- Portrait/Landscape orientation toggle
+- Debug panel with real-time logging
+- Content-aware SVG scaling
+- Dynamic viewBox calculation
+
+### Fixed
+- SVG dimension handling in portrait mode
+- Layer selection state preservation
+- Orientation state during refresh
+- Content centering in both orientations
+
+### Changed
+- Improved button styling and consistency
+- Enhanced debug logging clarity
+- Simplified SVG transformation logic
+- Centralized viewBox calculations
+
 ## [1.1.0] - 2025-02-02
 
 ### Added
