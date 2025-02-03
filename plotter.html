@@ -332,15 +332,15 @@
                     }
                     svg.appendChild(contentGroup);
                     
-                    // Get original dimensions
-                    const width = svg.getAttribute('width');
-                    const height = svg.getAttribute('height');
+                    // Get original dimensions (remove mm units)
+                    const width = svg.getAttribute('width').replace('mm', '');
+                    const height = svg.getAttribute('height').replace('mm', '');
                     const w = parseFloat(width);
                     const h = parseFloat(height);
                     
                     // Swap dimensions
-                    svg.setAttribute('width', height);
-                    svg.setAttribute('height', width);
+                    svg.setAttribute('width', height + 'mm');
+                    svg.setAttribute('height', width + 'mm');
                     svg.setAttribute('viewBox', `-${height} 0 ${height} ${width}`);
                     
                     // Calculate translation to maintain size and center
