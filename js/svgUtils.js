@@ -90,15 +90,13 @@ export function setOrientation(svg, isPortrait) {
         // Switch to portrait mode
         svg.setAttribute('width', height + 'mm');
         svg.setAttribute('height', width + 'mm');
-        const offsetX = (parseFloat(height) - parseFloat(width)) / 2;
-        const offsetY = (parseFloat(width) - parseFloat(height)) / 2;
-        svg.setAttribute('viewBox', `${offsetY} ${offsetY} ${height} ${width}`);
-        contentGroup.setAttribute('transform', 'rotate(90)');
+        svg.setAttribute('viewBox', `0 0 ${height} ${width}`);
+        contentGroup.setAttribute('transform', `translate(${height} 0) rotate(90)`);
     } else {
         // Switch to landscape mode
         svg.setAttribute('width', width + 'mm');
         svg.setAttribute('height', height + 'mm');
-        svg.setAttribute('viewBox', `${offsetX} ${offsetY} ${height} ${width}`);	
+        svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
         contentGroup.removeAttribute('transform');
     }
 
