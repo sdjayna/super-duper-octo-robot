@@ -406,10 +406,10 @@
             // Toggle between portrait and landscape
             const isRotated = contentGroup.getAttribute('transform')?.includes('rotate');
             
-            // Swap dimensions
+            // Swap dimensions and update viewBox
             svg.setAttribute('width', height);
-	    svg.setAttribute('height', width);
-	    svg.setAttribute('viewBox', `-322 0 322 455`);
+            svg.setAttribute('height', width);
+            svg.setAttribute('viewBox', isRotated ? `0 0 ${width} ${height}` : `-322 0 322 455`);
 
             // Toggle rotation
             if (isRotated) {
