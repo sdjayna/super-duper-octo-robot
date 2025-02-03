@@ -144,58 +144,76 @@ export const drawings = {
 
 ### Adding New Drawing Types
 
-1. Create a configuration class (e.g., `js/MyNewConfig.js`):
-```javascript
-export class MyNewConfig {
-    constructor(params) {
-        // Initialize with type-specific parameters
-        this.width = 420;
-        this.height = 297;
-    }
-
-    toArray() {
-        // Return array representation of config
-        return [/* config values */];
-    }
-}
-```
-
-2. Create drawing implementation (e.g., `js/drawings/mynewtype.js`):
+1. Create a new file in `js/drawings/mynewtype.js`:
 ```javascript
 import { createSVG, createColorGroups, createPath } from '../svgUtils.js';
 import { ColorManager } from '../ColorManager.js';
+import { BaseConfig } from '../configs/BaseConfig.js';
 
+// Configuration class for this drawing type
+export class MyNewConfig extends BaseConfig {
+    constructor(params) {
+        super(params);
+        // Add type-specific parameters
+        this.myParam = params.myParam || defaultValue;
+        // BaseConfig provides:
+        // this.width = params.paper?.width || 420;
+        // this.height = params.paper?.height || 297;
+    }
+
+    toArray() {
+        // Optional: Return array representation if needed
+        return [this.myParam];
+    }
+}
+
+// Drawing implementation
 export function drawMyNewType(drawingConfig, isPortrait = false) {
-    const svg = createSVG(drawingConfig, drawingConfig.drawingData.width, drawingConfig.drawingData.height, isPortrait);
+    const config = drawingConfig.drawingData;
+    
+    // Create SVG with proper dimensions and viewBox
+    const svg = createSVG(drawingConfig, config.width, config.height, isPortrait);
+    
+    // Set up color management
     const colorGroups = createColorGroups(svg, drawingConfig.colorPalette);
     const colorManager = new ColorManager(drawingConfig.colorPalette);
     
-    // Implement drawing logic here
+    // Your drawing logic here
+    // Example of creating a colored path:
+    const points = [/* your points */];
+    const path = createPath(points);
+    path.setAttribute('stroke-width', drawingConfig.line.strokeWidth);
+    
+    // Get a color that works well with adjacent shapes
+    const color = colorManager.getValidColor({ 
+        x: points[0].x, 
+        y: points[0].y,
+        width: 1,
+        height: 1
+    });
+    
+    // Add path to the appropriate color group
+    colorGroups[color].appendChild(path);
     
     return svg;
 }
 ```
 
-3. Add type registration to `js/drawings/types.js`:
+2. Register the type in `js/drawings/types.js`:
 ```javascript
-import { drawMyNewType } from './mynewtype.js';
-import { MyNewConfig } from '../MyNewConfig.js';
+import { drawMyNewType, MyNewConfig } from './mynewtype.js';
 
 export const drawingTypes = {
     // ... existing types ...
     mynewtype: {
         name: 'My New Drawing Type',
         configClass: MyNewConfig,
-        drawFunction: drawMyNewType,
-        validator: (config) => {
-            // Optional: Add validation logic
-            return true;
-        }
+        drawFunction: drawMyNewType
     }
 };
 ```
 
-4. Add an example drawing to `js/drawings.js`:
+3. Add an example drawing to `js/drawings.js`:
 ```javascript
 export const drawings = {
     // ... existing drawings ...
@@ -203,30 +221,33 @@ export const drawings = {
         'My New Drawing',
         {
             type: 'mynewtype',
-            // Add type-specific parameters here
+            myParam: 42,          // Type-specific parameters
             paper: {
-                width: 420,
-                height: 297,
-                margin: 12.5
+                width: 420,       // A3 width in mm
+                height: 297,      // A3 height in mm
+                margin: 12.5      // margin in mm
             },
             line: {
-                spacing: 1.5,
-                strokeWidth: 0.5,
-                vertexGap: 0
+                spacing: 1.5,     // space between lines
+                strokeWidth: 0.5, // SVG stroke width
+                vertexGap: 0      // gap at vertices
             },
-            colorPalette
+            colorPalette         // from colorPalette.js
         }
     )
 };
 ```
 
-The framework handles:
-- SVG generation and management
-- Color separation and management
-- Portrait/landscape orientation
+The framework provides:
+- Automatic SVG creation with proper dimensions and viewBox
+- Smart color management that:
+  - Avoids adjacent shapes having the same color
+  - Tracks color usage for balanced distribution
+  - Maintains recent color history
+- Layer organization with Inkscape compatibility
+- Portrait/landscape orientation support
 - Real-time preview updates
 - Debug logging
-- Layer visibility controls
 
 ### Code Style
 
