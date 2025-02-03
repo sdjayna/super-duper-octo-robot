@@ -92,13 +92,13 @@ export function setOrientation(svg, isPortrait) {
         svg.setAttribute('height', width + 'mm');
         const offsetX = (parseFloat(height) - parseFloat(width)) / 2;
         const offsetY = (parseFloat(width) - parseFloat(height)) / 2;
-        svg.setAttribute('viewBox', `${offsetX} ${offsetY} ${height} ${width}`);
+        svg.setAttribute('viewBox', `${offsetY} ${offsetY} ${height} ${width}`);
         contentGroup.setAttribute('transform', 'rotate(90)');
     } else {
         // Switch to landscape mode
         svg.setAttribute('width', width + 'mm');
         svg.setAttribute('height', height + 'mm');
-        svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+        svg.setAttribute('viewBox', `${offsetX} ${offsetY} ${height} ${width}`);	
         contentGroup.removeAttribute('transform');
     }
 
