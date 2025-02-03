@@ -66,59 +66,65 @@ export function createPath(points) {
     return pathElement;
 }
 
-export function setViewBox(svg, width, height, contentWidth, contentHeight, isPortrait = false) {
+export function setViewBox(svg, paperWidth, paperHeight, contentWidth, contentHeight, isPortrait = false) {
     // Parse all dimensions to ensure we're working with numbers
-    const w = parseFloat(width);
-    const h = parseFloat(height);
-    const cw = parseFloat(contentWidth);
-    const ch = parseFloat(contentHeight);
+    const totalWidth = parseFloat(paperWidth);
+    const totalHeight = parseFloat(paperHeight);
+    const drawingWidth = parseFloat(contentWidth);
+    const drawingHeight = parseFloat(contentHeight);
 
     // Calculate centering offsets
-    const offsetX = (w - cw) / 2;
-    const offsetY = (h - ch) / 2;
-
-    console.log('setting viewbox with',width,height,contentWidth,contentHeight,isPortrait);
+    const horizontalOffset = (totalWidth - drawingWidth) / 2;
+    const verticalOffset = (totalHeight - drawingHeight) / 2;
 
     if (isPortrait) {
-	console.log('portrait',offsetY,offsetX);
-        // In portrait mode, swap dimensions and adjust offsets for rotation
-        const viewBox = `${offsetY} ${-offsetX} ${h} ${w}`;
+        // In portrait mode:
+        // - Content is rotated 90 degrees clockwise
+        // - Paper dimensions are swapped
+        // - Horizontal offset becomes negative to account for rotation
+        const viewBox = `${verticalOffset} ${-horizontalOffset} ${totalHeight} ${totalWidth}`;
         svg.setAttribute('viewBox', viewBox);
     } else {
-	console.log('landscape',offsetY,offsetX);
-        // In landscape mode, use standard centering offsets
-        const viewBox = `${-offsetX} ${-offsetY} ${w} ${h}`;
+        // In landscape mode:
+        // - No rotation
+        // - Use negative offsets to move content into view from origin
+        const viewBox = `${-horizontalOffset} ${-verticalOffset} ${totalWidth} ${totalHeight}`;
         svg.setAttribute('viewBox', viewBox);
     }
 }
 
-export function setOrientation(svg, isPortrait, contentWidth, contentHeight) {
-    // Get or create content group
+export function setOrientation(svg, isPortrait, drawingWidth, drawingHeight) {
+    // Get or create the content group that will be rotated
     let contentGroup = svg.querySelector('g.content-group');
     if (!contentGroup) {
         contentGroup = document.createElementNS(svgNS, "g");
         contentGroup.setAttribute('class', 'content-group');
+        // Move all existing content into the group
         while (svg.firstChild) {
             contentGroup.appendChild(svg.firstChild);
         }
         svg.appendChild(contentGroup);
     }
 
-    // Get dimensions without units
-    const width = svg.getAttribute('width').replace('mm', '');
-    const height = svg.getAttribute('height').replace('mm', '');
+    // Get paper dimensions without units
+    const paperWidth = svg.getAttribute('width').replace('mm', '');
+    const paperHeight = svg.getAttribute('height').replace('mm', '');
 
-    // Set dimensions and viewBox based on orientation
     if (isPortrait) {
-        svg.setAttribute('width', height + 'mm');
-        svg.setAttribute('height', width + 'mm');
-	console.log('here',width,height,contentWidth,contentHeight,isPortrait);
-        setViewBox(svg, width, height, contentWidth, contentHeight, isPortrait);
-        contentGroup.setAttribute('transform', `translate(${height} 0) rotate(90)`);
+        // In portrait mode:
+        // - Swap paper dimensions
+        // - Translate content to new origin then rotate
+        svg.setAttribute('width', paperHeight + 'mm');
+        svg.setAttribute('height', paperWidth + 'mm');
+        setViewBox(svg, paperWidth, paperHeight, drawingWidth, drawingHeight, true);
+        contentGroup.setAttribute('transform', `translate(${paperHeight} 0) rotate(90)`);
     } else {
-        svg.setAttribute('width', width + 'mm');
-        svg.setAttribute('height', height + 'mm');
-        setViewBox(svg, width, height, contentWidth, contentHeight, false);
+        // In landscape mode:
+        // - Keep original dimensions
+        // - Remove any transformation
+        svg.setAttribute('width', paperWidth + 'mm');
+        svg.setAttribute('height', paperHeight + 'mm');
+        setViewBox(svg, paperWidth, paperHeight, drawingWidth, drawingHeight, false);
         contentGroup.removeAttribute('transform');
     }
 
