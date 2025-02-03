@@ -1,5 +1,6 @@
 import { drawBouwkampCode } from './drawings/bouwkamp.js';
 import { drawDelaunayTriangulation } from './drawings/delaunay.js';
+import { drawHilbertCurve } from './drawings/hilbert.js';
 import { validateBouwkampCode } from './bouwkampUtils.js';
 
 export function generateSVG(drawingConfig) {
@@ -17,6 +18,9 @@ export function generateSVG(drawingConfig) {
                 break;
             case 'delaunay':
                 svg = drawDelaunayTriangulation(drawingConfig);
+                break;
+            case 'hilbert':
+                svg = drawHilbertCurve(drawingConfig);
                 break;
             default:
                 throw new Error(`Unsupported drawing type: ${drawingConfig.type}`);

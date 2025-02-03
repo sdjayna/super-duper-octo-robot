@@ -1,5 +1,6 @@
 import { BouwkampConfig } from './BouwkampConfig.js';
 import { DelaunayConfig } from './DelaunayConfig.js';
+import { HilbertConfig } from './HilbertConfig.js';
 
 export class DrawingConfig {
     static defaultPaper = {
@@ -26,7 +27,8 @@ export class DrawingConfig {
     createDrawingData(params) {
         const configs = {
             bouwkamp: () => new BouwkampConfig(params.code),
-            delaunay: () => new DelaunayConfig(params.triangulation)
+            delaunay: () => new DelaunayConfig(params.triangulation),
+            hilbert: () => new HilbertConfig(params.level)
         };
         
         const creator = configs[params.type];

@@ -56,5 +56,24 @@ export const drawings = {
             },
             colorPalette
         }
+    ),
+    
+    hilbertCurve: new DrawingConfig(
+        'Hilbert Curve',
+        {
+            type: 'hilbert',
+            level: 8,
+            paper: {
+                width: 420,
+                height: 297,
+                margin: 12.5
+            },
+            line: {
+                spacing: 1.5,
+                strokeWidth: 0.5,
+                vertexGap: 0
+            },
+            colorPalette
+        }
     )
 };
