@@ -314,6 +314,7 @@
                 const isLandscape = orientationButton.textContent === 'Landscape';
                 container.innerHTML = '';
                 const svg = generateSVG(selectedDrawing);
+		svg.setAttribute('preserveAspectRatio', `none`);		
                 
                 // Restore orientation if needed
                 if (isLandscape) {
@@ -407,9 +408,9 @@
             
             // Swap dimensions
             svg.setAttribute('width', height);
-            svg.setAttribute('height', width);
-            svg.setAttribute('viewBox', `0 0 ${height} ${width}`);
-            
+	    svg.setAttribute('height', width);
+	    svg.setAttribute('viewBox', `-322 0 322 455`);
+
             // Toggle rotation
             if (isRotated) {
                 contentGroup.removeAttribute('transform');
