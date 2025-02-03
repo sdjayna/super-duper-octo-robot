@@ -25,8 +25,8 @@ export function validateBouwkampCode(code) {
  * @returns {Array<{x: number, y: number}>} Array of points defining the pattern
  */
 
-export function generateSingleSerpentineLine(rect, lineWidth) {
-    const spacing = rect.spacing || 2.5;
+export function generateSingleSerpentineLine(rect, lineSpacing, lineWidth) {
+    const spacing = lineSpacing || 2.5;
     const adjustedRect = adjustRectForLineWidth(rect, lineWidth);
     const points = generateSerpentinePoints(adjustedRect, spacing);
     return [...points, ...generateClosingPath(points[points.length - 1], adjustedRect)];

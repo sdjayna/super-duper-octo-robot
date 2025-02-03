@@ -28,7 +28,7 @@ export function drawBouwkampCode(drawingConfig, isPortrait = false) {
             width: size - (2 * vertexGap), 
             height: size - (2 * vertexGap)
         };
-        const points = generateSingleSerpentineLine(rectData, drawingConfig.line.width);
+        const points = generateSingleSerpentineLine(rectData, drawingConfig.line.spacing, drawingConfig.line.strokeWidth);
         
         const pathElement = createPath(points);
         pathElement.setAttribute('stroke-width', drawingConfig.line.strokeWidth.toString());

@@ -13,10 +13,9 @@ export const drawings = {
                 margin: 12.5
             },
             line: {
-                width: 0.3,
-                spacing: 2.5,
-                strokeWidth: 0.45,
-                vertexGap: 0.5
+                spacing: 2,
+                strokeWidth: 0.85,
+                vertexGap: 0.20
             },
             colorPalette
         }
@@ -51,7 +50,6 @@ export const drawings = {
                 margin: 20
             },
             line: {
-                width: 0.2,
                 spacing: 1.5,
                 strokeWidth: 0.3,
                 vertexGap: 0

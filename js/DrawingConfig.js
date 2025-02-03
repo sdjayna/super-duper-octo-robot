@@ -9,7 +9,6 @@ export class DrawingConfig {
     };
 
     static defaultLine = {
-        width: 0.3,
         spacing: 2.5,
         strokeWidth: 0.45,
         vertexGap: 0.5
