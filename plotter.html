@@ -388,6 +388,12 @@
             const button = document.getElementById('toggleOrientation');
             button.textContent = isRotated ? 'Portrait' : 'Landscape';
             logDebug(`Switched to ${button.textContent} orientation`);
+
+            // Force redraw if refresh is paused
+            if (!refreshInterval) {
+                container.innerHTML = '';
+                container.appendChild(svg);
+            }
         }
 
         // Toggle debug panel visibility
