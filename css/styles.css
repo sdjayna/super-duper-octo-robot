@@ -96,6 +96,16 @@ body, html {
     background: #ffebee;
 }
 
+.plotter-button.warning {
+    background: #fff8e1;
+    border-color: #ffca28;
+    color: #ff6f00;
+}
+
+.plotter-button.warning:not(:disabled):hover {
+    background: #fff3e0;
+}
+
 .plotter-status {
     margin-top: 10px;
     padding: 8px;
