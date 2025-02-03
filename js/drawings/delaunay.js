@@ -1,5 +1,24 @@
 import { createSVG, createColorGroups, createPath } from '../svgUtils.js';
 import { ColorManager } from '../ColorManager.js';
+import { BaseConfig } from '../configs/BaseConfig.js';
+
+export class DelaunayConfig extends BaseConfig {
+    constructor(params) {
+        super(params);
+        const triangulation = params.triangulation;
+        if (!triangulation) {
+            throw new Error('Triangulation data is required');
+        }
+        
+        this.points = triangulation.points;
+        this.width = triangulation.width;
+        this.height = triangulation.height;
+        
+        if (!Array.isArray(this.points)) {
+            throw new Error('Points must be an array');
+        }
+    }
+}
 
 export function drawDelaunayTriangulation(drawingConfig, isPortrait = false) {
     const delaunay = drawingConfig.drawingData;

@@ -1,5 +1,17 @@
 import { createSVG, createColorGroups, createPath } from '../svgUtils.js';
 import { ColorManager } from '../ColorManager.js';
+import { BaseConfig } from '../configs/BaseConfig.js';
+
+export class HilbertConfig extends BaseConfig {
+    constructor(params) {
+        super(params);
+        this.level = params.level || 7;
+    }
+
+    toArray() {
+        return [this.level];
+    }
+}
 
 function generateHilbertPoints(n, width, height) {
     const points = [];

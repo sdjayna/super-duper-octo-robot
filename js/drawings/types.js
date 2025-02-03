@@ -1,9 +1,6 @@
-import { drawBouwkampCode } from './bouwkamp.js';
-import { drawDelaunayTriangulation } from './delaunay.js';
-import { drawHilbertCurve } from './hilbert.js';
-import { BouwkampConfig } from '../BouwkampConfig.js';
-import { DelaunayConfig } from '../DelaunayConfig.js';
-import { HilbertConfig } from '../HilbertConfig.js';
+import { drawBouwkampCode, BouwkampConfig } from './bouwkamp.js';
+import { drawDelaunayTriangulation, DelaunayConfig } from './delaunay.js';
+import { drawHilbertCurve, HilbertConfig } from './hilbert.js';
 
 export const drawingTypes = {
     bouwkamp: {

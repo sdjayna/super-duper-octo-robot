@@ -1,6 +1,25 @@
 import { createSVG, createColorGroups, createPath } from '../svgUtils.js';
 import { validateBouwkampCode, generateSingleSerpentineLine } from '../bouwkampUtils.js';
 import { ColorManager } from '../ColorManager.js';
+import { BaseConfig } from '../configs/BaseConfig.js';
+
+export class BouwkampConfig extends BaseConfig {
+    constructor(params) {
+        super(params);
+        if (!Array.isArray(params.code)) {
+            throw new Error('Bouwkamp code must be an array');
+        }
+        
+        this.order = params.code[0];
+        this.width = params.code[1];
+        this.height = params.code[2];
+        this.squares = params.code.slice(3);
+    }
+
+    toArray() {
+        return [this.order, this.width, this.height, ...this.squares];
+    }
+}
 
 export function drawBouwkampCode(drawingConfig, isPortrait = false) {
     const bouwkamp = drawingConfig.drawingData;
