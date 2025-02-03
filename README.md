@@ -1,55 +1,56 @@
 # Plotter Art Generator
 
-A web-based tool for generating algorithmic art optimized for pen plotters. This project creates SVG files with separated layers for multi-pen plotting, featuring perfect square subdivisions (Bouwkamp codes) and Delaunay triangulations. It includes live preview, automatic file saving, and color separation for plotter-ready output.
+A web-based tool for generating algorithmic art optimized for pen plotters. This project creates SVG files with separated layers for multi-pen plotting, featuring perfect square subdivisions (Bouwkamp codes) and Delaunay triangulations.
 
 ![Plotter Art UI](ui-screenshot.png)
 
-## Contents
-
-- [Features](#features)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-- [Usage](#usage)
-  - [Basic Usage](#basic-usage)
-  - [File Output](#file-output)
-  - [Creating Custom Drawings](#creating-custom-drawings)
-- [Project Structure](#project-structure)
-- [Development](#development)
-  - [Code Style](#code-style)
-  - [Adding New Drawing Types](#adding-new-drawing-types)
-  - [Drawing Type Guidelines](#drawing-type-guidelines)
-  - [Example Drawing Types](#example-drawing-types)
-- [Color System](#color-system)
-- [Changelog](#changelog)
-- [Contributing](#contributing)
-  - [Development Guidelines](#development-guidelines)
-- [License](#license)
-- [Support](#support)
-- [Roadmap](#roadmap)
-- [Acknowledgments](#acknowledgments)
-- [Authors](#authors)
-
 ## Features
 
-- Multiple drawing algorithms:
+- **Multiple Drawing Algorithms**
   - Bouwkamp codes (perfect square subdivisions)
   - Delaunay triangulations
-- Real-time preview with automatic refresh
-- Automatic SVG file saving:
-  - Organized directory structure
-  - Timestamp-based filenames
+  - Portrait/Landscape orientation support
+  - Content-aware SVG scaling
+
+- **Real-time Development**
+  - Live preview with auto-refresh
+  - Debug panel with real-time logging
+  - Hot module reloading
+  - Layer visibility controls
+
+- **SVG Generation**
+  - Automatic file saving with timestamps
   - Pretty-printed SVG output
-  - Configuration preserved in file comments
-- Multi-pen plotting support:
-  - Automatic color separation into layers
-  - Smart color selection to avoid adjacent same-color shapes
+  - Configuration preserved in comments
+  - Dynamic viewBox calculation
+
+- **Multi-pen Support**
+  - Smart color separation into layers
+  - Intelligent color selection system
+  - Adjacent color avoidance
   - Inkscape-compatible layer naming
-- Configurable drawing parameters:
-  - Paper sizes and margins
-  - Line widths and spacing
-  - Vertex gaps for clean pen lifts
-- Live development environment with hot reload
+
+## Project Structure
+
+```
+├── js/
+│   ├── app.js              # Main application logic
+│   ├── DrawingConfig.js    # Base drawing configuration
+│   ├── BouwkampConfig.js   # Perfect square subdivision config
+│   ├── DelaunayConfig.js   # Triangulation configuration
+│   ├── ColorManager.js     # Smart color selection system
+│   ├── drawings/
+│   │   ├── bouwkamp.js    # Perfect square drawing implementation
+│   │   └── delaunay.js    # Triangulation drawing implementation
+│   ├── bouwkampUtils.js    # Square subdivision utilities
+│   ├── svgUtils.js        # SVG generation and manipulation
+│   └── colorPalette.js    # Color definitions and palettes
+├── server.py             # Python development server
+├── plotter.html         # Main application interface
+├── .eslintrc.json      # JavaScript linting rules
+├── CHANGELOG.md        # Version history
+└── README.md
+```
 
 ## Getting Started
 
@@ -72,278 +73,137 @@ cd plotter-art
 python3 server.py
 ```
 
-3. Open your browser and navigate to:
+3. Open in your browser:
 ```
 http://localhost:8000/plotter.html
 ```
 
 ## Usage
 
-### Basic Usage
+### Basic Operation
 
-1. Open `plotter.html` in your browser
-2. Select a drawing type from the dropdown menu
-3. The preview updates automatically
-4. Click "Save SVG" to save the current drawing
+1. Select a drawing type from the dropdown
+2. Use the controls to:
+   - Toggle orientation (Portrait/Landscape)
+   - Show/hide the debug panel
+   - Pause/resume auto-refresh
+   - Save the current SVG
+3. Use the layer selector to view specific pen colors
 
 ### File Output
 
-SVG files are automatically saved to an `output` directory, organized by drawing type:
+SVG files are saved to the `output` directory:
 ```
 output/
     simplePerfectRectangle/
-        20231124-153022.svg
+        20250203-153022.svg
     delaunayExample/
-        20231124-153024.svg
+        20250203-153024.svg
 ```
 
-Each SVG file includes:
-- Pretty-printed SVG code
+Each SVG includes:
 - Configuration details in comments
-- Inkscape-compatible layer names
+- Inkscape-compatible layers
 - Timestamp-based filename
+- Pretty-printed SVG code
 
 ### Creating Custom Drawings
 
 Add new drawings in `js/drawings.js`:
 
 ```javascript
-myNewDrawing: new DrawingConfig(
-    'My New Drawing',
-    {
-        type: 'bouwkamp',  // or 'delaunay'
-        code: [...],       // for bouwkamp
-        // or
-        triangulation: {   // for delaunay
-            points: [{x: 0, y: 0}, ...],
-            width: 100,
-            height: 100
-        },
-        paper: {
-            width: 420,    // A3 width in mm
-            height: 297,   // A3 height in mm
-            margin: 12.5   // margin in mm
-        },
-        line: {
-            width: 0.3,      // line width in mm
-            spacing: 2.5,    // space between lines
-            strokeWidth: 0.45,// SVG stroke width
-            vertexGap: 0.5   // gap at vertices
-        },
-        colorPalette      // imported from colorPalette.js
-    }
-)
-```
-
-## Project Structure
-
-```
-├── js/
-│   ├── app.js              # Main application logic
-│   ├── DrawingConfig.js    # Drawing configuration classes
-│   ├── BouwkampConfig.js   # Bouwkamp-specific configuration
-│   ├── DelaunayConfig.js   # Delaunay-specific configuration
-│   ├── drawings.js         # Drawing definitions
-│   ├── svgUtils.js         # SVG creation utilities
-│   ├── bouwkampUtils.js    # Bouwkamp-specific utilities
-│   └── colorPalette.js     # Color definitions
-├── plotter.html           # Main application page
-├── .eslintrc.json        # ESLint configuration
-└── README.md
+export const drawings = {
+    myNewDrawing: new DrawingConfig(
+        'My Drawing Name',
+        {
+            type: 'bouwkamp',  // or 'delaunay'
+            code: [...],       // for bouwkamp
+            // or
+            triangulation: {   // for delaunay
+                points: [{x: 0, y: 0}, ...],
+                width: 100,
+                height: 100
+            },
+            paper: {
+                width: 420,    // A3 width in mm
+                height: 297,   // A3 height in mm
+                margin: 12.5   // margin in mm
+            },
+            line: {
+                spacing: 2.5,    // space between lines
+                strokeWidth: 0.45,// SVG stroke width
+                vertexGap: 0.5   // gap at vertices
+            },
+            colorPalette
+        }
+    )
+};
 ```
 
 ## Development
 
-### Code Style
-
-The project uses ESLint with specific rules. See `.eslintrc.json` for the complete configuration.
-
 ### Adding New Drawing Types
 
-To add a new drawing type to the system, follow these steps:
-
-1. Create a new configuration class in `js/MyNewConfig.js`:
+1. Create a configuration class in `js/configs/`:
 ```javascript
 export class MyNewConfig {
     constructor(params) {
-        // Define the properties needed for your drawing
         this.width = params.width;
         this.height = params.height;
-        // Add any other required properties
     }
 }
 ```
 
-2. Create a new drawing module in `js/drawings/myNew.js`:
+2. Create drawing implementation in `js/drawings/`:
 ```javascript
-import { createSVG, createColorGroups, createPath } from '../svgUtils.js';
-import { ColorManager } from '../ColorManager.js';
-
-export function drawMyNewType(drawingConfig) {
-    const myDrawing = drawingConfig.drawingData;
-    const svg = createSVG(drawingConfig, myDrawing.width, myDrawing.height);
-    
-    const colorGroups = createColorGroups(svg, drawingConfig.colorPalette);
-    const colorManager = new ColorManager(drawingConfig.colorPalette);
-    
-    // Implement your drawing logic here
-    // Use colorGroups for different pen colors
-    // Use colorManager.getValidColor() for color selection
-    
+export function drawMyNewType(config) {
+    const svg = createSVG(config);
+    const colorManager = new ColorManager(config.colorPalette);
+    // Implement drawing logic
     return svg;
 }
 ```
 
-3. Update `DrawingConfig.js` to include your new type:
-```javascript
-import { MyNewConfig } from './MyNewConfig.js';
+3. Update `DrawingConfig.js` and `app.js` to support the new type
 
-export class DrawingConfig {
-    createDrawingData(params) {
-        const configs = {
-            bouwkamp: () => new BouwkampConfig(params.code),
-            delaunay: () => new DelaunayConfig(params.triangulation),
-            mynew: () => new MyNewConfig(params.myParams)  // Add your type
-        };
-        
-        const creator = configs[params.type];
-        if (!creator) {
-            throw new Error(`Unsupported drawing type: ${params.type}`);
-        }
-        return creator();
-    }
-}
-```
+### Code Style
 
-4. Update `app.js` to handle the new drawing type:
-```javascript
-import { drawMyNewType } from './drawings/myNew.js';
+The project uses ESLint with specific rules for:
+- Consistent indentation (4 spaces)
+- Single quotes for strings
+- Semicolon usage
+- JSDoc documentation
+- Max line length (100 chars)
 
-export function generateSVG(drawingConfig) {
-    try {
-        let svg;
-        switch (drawingConfig.type) {
-            case 'bouwkamp':
-                validateBouwkampCode(drawingConfig.drawingData.toArray());
-                svg = drawBouwkampCode(drawingConfig, false);
-                break;
-            case 'delaunay':
-                svg = drawDelaunayTriangulation(drawingConfig, false);
-                break;
-            case 'mynew':
-                svg = drawMyNewType(drawingConfig);  // Add your case
-                break;
-            default:
-                throw new Error(`Unsupported drawing type: ${drawingConfig.type}`);
-        }
-        return svg;
-    } catch (error) {
-        console.error('Error generating visualization:', error);
-        throw error;
-    }
-}
-```
-
-5. Add an example configuration in `drawings.js`:
-```javascript
-myNewExample: new DrawingConfig(
-    'My New Drawing Type',
-    {
-        type: 'mynew',
-        myParams: {
-            width: 200,
-            height: 200,
-            // Add any other parameters your drawing needs
-        },
-        paper: {
-            width: 420,
-            height: 297,
-            margin: 12.5
-        },
-        line: {
-            width: 0.3,
-            spacing: 2.5,
-            strokeWidth: 0.45,
-            vertexGap: 0.5
-        },
-        colorPalette
-    }
-)
-```
-
-### Drawing Type Guidelines
-
-When creating a new drawing type:
-
-1. **Configuration Class**
-   - Keep drawing-specific parameters separate from general configuration
-   - Use clear parameter names
-   - Document the expected parameter formats
-
-2. **Drawing Function**
-   - Use the provided SVG utilities (`createSVG`, `createPath`)
-   - Implement color separation using `colorGroups`
-   - Use `colorManager` for smart color selection
-   - Scale output to fit the paper size
-   - Center the drawing appropriately
-
-3. **Color Management**
-   - Use the `ColorManager` class for color selection
-   - Define shapes with proper bounds for adjacency checking
-   - Consider color distribution in your pattern
-
-4. **SVG Output**
-   - Ensure paths are properly closed
-   - Use appropriate stroke widths
-   - Consider pen movement optimization
-   - Add any necessary metadata to layers
-
-### Example Drawing Types
-
-The project includes two reference implementations:
-
-1. **Bouwkamp** (`js/drawings/bouwkamp.js`)
-   - Demonstrates perfect square subdivisions
-   - Shows how to handle complex geometry
-   - Includes utility functions for pattern generation
-
-2. **Delaunay** (`js/drawings/delaunay.js`)
-   - Shows point-based drawing
-   - Demonstrates scaling and centering
-   - Implements triangle-based patterns
-
-Use these as references when implementing your own drawing types.
+See `.eslintrc.json` for complete configuration.
 
 ## Color System
 
-The project includes a comprehensive color palette based on common plotter pen colors. See the [Color Documentation](docs/colors.md) for details about:
-- Available colors
-- Layer separation
-- Color selection algorithm
-- Adding new colors
+The project includes a comprehensive color palette based on common plotter pen colors:
 
-## Changelog
+- Smart color selection to avoid adjacent shapes having the same color
+- Automatic layer creation for each color
+- Support for metallic, fluorescent, and pastel colors
+- Easy addition of new colors to the palette
 
-See [CHANGELOG.md](CHANGELOG.md) for a list of changes and versions.
+See `colorPalette.js` for the complete list of available colors.
 
 ## Contributing
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
 
-### Development Guidelines
-
-- Follow the ESLint configuration
-- Maintain modular code structure
-- Add JSDoc comments for new functions
-- Update documentation for new features
+Please:
+- Follow the existing code style
+- Add JSDoc comments
+- Update documentation
+- Test thoroughly
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see [LICENSE](LICENSE) for details.
 
 ## Support
 
@@ -355,23 +215,12 @@ For support:
    - Steps to reproduce
    - Example configuration (if applicable)
 
-## Roadmap
+## Changelog
 
-- [ ] Add more drawing algorithms
-- [ ] Implement true Delaunay triangulation
-- [ ] Add export options for different plotter types
-- [ ] Create a configuration UI
-- [ ] Add SVG optimization options
-- [ ] Support for curved lines and bezier paths
+See [CHANGELOG.md](CHANGELOG.md) for version history and updates.
 
 ## Acknowledgments
 
-- Inspired by the work of C.J. Bouwkamp on perfect square subdivisions
-- Built for use with pen plotters
-- Color palette inspired by common plotter pen sets
-
-## Authors
-
-- **Your Name** - *Initial work* - [YourGithub](https://github.com/yourusername)
-
-See also the list of [contributors](https://github.com/yourusername/plotter-art/contributors) who participated in this project.
+- Inspired by C.J. Bouwkamp's work on perfect square subdivisions
+- Built for pen plotter art generation
+- Color palette based on common plotter pen sets
