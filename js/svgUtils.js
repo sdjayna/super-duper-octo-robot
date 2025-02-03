@@ -8,7 +8,7 @@ export const svgNS = "http://www.w3.org/2000/svg";
  * @param {number} contentHeight - Height of the content to be centered
  * @returns {SVGElement} The created SVG element
  */
-export function createSVG(drawingConfig, contentWidth, contentHeight) {
+export function createSVG(drawingConfig, contentWidth, contentHeight, isPortrait) {
     const svg = document.createElementNS(svgNS, "svg");
     const { width, height, margin } = drawingConfig.paper;
     
@@ -19,12 +19,8 @@ export function createSVG(drawingConfig, contentWidth, contentHeight) {
     svg.setAttribute("width", `${totalWidth}mm`);
     svg.setAttribute("height", `${totalHeight}mm`);
     
-    // Calculate centering offsets including margin
-    const offsetX = ((totalWidth - contentWidth) / 2);
-    const offsetY = ((totalHeight - contentHeight) / 2);
-    
     // Set initial viewBox
-    setViewBox(svg, totalWidth, totalHeight);
+    setViewBox(svg, totalWidth, totalHeight, contentWidth, contentHeight, isPortrait);
     svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
     svg.setAttribute("xmlns:svg", "http://www.w3.org/2000/svg");
     svg.setAttribute("xmlns:inkscape", "http://www.inkscape.org/namespaces/inkscape");
@@ -70,17 +66,24 @@ export function createPath(points) {
     return pathElement;
 }
 
-export function setViewBox(svg, width, height, isPortrait = false) {
+export function setViewBox(svg, width, height, contentWidth, contentHeight, isPortrait = false) {
     // Calculate offsets for centering - use smaller offset to prevent over-translation
-    const offsetX = (parseFloat(height) - parseFloat(width))/4;
-    const offsetY = (parseFloat(width) - parseFloat(height))/4;
+    const offsetX = ((width - contentWidth) / 2);
+    const offsetY = ((height - contentHeight) / 2);
+        
+    if (isPortrait){
+    	const viewBox = `${offsetY} ${offsetX} ${width} ${height}`;
+	svg.setAttribute('viewBox', viewBox);
+    }else{
+	// Set viewBox based on orientation
+	const offsetX = ((width - contentWidth) / 2);
+	const offsetY = ((height - contentHeight) / 2);
+	
+	const viewBox = `-${offsetX} -${offsetY} ${width} ${height}`;
     
-    // Set viewBox based on orientation
-    const viewBox = isPortrait ? 
-        `${offsetX} ${offsetY} ${height} ${width}` :
-        `0 0 ${width} ${height}`;
-    
-    svg.setAttribute('viewBox', viewBox);
+	svg.setAttribute('viewBox', viewBox);
+	
+    }
 }
 
 export function setOrientation(svg, isPortrait) {
@@ -109,9 +112,6 @@ export function setOrientation(svg, isPortrait) {
         svg.setAttribute('height', height + 'mm');
         contentGroup.removeAttribute('transform');
     }
-    
-    // Set viewBox after dimensions are updated
-    setViewBox(svg, width, height, isPortrait);
 
     return contentGroup;
 }
