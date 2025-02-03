@@ -1,5 +1,11 @@
 export class BouwkampConfig {
-    constructor(code) {
+    constructor(params) {
+        // Extract code array from params
+        const code = params.code;
+        if (!Array.isArray(code)) {
+            throw new Error('Bouwkamp code must be an array');
+        }
+        
         this.order = code[0];
         this.width = code[1];
         this.height = code[2];
