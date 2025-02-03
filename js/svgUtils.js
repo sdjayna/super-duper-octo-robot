@@ -72,7 +72,7 @@ export function createPath(points) {
 
 export function getViewBoxForOrientation(width, height, isPortrait, offsets = { x: 0, y: 0 }) {
     if (isPortrait) {
-        return `${offsets.x} ${offsets.y} ${height} ${width}`;
+        return `${offsets.x} -${offsets.y} ${height} ${width}`;
     }
     return `${offsets.x} ${offsets.y} ${width} ${height}`;
 }
