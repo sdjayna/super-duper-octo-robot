@@ -391,12 +391,21 @@
 
             // Force redraw if refresh is paused
             if (!refreshInterval) {
-                // Store current layer selection
+                // Store current layer selection and SVG attributes
                 const currentLayer = document.getElementById('layerSelect').value;
+                const { drawings } = await import('./js/drawings.js?v=' + Date.now());
+                const currentConfig = drawings[select.value];
                 
-                // Clear and re-append SVG
+                // Generate fresh SVG to ensure correct dimensions
+                const { generateSVG } = await import('./js/app.js?v=' + Date.now());
+                const newSvg = generateSVG(currentConfig);
+                
+                // Apply current orientation
+                setOrientation(newSvg, !isRotated, contentWidth, contentHeight);
+                
+                // Update container
                 container.innerHTML = '';
-                container.appendChild(svg);
+                container.appendChild(newSvg);
                 
                 // Restore layer visibility
                 populateLayerSelect();
