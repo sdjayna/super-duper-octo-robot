@@ -225,10 +225,10 @@ export function generateSVG(drawingConfig) {
         switch (drawingConfig.type) {
             case 'bouwkamp':
                 validateBouwkampCode(drawingConfig.drawingData.toArray());
-                svg = drawBouwkampCode(drawingConfig);
+                svg = drawBouwkampCode(drawingConfig, false);
                 break;
             case 'delaunay':
-                svg = drawDelaunayTriangulation(drawingConfig);
+                svg = drawDelaunayTriangulation(drawingConfig, false);
                 break;
             case 'mynew':
                 svg = drawMyNewType(drawingConfig);  // Add your case

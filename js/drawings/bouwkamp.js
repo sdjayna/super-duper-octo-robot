@@ -2,9 +2,9 @@ import { createSVG, createColorGroups, createPath } from '../svgUtils.js';
 import { validateBouwkampCode, generateSingleSerpentineLine } from '../bouwkampUtils.js';
 import { ColorManager } from '../ColorManager.js';
 
-export function drawBouwkampCode(drawingConfig) {
+export function drawBouwkampCode(drawingConfig, isPortrait = false) {
     const bouwkamp = drawingConfig.drawingData;
-    const svg = createSVG(drawingConfig, bouwkamp.width, bouwkamp.height);
+    const svg = createSVG(drawingConfig, bouwkamp.width, bouwkamp.height, isPortrait);
 
     const colorGroups = createColorGroups(svg, drawingConfig.colorPalette);
     const colorManager = new ColorManager(drawingConfig.colorPalette);

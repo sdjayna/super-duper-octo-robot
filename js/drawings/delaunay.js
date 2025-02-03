@@ -1,9 +1,9 @@
 import { createSVG, createColorGroups, createPath } from '../svgUtils.js';
 import { ColorManager } from '../ColorManager.js';
 
-export function drawDelaunayTriangulation(drawingConfig) {
+export function drawDelaunayTriangulation(drawingConfig, isPortrait = false) {
     const delaunay = drawingConfig.drawingData;
-    const svg = createSVG(drawingConfig, delaunay.width, delaunay.height);
+    const svg = createSVG(drawingConfig, delaunay.width, delaunay.height, isPortrait);
     
     const colorGroups = createColorGroups(svg, drawingConfig.colorPalette);
     const colorManager = new ColorManager(drawingConfig.colorPalette);
