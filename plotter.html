@@ -49,6 +49,68 @@
             overflow-y: auto;
             flex: 1;
         }
+        .debug-section, .plotter-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .debug-section {
+            border-bottom: 1px solid #ccc;
+        }
+        #debugLog {
+            flex: 1;
+            min-height: 0;
+        }
+        .plotter-controls {
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .plotter-button {
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .plotter-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .plotter-button:not(:disabled):hover {
+            background: #f0f0f0;
+        }
+        .plotter-button.danger {
+            background: #fff2f2;
+            border-color: #ffcdd2;
+            color: #c62828;
+        }
+        .plotter-button.danger:not(:disabled):hover {
+            background: #ffebee;
+        }
+        .plotter-status {
+            margin-top: 10px;
+            padding: 8px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        #plotterStatusText {
+            font-weight: bold;
+            color: #666;
+        }
+        #plotterStatusText.connected {
+            color: #2e7d32;
+        }
+        #plotterStatusText.busy {
+            color: #1565c0;
+        }
+        #plotterStatusText.error {
+            color: #c62828;
+        }
         .debug-entry {
             margin: 2px 0;
             padding: 2px 4px;
@@ -139,8 +201,23 @@
             <div id="svgContainer"></div>
         </div>
         <div class="debug-panel">
-            <h3>Debug Log</h3>
-            <div id="debugLog"></div>
+            <div class="debug-section">
+                <h3>Debug Log</h3>
+                <div id="debugLog"></div>
+            </div>
+            <div class="plotter-section">
+                <h3>Plotter Control</h3>
+                <div class="plotter-controls">
+                    <button id="plotterConnect" class="plotter-button">Connect</button>
+                    <button id="plotterHome" class="plotter-button" disabled>Home</button>
+                    <button id="plotterPlot" class="plotter-button" disabled>Plot Current</button>
+                    <button id="plotterStop" class="plotter-button danger" disabled>Stop</button>
+                    <div class="plotter-status">
+                        <span>Status: </span>
+                        <span id="plotterStatusText">Disconnected</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -427,6 +504,74 @@
         document.getElementById('toggleRefresh').addEventListener('click', toggleRefresh);
         document.getElementById('toggleDebug').addEventListener('click', toggleDebugPanel);
         document.getElementById('toggleOrientation').addEventListener('click', toggleOrientation);
+
+        // Plotter control functions
+        async function sendPlotterCommand(command, data = {}) {
+            try {
+                const response = await fetch('http://localhost:8000/plotter', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        command,
+                        ...data
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.status === 'success') {
+                    logDebug(`Plotter command ${command} successful`);
+                    return true;
+                } else {
+                    throw new Error(result.message || 'Unknown error');
+                }
+            } catch (error) {
+                logDebug(`Plotter command ${command} failed: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        function updatePlotterStatus(status, isConnected = false) {
+            const statusText = document.getElementById('plotterStatusText');
+            statusText.textContent = status;
+            statusText.className = isConnected ? 'connected' : '';
+            
+            // Update button states
+            document.getElementById('plotterConnect').disabled = isConnected;
+            document.getElementById('plotterHome').disabled = !isConnected;
+            document.getElementById('plotterPlot').disabled = !isConnected;
+            document.getElementById('plotterStop').disabled = !isConnected;
+        }
+
+        // Plotter control event listeners
+        document.getElementById('plotterConnect').addEventListener('click', async () => {
+            if (await sendPlotterCommand('connect')) {
+                updatePlotterStatus('Connected', true);
+            }
+        });
+
+        document.getElementById('plotterHome').addEventListener('click', async () => {
+            if (await sendPlotterCommand('home')) {
+                updatePlotterStatus('Ready', true);
+            }
+        });
+
+        document.getElementById('plotterPlot').addEventListener('click', async () => {
+            const svg = container.querySelector('svg');
+            if (!svg) return;
+            
+            const svgData = new XMLSerializer().serializeToString(svg);
+            if (await sendPlotterCommand('plot', { svg: svgData })) {
+                updatePlotterStatus('Plotting', true);
+            }
+        });
+
+        document.getElementById('plotterStop').addEventListener('click', async () => {
+            if (await sendPlotterCommand('stop')) {
+                updatePlotterStatus('Ready', true);
+            }
+        });
     </script>
 </body>
 </html>
