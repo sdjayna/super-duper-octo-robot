@@ -132,7 +132,7 @@
                 </select>
                 <button id="updateSvg">Update SVG</button>
                 <button id="exportSvg">Export SVG</button>
-                <button id="toggleRefresh">Pause Refresh</button>
+                <button id="toggleRefresh" class="paused">Resume Refresh</button>
                 <button id="toggleOrientation">Portrait</button>
                 <span id="lastRefresh"></span>
             </div>
@@ -394,8 +394,9 @@
             toggleButton.textContent = debugPanel.classList.contains('hidden') ? 'Show Debug' : 'Hide Debug';
         }
 
-        // Draw immediately and start refresh
-        startRefresh();
+        // Draw once but don't start refresh
+        draw();
+        logDebug('Initial draw complete. Auto-refresh is off.');
 
         // Handle drawing selection changes
         select.addEventListener('change', draw);
