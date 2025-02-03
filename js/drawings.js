@@ -62,7 +62,7 @@ export const drawings = {
         'Hilbert Curve',
         {
             type: 'hilbert',
-            level: 8,
+            level: 7,
             paper: {
                 width: 420,
                 height: 297,

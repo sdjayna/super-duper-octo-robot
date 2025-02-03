@@ -7,8 +7,8 @@ function generateHilbertPoints(n, width, height) {
 
     // Add safety check for n
     if (n < 0 || n > 10) { // 10 is a reasonable max level to prevent stack overflow
-        console.warn(`Invalid Hilbert level: ${n}. Using level 8.`);
-        n = 8;
+        console.warn(`Invalid Hilbert level: ${n}. Using level 3.`);
+        n = 3;
     }
 
     function hilbert(x0, y0, xi, xj, yi, yj, n) {
