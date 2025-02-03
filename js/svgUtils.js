@@ -69,3 +69,36 @@ export function createPath(points) {
     pathElement.setAttribute("fill", "none");
     return pathElement;
 }
+
+export function setOrientation(svg, isPortrait) {
+    // Get or create content group
+    let contentGroup = svg.querySelector('g.content-group');
+    if (!contentGroup) {
+        contentGroup = document.createElementNS(svgNS, "g");
+        contentGroup.setAttribute('class', 'content-group');
+        while (svg.firstChild) {
+            contentGroup.appendChild(svg.firstChild);
+        }
+        svg.appendChild(contentGroup);
+    }
+
+    // Get dimensions without units
+    const width = svg.getAttribute('width').replace('mm', '');
+    const height = svg.getAttribute('height').replace('mm', '');
+
+    if (isPortrait) {
+        // Switch to portrait mode
+        svg.setAttribute('width', height + 'mm');
+        svg.setAttribute('height', width + 'mm');
+        svg.setAttribute('viewBox', `18.5 -21 ${height} ${width}`);
+        contentGroup.setAttribute('transform', 'rotate(90)');
+    } else {
+        // Switch to landscape mode
+        svg.setAttribute('width', width + 'mm');
+        svg.setAttribute('height', height + 'mm');
+        svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+        contentGroup.removeAttribute('transform');
+    }
+
+    return contentGroup;
+}

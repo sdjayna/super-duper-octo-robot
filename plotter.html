@@ -325,31 +325,8 @@
                 
                 // Restore orientation if needed
                 if (isLandscape) {
-                    const contentGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
-                    contentGroup.setAttribute('class', 'content-group');
-                    while (svg.firstChild) {
-                        contentGroup.appendChild(svg.firstChild);
-                    }
-                    svg.appendChild(contentGroup);
-                    
-                    // Get original dimensions (remove mm units)
-                    const width = svg.getAttribute('width').replace('mm', '');
-                    const height = svg.getAttribute('height').replace('mm', '');
-                    const w = parseFloat(width);
-                    const h = parseFloat(height);
-                    
-                    // Swap dimensions
-                    svg.setAttribute('width', height + 'mm');
-                    svg.setAttribute('height', width + 'mm');
-                    svg.setAttribute('viewBox', `18.5 -21 ${height} ${width}`);		    
-                    
-                    // Calculate translation to maintain size and center
-                    const translateX = (h - w) / 2;
-                    const translateY = (w - h) / 2;
-                    
-                    // Rotate around origin and translate to center
-                    contentGroup.setAttribute('transform', 
-                        `translate(${h/2} ${w/2}) rotate(90) translate(${-w/2} ${-h/2})`);
+                    const { setOrientation } = await import('./js/svgUtils.js?v=' + Date.now());
+                    setOrientation(svg, true);
                 }
                 container.appendChild(svg);
                 populateLayerSelect();
@@ -392,40 +369,19 @@
             }
         }
 
-        // Handle orientation toggle
-        function toggleOrientation() {
+        async function toggleOrientation() {
             const svg = container.querySelector('svg');
             if (!svg) return;
             
-            const width = svg.getAttribute('width');
-            const height = svg.getAttribute('height');
-            
-            // Wrap all content in a group if needed
-            let contentGroup = svg.querySelector('g.content-group');
-            if (!contentGroup) {
-                contentGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
-                contentGroup.setAttribute('class', 'content-group');
-                while (svg.firstChild) {
-                    contentGroup.appendChild(svg.firstChild);
-                }
-                svg.appendChild(contentGroup);
-            }
+            const { setOrientation } = await import('./js/svgUtils.js?v=' + Date.now());
             
             // Toggle between portrait and landscape
-            const isRotated = contentGroup.getAttribute('transform')?.includes('rotate');
-            
-            // Toggle rotation
-            if (isRotated) {
-                contentGroup.removeAttribute('transform');
-            } else {
-                contentGroup.setAttribute('transform', 'rotate(90)');
-            }
+            const isRotated = svg.querySelector('g.content-group')?.getAttribute('transform')?.includes('rotate');
+            setOrientation(svg, !isRotated);
             
             // Update button text
             const button = document.getElementById('toggleOrientation');
             button.textContent = isRotated ? 'Portrait' : 'Landscape';
-            logDebug(`Set orientation to ${button.textContent}`);
-            
             logDebug(`Switched to ${button.textContent} orientation`);
         }
 
