@@ -312,6 +312,7 @@
                 const currentLayer = document.getElementById('layerSelect').value;
                 const orientationButton = document.getElementById('toggleOrientation');
                 const isLandscape = orientationButton.textContent === 'Landscape';
+                orientationButton.textContent = isLandscape ? 'Landscape' : 'Portrait';
                 container.innerHTML = '';
                 const svg = generateSVG(selectedDrawing);
                 svg.setAttribute('preserveAspectRatio', 'none');
