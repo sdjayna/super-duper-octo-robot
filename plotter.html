@@ -317,12 +317,14 @@
                 const svg = generateSVG(selectedDrawing);
                 svg.setAttribute('preserveAspectRatio', 'none');
                 
+                // Get the actual content dimensions from the drawing data
+                const contentWidth = selectedDrawing.drawingData.width;
+                const contentHeight = selectedDrawing.drawingData.height;
+                
                 // Restore orientation if needed
                 if (isLandscape) {
                     const { setOrientation } = await import('./js/svgUtils.js?v=' + Date.now());
-                    const width = svg.getAttribute('width').replace('mm', '');
-                    const height = svg.getAttribute('height').replace('mm', '');
-                    setOrientation(svg, true, parseFloat(width), parseFloat(height));
+                    setOrientation(svg, true, contentWidth, contentHeight);
                 }
                 container.appendChild(svg);
                 populateLayerSelect();
@@ -373,9 +375,14 @@
             
             // Toggle between portrait and landscape
             const isRotated = svg.querySelector('g.content-group')?.getAttribute('transform')?.includes('rotate');
-            const width = svg.getAttribute('width').replace('mm', '');
-            const height = svg.getAttribute('height').replace('mm', '');
-            setOrientation(svg, !isRotated, parseFloat(width), parseFloat(height));
+            
+            // Get the current drawing configuration
+            const { drawings } = await import('./js/drawings.js?v=' + Date.now());
+            const currentConfig = drawings[select.value];
+            const contentWidth = currentConfig.drawingData.width;
+            const contentHeight = currentConfig.drawingData.height;
+            
+            setOrientation(svg, !isRotated, contentWidth, contentHeight);
             
             // Update button text
             const button = document.getElementById('toggleOrientation');
