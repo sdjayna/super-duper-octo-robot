@@ -72,7 +72,7 @@ export function setViewBox(svg, width, height, contentWidth, contentHeight, isPo
     const offsetY = ((height - contentHeight) / 2);
         
     if (isPortrait){
-    	const viewBox = `${offsetY} ${offsetX} ${width} ${height}`;
+    	const viewBox = `${offsetY} ${offsetX} ${height} ${width}`;
 	svg.setAttribute('viewBox', viewBox);
     }else{
 	// Set viewBox based on orientation
@@ -106,7 +106,7 @@ export function setOrientation(svg, isPortrait, contentWidth, contentHeight) {
     if (isPortrait) {
         svg.setAttribute('width', height + 'mm');
         svg.setAttribute('height', width + 'mm');
-        setViewBox(svg, width, height, contentWidth, contentHeight, true);
+        setViewBox(svg, width, height, contentWidth, contentHeight, isPortrait);
         contentGroup.setAttribute('transform', `translate(${height} 0) rotate(90)`);
     } else {
         svg.setAttribute('width', width + 'mm');
