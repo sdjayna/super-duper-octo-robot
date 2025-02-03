@@ -404,9 +404,23 @@
         // Handle drawing selection changes
         select.addEventListener('change', draw);
         
-        // Pause refresh when layer select is open
-        document.getElementById('layerSelect').addEventListener('focus', stopRefresh);
-        document.getElementById('layerSelect').addEventListener('blur', startRefresh);
+        // Handle layer select interactions
+        document.getElementById('layerSelect').addEventListener('focus', () => {
+            // Store current refresh state
+            const wasRefreshing = !!refreshInterval;
+            stopRefresh();
+            // Store state on the element
+            document.getElementById('layerSelect').dataset.wasRefreshing = wasRefreshing;
+        });
+        
+        document.getElementById('layerSelect').addEventListener('blur', () => {
+            // Restore previous refresh state
+            const wasRefreshing = document.getElementById('layerSelect').dataset.wasRefreshing === 'true';
+            if (wasRefreshing) {
+                startRefresh();
+            }
+        });
+        
         document.getElementById('layerSelect').addEventListener('change', (e) => {
             updateLayerVisibility();
             e.target.blur();
