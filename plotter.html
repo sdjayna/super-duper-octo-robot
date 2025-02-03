@@ -317,13 +317,6 @@
                 const svg = generateSVG(selectedDrawing);
                 svg.setAttribute('preserveAspectRatio', 'none');
                 
-                // Set initial viewBox if not already set
-                if (!svg.getAttribute('viewBox')) {
-                    const width = svg.getAttribute('width');
-                    const height = svg.getAttribute('height');
-                    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
-                }
-                
                 // Restore orientation if needed
                 if (isLandscape) {
                     const { setOrientation } = await import('./js/svgUtils.js?v=' + Date.now());
