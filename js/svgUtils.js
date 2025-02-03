@@ -71,14 +71,14 @@ export function createPath(points) {
 }
 
 export function setViewBox(svg, width, height, isPortrait = false) {
-    // Calculate offsets for centering
-    const offsetX = (parseFloat(height) - parseFloat(width))/2;
-    const offsetY = (parseFloat(width) - parseFloat(height))/2;
+    // Calculate offsets for centering - use smaller offset to prevent over-translation
+    const offsetX = (parseFloat(height) - parseFloat(width))/4;
+    const offsetY = (parseFloat(width) - parseFloat(height))/4;
     
     // Set viewBox based on orientation
     const viewBox = isPortrait ? 
         `${offsetX} ${offsetY} ${height} ${width}` :
-        `${offsetX} ${offsetY} ${width} ${height}`;
+        `0 0 ${width} ${height}`;
     
     svg.setAttribute('viewBox', viewBox);
 }
