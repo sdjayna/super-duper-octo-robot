@@ -341,7 +341,7 @@
                     // Swap dimensions
                     svg.setAttribute('width', height + 'mm');
                     svg.setAttribute('height', width + 'mm');
-                    svg.setAttribute('viewBox', `-${height} 0 ${height} ${width}`);
+                    svg.setAttribute('viewBox', `18.5 -21 ${height} ${width}`);		    
                     
                     // Calculate translation to maintain size and center
                     const translateX = (h - w) / 2;
@@ -414,11 +414,6 @@
             // Toggle between portrait and landscape
             const isRotated = contentGroup.getAttribute('transform')?.includes('rotate');
             
-            // Swap dimensions and update viewBox
-//            svg.setAttribute('width', height);
-//            svg.setAttribute('height', width);
-
-
             // Toggle rotation
             if (isRotated) {
                 contentGroup.removeAttribute('transform');
