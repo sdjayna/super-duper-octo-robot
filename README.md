@@ -60,6 +60,36 @@ A web-based tool for generating algorithmic art optimized for pen plotters. This
 - Modern web browser (Chrome, Firefox, Safari)
 - Git
 
+### Python Environment Setup
+
+1. Create a virtual environment:
+```bash
+# On Windows
+python -m venv venv
+
+# On macOS/Linux
+python3 -m venv venv
+```
+
+2. Activate the virtual environment:
+```bash
+# On Windows
+venv\Scripts\activate
+
+# On macOS/Linux
+source venv/bin/activate
+```
+
+3. Install required packages:
+```bash
+pip install watchdog
+```
+
+4. When you're done, you can deactivate the virtual environment:
+```bash
+deactivate
+```
+
 ### Installation
 
 1. Clone the repository:
@@ -68,12 +98,16 @@ git clone https://github.com/yourusername/plotter-art.git
 cd plotter-art
 ```
 
-2. Start the Python server:
+2. Set up Python environment:
+   - Follow the Python Environment Setup steps above
+   - Ensure your virtual environment is activated
+
+3. Start the development server:
 ```bash
-python3 server.py
+python server_runner.py
 ```
 
-3. Open in your browser:
+4. Open in your browser:
 ```
 http://localhost:8000/plotter.html
 ```
