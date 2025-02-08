@@ -97,8 +97,22 @@ Configuration:
         self.send_header('Access-Control-Allow-Origin', '*')
         SimpleHTTPRequestHandler.end_headers(self)
 
+def create_server():
+    try:
+        server_address = ('', 8000)
+        httpd = HTTPServer(server_address, PlotterHandler)
+        print('🚀 Server running on http://localhost:8000')
+        return httpd
+    except Exception as e:
+        print(f"❌ Error creating server: {e}")
+        raise
+
 if __name__ == '__main__':
-    server_address = ('', 8000)
-    httpd = HTTPServer(server_address, PlotterHandler)
-    print('Server running on port 8000...')
-    httpd.serve_forever()
+    try:
+        httpd = create_server()
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        print('\n👋 Server shutting down...')
+        httpd.server_close()
+    except Exception as e:
+        print(f"❌ Server error: {e}")
