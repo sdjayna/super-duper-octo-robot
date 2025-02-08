@@ -13,7 +13,8 @@ class PlotterHandler(SimpleHTTPRequestHandler):
         
         # Dictionary of supported commands and their responses
         commands = {
-            'status': lambda: {'status': 'ready', 'battery': '100%'},
+            'status': lambda: {'status': 'success', 'battery': '100%'},
+            'connect': lambda: {'status': 'success', 'battery': '100%'},
             'home': lambda: {'status': 'success', 'message': 'Plotter homed successfully'},
             'calibrate': lambda: {'status': 'success', 'message': 'Calibration complete'},
             'test': lambda: {'status': 'success', 'message': 'Test pattern completed'}
@@ -73,7 +74,7 @@ Configuration:
                     'status': 'success',
                     'filename': filename
                 }).encode())
-            elif self.path == '/command':
+            elif self.path == '/plotter':
                 # Handle plotter commands
                 response = self.handle_command(data)
                 
