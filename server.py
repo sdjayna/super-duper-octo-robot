@@ -6,6 +6,23 @@ import xml.dom.minidom
 import pprint
 
 class PlotterHandler(SimpleHTTPRequestHandler):
+    def handle_command(self, command_data):
+        """Handle plotter commands and return appropriate responses"""
+        command = command_data.get('command')
+        params = command_data.get('params', {})
+        
+        # Dictionary of supported commands and their responses
+        commands = {
+            'status': lambda: {'status': 'ready', 'battery': '100%'},
+            'home': lambda: {'status': 'success', 'message': 'Plotter homed successfully'},
+            'calibrate': lambda: {'status': 'success', 'message': 'Calibration complete'},
+            'test': lambda: {'status': 'success', 'message': 'Test pattern completed'}
+        }
+        
+        if command in commands:
+            return commands[command]()
+        else:
+            return {'status': 'error', 'message': f'Unknown command: {command}'}
     def do_OPTIONS(self):
         self.send_response(200)
         self.send_header('Access-Control-Allow-Origin', '*')
@@ -15,11 +32,11 @@ class PlotterHandler(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         try:
+            content_length = int(self.headers['Content-Length'])
+            post_data = self.rfile.read(content_length)
+            data = json.loads(post_data.decode('utf-8'))
+
             if self.path == '/save-svg':
-                # Read the POST data
-                content_length = int(self.headers['Content-Length'])
-                post_data = self.rfile.read(content_length)
-                data = json.loads(post_data.decode('utf-8'))
                 
                 # Create output directory and drawing-specific subdirectory
                 output_dir = os.path.join('output', data['name'])
@@ -61,6 +78,14 @@ Configuration:
                 self.send_response(404)
                 self.end_headers()
                 self.wfile.write(b'Not Found')
+            elif self.path == '/command':
+                # Handle plotter commands
+                response = self.handle_command(data)
+                
+                self.send_response(200)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps(response).encode())
         except Exception as e:
             print(f"Error handling POST: {e}")
             self.send_response(500)
