@@ -73,11 +73,6 @@ Configuration:
                     'status': 'success',
                     'filename': filename
                 }).encode())
-            else:
-                # Handle non-matching paths with 404
-                self.send_response(404)
-                self.end_headers()
-                self.wfile.write(b'Not Found')
             elif self.path == '/command':
                 # Handle plotter commands
                 response = self.handle_command(data)
@@ -86,6 +81,11 @@ Configuration:
                 self.send_header('Content-type', 'application/json')
                 self.end_headers()
                 self.wfile.write(json.dumps(response).encode())
+            else:
+                # Handle non-matching paths with 404
+                self.send_response(404)
+                self.end_headers()
+                self.wfile.write(b'Not Found')
         except Exception as e:
             print(f"Error handling POST: {e}")
             self.send_response(500)
