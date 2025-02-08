@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2025-02-04
+
+### Added
+- Hot-reloading development server with watchdog
+- Python virtual environment setup
+- Improved server startup and shutdown handling
+- Server auto-restart on file changes
+- Second plotter control panel (Plotter B)
+
+### Changed
+- Updated development server to use hot-reloading
+- Improved server process management
+- Enhanced documentation for Python environment setup
+- Server startup now shows emoji status indicators
+
+### Fixed
+- Server shutdown handling
+- Process cleanup on restart
+- Documentation clarity for first-time setup
+
 ## [1.2.0] - 2025-02-03
 
 ### Added
@@ -71,6 +91,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Simple color separation
 - Development server with hot reload
 
+[1.3.0]: https://github.com/yourusername/plotter-art/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/yourusername/plotter-art/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/yourusername/plotter-art/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/yourusername/plotter-art/releases/tag/v1.0.0
