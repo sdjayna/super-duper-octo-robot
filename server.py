@@ -21,11 +21,44 @@ class PlotterHandler(SimpleHTTPRequestHandler):
             if 'layer' not in params:
                 print("Error: No layer specified in plot command")
                 raise ValueError("No layer specified in plot command")
-            return [
-                self.AXIDRAW_PATH,
-                '--mode', 'layers',
-                '--layer', str(params['layer'])
-            ]
+            
+            # Create temp file for SVG if present
+            temp_svg_path = None
+            if 'svg' in params:
+                temp_svg_path = f'temp_{datetime.now().strftime("%Y%m%d_%H%M%S")}.svg'
+                with open(temp_svg_path, 'w') as f:
+                    f.write(params['svg'])
+            
+            try:
+                # Build command array with filename as first parameter after axicli
+                cmd = [self.AXIDRAW_PATH]
+                if temp_svg_path:
+                    cmd.append(temp_svg_path)
+                cmd.extend([
+                    '--mode', 'layers',
+                    '--layer', str(params['layer'])
+                ])
+                
+                print(f"Executing command for layer number: {params.get('layer', '1')}")
+                print(f"Executing command for layer label: {params.get('layerLabel', 'unknown')}")
+                print(f"Executing: {' '.join(cmd)}")
+                
+                result = subprocess.run(
+                    cmd,
+                    capture_output=True,
+                    text=True,
+                    check=True
+                )
+                
+                return {
+                    'status': 'success',
+                    'message': result.stdout.strip() or 'Command executed successfully'
+                }
+                
+            finally:
+                # Clean up temp file if it was created
+                if temp_svg_path and os.path.exists(temp_svg_path):
+                    os.remove(temp_svg_path)
 
         commands = {
             'plot': plot_command,
@@ -47,45 +80,22 @@ class PlotterHandler(SimpleHTTPRequestHandler):
             return {'status': 'error', 'message': f'Unknown command: {command}'}
             
         try:
-            # Get the command array for this command
-            cmd_array = commands[command](params)
-            
-            # If this is a plot command and we have SVG data, save it to a temp file
-            if command == 'plot' and 'svg' in params:
-                temp_svg_path = f'temp_{datetime.now().strftime("%Y%m%d_%H%M%S")}.svg'
-                with open(temp_svg_path, 'w') as f:
-                    f.write(params['svg'])
-                cmd_array.extend(['--file', temp_svg_path])
-            
-            # Execute the command
-            print(f"Executing command for layer number: {params.get('layer', '1')}")
-            print(f"Executing command for layer label: {params.get('layerLabel', 'unknown')}")
-            print(f"Executing: {' '.join(cmd_array)}")  # Debug log
-            result = subprocess.run(
-                cmd_array,
-                capture_output=True,
-                text=True,
-                check=True
-            )
-            
-            # Clean up temp file if it was created
-            if command == 'plot' and 'svg' in params:
-                os.remove(temp_svg_path)
-            
-            # Check if the command was successful
-            if result.returncode == 0:
+            if command == 'plot':
+                return commands[command](params)
+            else:
+                # Handle non-plot commands
+                cmd_array = commands[command](params)
+                result = subprocess.run(
+                    cmd_array,
+                    capture_output=True,
+                    text=True,
+                    check=True
+                )
                 return {
                     'status': 'success',
                     'message': result.stdout.strip() or 'Command executed successfully'
                 }
-            else:
-                raise subprocess.CalledProcessError(
-                    result.returncode,
-                    cmd_array,
-                    result.stdout,
-                    result.stderr
-                )
-                
+                    
         except subprocess.CalledProcessError as e:
             error_msg = e.stderr.strip() if e.stderr else str(e)
             return {
