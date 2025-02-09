@@ -11,6 +11,23 @@ from plotter_config import PLOTTER_CONFIGS, CURRENT_PLOTTER
 class PlotterHandler(SimpleHTTPRequestHandler):
     AXIDRAW_PATH = "./bin/axicli"  # Path to the AxiDraw executable
 
+    def do_GET(self):
+        # Handle favicon.ico requests
+        if self.path == '/favicon.ico':
+            self.send_response(200)
+            self.send_header('Content-Type', 'image/x-icon')
+            self.end_headers()
+            try:
+                with open('favicon.ico', 'rb') as f:
+                    self.wfile.write(f.read())
+            except FileNotFoundError:
+                # If favicon.ico doesn't exist, return empty response
+                self.wfile.write(b'')
+            return
+        
+        # Handle all other GET requests as normal
+        return SimpleHTTPRequestHandler.do_GET(self)
+
     def handle_command(self, command_data):
         """Handle plotter commands by executing AxiDraw CLI commands"""
         command = command_data.get('command')
