@@ -362,6 +362,17 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for deta
 
 Before contributing, please review our contribution guidelines to ensure a smooth collaboration process.
 
+## AI Development Assistance
+
+This project has been developed with the assistance of several AI tools:
+
+- [aider.chat](https://aider.chat) - AI coding assistant for pair programming and iterative development
+  - Using the top-performing combination from the [aider leaderboards](https://aider.chat/docs/leaderboards/): DeepSeek R1 + Claude-3-Sonnet (64.0% success rate on polyglot benchmark)
+- [DeepSeek R1](https://www.deepseek.com/) - Large language model optimized for reasoning and code generation
+- [Claude-3-Sonnet](https://www.anthropic.com/claude) - AI assistant from Anthropic, used for code review and documentation
+
+These AI tools helped streamline development while maintaining code quality and consistency. The project serves as an example of how AI assistance can enhance the software development process while keeping human creativity and oversight at the forefront.
+
 ## License
 
 This project is licensed under the MIT License:
