@@ -9,7 +9,7 @@
 </head>
 <body>
     <div class="layout">
-        <button id="toggleDebug">Hide Panel</button>
+        <button id="toggleDebug">Hide</button>
         <div class="canvas-area">
             <div id="svgContainer"></div>
         </div>
@@ -323,7 +323,7 @@
             const debugPanel = document.querySelector('.debug-panel');
             const toggleButton = document.getElementById('toggleDebug');
             debugPanel.classList.toggle('hidden');
-            toggleButton.textContent = debugPanel.classList.contains('hidden') ? 'Show Panel' : 'Hide Panel';
+            toggleButton.textContent = debugPanel.classList.contains('hidden') ? 'Show' : 'Hide';
         }
 
         // Draw once but don't start refresh
