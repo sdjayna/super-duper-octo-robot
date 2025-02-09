@@ -11,6 +11,7 @@ from plotter_config import PLOTTER_CONFIGS, CURRENT_PLOTTER
 
 class PlotterHandler(SimpleHTTPRequestHandler):
     AXIDRAW_PATH = "./bin/axicli"  # Path to the AxiDraw executable
+    current_plot_process = None  # Track the current plotting process
 
     def do_GET(self):
         if self.path == '/plot-progress':
@@ -92,6 +93,9 @@ class PlotterHandler(SimpleHTTPRequestHandler):
                     universal_newlines=True
                 )
 
+                # Store the process
+                PlotterHandler.current_plot_process = process
+
                 # Stream output in real-time
                 while True:
                     output = process.stdout.readline()
@@ -107,6 +111,9 @@ class PlotterHandler(SimpleHTTPRequestHandler):
                 # Get final return code
                 if process.returncode != 0:
                     raise subprocess.CalledProcessError(process.returncode, cmd)
+                
+                # Clear the process reference
+                PlotterHandler.current_plot_process = None
         
                 return {
                     'status': 'success',
@@ -114,6 +121,8 @@ class PlotterHandler(SimpleHTTPRequestHandler):
                 }
                 
             finally:
+                # Clear the process reference in case of error
+                PlotterHandler.current_plot_process = None
                 # Clean up temp file if it was created
                 if temp_svg_path:
                     try:
@@ -150,13 +159,30 @@ class PlotterHandler(SimpleHTTPRequestHandler):
             
         try:
             if command == 'stop_plot':
-                # Find and terminate the running axicli process
-                for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
-                    if 'axicli' in str(proc.info.get('name', '')) or \
-                       (proc.info.get('cmdline') and any('axicli' in str(cmd) for cmd in proc.info['cmdline'])):
-                        proc.terminate()
-                        proc.wait(timeout=5)  # Wait up to 5 seconds for the process to terminate
-                return {'status': 'success', 'message': 'Plot stopped'}
+                if PlotterHandler.current_plot_process:
+                    # Terminate the current process
+                    PlotterHandler.current_plot_process.terminate()
+                    try:
+                        PlotterHandler.current_plot_process.wait(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        PlotterHandler.current_plot_process.kill()
+                    PlotterHandler.current_plot_process = None
+                    return {'status': 'success', 'message': 'Plot stopped'}
+                else:
+                    # Also check for any stray axicli processes
+                    found_stray = False
+                    for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+                        if 'axicli' in str(proc.info.get('name', '')) or \
+                           (proc.info.get('cmdline') and any('axicli' in str(cmd) for cmd in proc.info['cmdline'])):
+                            proc.terminate()
+                            try:
+                                proc.wait(timeout=5)
+                            except psutil.TimeoutExpired:
+                                proc.kill()
+                            found_stray = True
+                    if found_stray:
+                        return {'status': 'success', 'message': 'Stray plot process stopped'}
+                    return {'status': 'success', 'message': 'No active plot to stop'}
             elif command == 'plot':
                 return commands[command](params)
             else:
