@@ -54,6 +54,7 @@
                                 <option value="all">Show All Layers</option>
                             </select>
                             <button id="plotterPlotLayer" class="plotter-button" disabled>Plot Current Layer</button>
+                            <button id="plotterStopPlot" class="plotter-button danger">Stop Plot</button>
                         </div>
                     </div>
                     <div class="control-section">
@@ -444,6 +445,14 @@
             logDebug('Sending align command...');
             if (await sendPlotterCommand('align')) {
                 logDebug('Align command completed');
+                updatePlotterStatus('Ready', true);
+            }
+        });
+
+        document.getElementById('plotterStopPlot').addEventListener('click', async () => {
+            logDebug('Sending stop plot command...');
+            if (await sendPlotterCommand('stop_plot')) {
+                logDebug('Stop plot command sent successfully');
                 updatePlotterStatus('Ready', true);
             }
         });
