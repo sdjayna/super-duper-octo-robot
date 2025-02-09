@@ -10,7 +10,7 @@ import subprocess
 import shlex
 import threading
 import time
-from plotter_config import PLOTTER_CONFIGS, CURRENT_PLOTTER
+from .plotter_config import PLOTTER_CONFIGS, CURRENT_PLOTTER
 
 class PlotterHandler(SimpleHTTPRequestHandler):
     AXIDRAW_PATH = "./bin/axicli"  # Path to the AxiDraw executable
