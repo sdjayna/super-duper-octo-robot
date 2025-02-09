@@ -62,7 +62,9 @@ class PlotterHandler(SimpleHTTPRequestHandler):
         
         # Handle JS file requests
         if self.path.startswith('/js/'):
-            js_path = os.path.join('client/', self.path.lstrip('/'))
+            # Strip off any URL parameters
+            js_path = self.path.split('?')[0]
+            js_path = os.path.join('client/', js_path.lstrip('/'))
             if os.path.exists(js_path):
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/javascript')
