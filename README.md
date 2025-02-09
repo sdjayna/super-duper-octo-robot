@@ -1,4 +1,4 @@
-# Plotter Art Generator
+# Jupiter Jayna's Plotter Art Control Centre
 
 A web-based tool for generating algorithmic art optimized for AxiDraw pen plotters. This project creates SVG files with separated layers for multi-pen plotting, featuring perfect square subdivisions (Bouwkamp codes) and Delaunay triangulations.
 
