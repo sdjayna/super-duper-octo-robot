@@ -60,36 +60,6 @@ A web-based tool for generating algorithmic art optimized for pen plotters. This
 - Modern web browser (Chrome, Firefox, Safari)
 - Git
 
-### Python Environment Setup
-
-1. Create a virtual environment:
-```bash
-# On Windows
-python -m venv venv
-
-# On macOS/Linux
-python3 -m venv venv
-```
-
-2. Activate the virtual environment:
-```bash
-# On Windows
-venv\Scripts\activate
-
-# On macOS/Linux
-source venv/bin/activate
-```
-
-3. Install required packages:
-```bash
-pip install watchdog
-```
-
-4. When you're done, you can deactivate the virtual environment:
-```bash
-deactivate
-```
-
 ### Installation
 
 1. Clone the repository:
@@ -99,12 +69,21 @@ cd plotter-art
 ```
 
 2. Set up Python environment:
-   - Follow the Python Environment Setup steps above
-   - Ensure your virtual environment is activated
+```python3 -m venv ./```
+```source ./bin/activate```
+
+3. Install axicli:
+``` bash
+python3 -m pip install https://cdn.evilmadscientist.com/dl/ad/public/AxiDraw_API.zip
+```
+
+4. Install watchdog:
+```bash
+python3 -m pip install watchdog```
 
 3. Start the development server:
 ```bash
-python server_runner.py
+python3 server_runner.py
 ```
 
 4. Open in your browser:
