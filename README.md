@@ -83,11 +83,11 @@ For examples of artwork created using similar techniques, visit [plotter.art](ht
 
 3. Install required Python packages:
    ```bash
-   # Install AxiDraw API
-   python3 -m pip install https://cdn.evilmadscientist.com/dl/ad/public/AxiDraw_API.zip
+   # Install requirements including watchdog
+   python3 -m pip install -r requirements.txt
    
-   # Install watchdog for development server
-   python3 -m pip install watchdog
+   # Install AxiDraw API separately (not in PyPI)
+   python3 -m pip install https://cdn.evilmadscientist.com/dl/ad/public/AxiDraw_API.zip
    ```
 
 4. Start the development server:
