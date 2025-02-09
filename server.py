@@ -41,7 +41,8 @@ class PlotterHandler(SimpleHTTPRequestHandler):
                     '--model', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['model']),
                     '--pen_pos_up', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['pen_pos_up']),
                     '--pen_pos_down', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['pen_pos_down']),
-                    '--penlift', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['penlift'])
+                    '--penlift', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['penlift']),
+                    '--progress'
                 ])
                 
                 print(f"Executing command for layer number: {params.get('layer', '1')}")
