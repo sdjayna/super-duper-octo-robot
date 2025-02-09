@@ -87,16 +87,19 @@
             
             progressEventSource.onmessage = function(event) {
                 try {
+                    console.log('SSE message received:', event.data);  // Debug log
                     const data = JSON.parse(event.data);
                     if (data.progress) {
-                        logDebug(`Plot progress: ${data.progress}`);
+                        logDebug(data.progress, 'info');  // Changed to directly show the progress message
                     }
                 } catch (error) {
+                    console.error('SSE parse error:', error);  // Debug log
                     logDebug(`Error parsing progress data: ${error}`, 'error');
                 }
             };
             
             progressEventSource.onerror = function(error) {
+                console.error('SSE error:', error);  // Debug log
                 logDebug('Progress listener error, reconnecting...', 'error');
                 if (progressEventSource) {
                     progressEventSource.close();
@@ -107,6 +110,7 @@
             };
 
             progressEventSource.onopen = function() {
+                console.log('SSE connection opened');  // Debug log
                 logDebug('Progress listener connected');
             };
         }
