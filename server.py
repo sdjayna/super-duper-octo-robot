@@ -15,6 +15,7 @@ class PlotterHandler(SimpleHTTPRequestHandler):
     AXIDRAW_PATH = "./bin/axicli"  # Path to the AxiDraw executable
     current_plot_process = None  # Track the current plotting process
     sse_connections = set()  # Track active SSE connections
+    keep_sse_alive = True  # Control SSE connection lifecycle
 
     def do_GET(self):
         if self.path == '/plot-progress':
@@ -28,11 +29,15 @@ class PlotterHandler(SimpleHTTPRequestHandler):
             # Add this connection to the set
             PlotterHandler.sse_connections.add(self)
             
-            # Keep connection alive
             try:
-                while True:
-                    # Sleep to prevent busy-waiting
-                    time.sleep(1)
+                while PlotterHandler.keep_sse_alive:
+                    # Send a heartbeat to keep connection alive
+                    try:
+                        self.wfile.write(b':\n\n')  # SSE comment as heartbeat
+                        self.wfile.flush()
+                    except (BrokenPipeError, ConnectionResetError):
+                        break
+                    time.sleep(0.1)  # Shorter sleep to be more responsive
             except (BrokenPipeError, ConnectionResetError):
                 print("Client disconnected from SSE")
             finally:
@@ -64,6 +69,7 @@ class PlotterHandler(SimpleHTTPRequestHandler):
         
         # Dictionary mapping commands to their CLI parameters
         def plot_command(params):
+            PlotterHandler.keep_sse_alive = True  # Reset SSE state for new plot
             if 'layer' not in params:
                 print("Error: No layer specified in plot command")
                 raise ValueError("No layer specified in plot command")
@@ -189,6 +195,7 @@ class PlotterHandler(SimpleHTTPRequestHandler):
         try:
             if command == 'stop_plot':
                 print("\nExecuting stop_plot command...")
+                PlotterHandler.keep_sse_alive = False  # Stop SSE connections
                 if PlotterHandler.current_plot_process:
                     print(f"Found current plot process (PID: {PlotterHandler.current_plot_process.pid})")
                     # Terminate the current process
