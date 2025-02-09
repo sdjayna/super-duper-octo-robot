@@ -32,10 +32,6 @@
                 <h3>Plotter Control</h3>
                 <div class="plotter-controls">
                     <button id="plotterPlotLayer" class="plotter-button" disabled>Plot Current Layer</button>
-                    <div class="plotter-status">
-                        <span>Status: </span>
-                        <span id="plotterStatusText">Disconnected</span>
-                    </div>
                     <div class="plotter-setup">
                         <h4>Setup</h4>
                         <button id="plotterCycle" class="plotter-button" disabled>Cycle</button>
@@ -359,15 +355,6 @@
         }
 
         function updatePlotterStatus(status, isConnected = false) {
-            const statusText = document.getElementById('plotterStatusText');
-            statusText.textContent = status;
-            statusText.className = isConnected ? 'connected' : '';
-            
-            // Update button states
-            document.getElementById('plotterCycle').disabled = !isConnected;
-            document.getElementById('plotterAlign').disabled = !isConnected;
-            document.getElementById('plotterToggle').disabled = !isConnected;
-            
             // Update Plot Layer button based on layer selection only
             const layerSelect = document.getElementById('layerSelect');
             const canPlotLayer = layerSelect.value !== 'all';
