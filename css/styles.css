@@ -1,3 +1,17 @@
+.panel-title {
+    padding: 15px;
+    border-bottom: 1px solid #ccc;
+    background: #f8f8f8;
+}
+
+.panel-title h2 {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 16px;
+    color: #333;
+    text-align: center;
+}
+
 body, html {
     margin: 0;
     padding: 0;
