@@ -81,6 +81,7 @@ body, html {
     flex-direction: column;
     padding: 15px;
     border-bottom: none;
+    min-height: 0;
 }
 
 .preview-controls,
