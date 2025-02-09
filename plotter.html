@@ -357,8 +357,7 @@
         function updatePlotterStatus(status, isConnected = false) {
             // Update Plot Layer button based on layer selection only
             const layerSelect = document.getElementById('layerSelect');
-            const canPlotLayer = layerSelect.value !== 'all';
-            document.getElementById('plotterPlotLayer').disabled = !canPlotLayer;
+            document.getElementById('plotterPlotLayer').disabled = layerSelect.value === 'all';
         }
 
         // Plotter control event listeners
