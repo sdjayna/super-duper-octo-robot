@@ -435,9 +435,31 @@
         }
 
         function updatePlotterStatus(status, isConnected = false) {
-            // Update Plot Layer button based on layer selection only
-            const layerSelect = document.getElementById('layerSelect');
-            document.getElementById('plotterPlotLayer').disabled = layerSelect.value === 'all';
+            // Get all plotter control buttons
+            const plotButtons = document.querySelectorAll('.plotter-button');
+            const stopButton = document.getElementById('plotterStopPlot');
+            const plotLayerButton = document.getElementById('plotterPlotLayer');
+            
+            if (status === 'Plotting') {
+                // During plotting, disable all buttons except Stop
+                plotButtons.forEach(button => {
+                    if (button !== stopButton) {
+                        button.disabled = true;
+                    }
+                });
+                // Ensure stop button is enabled
+                stopButton.disabled = false;
+            } else {
+                // When not plotting, enable all buttons except Plot Layer (which depends on layer selection)
+                plotButtons.forEach(button => {
+                    if (button === plotLayerButton) {
+                        // Plot Layer button is enabled only when a specific layer is selected
+                        button.disabled = document.getElementById('layerSelect').value === 'all';
+                    } else {
+                        button.disabled = false;
+                    }
+                });
+            }
         }
 
         document.getElementById('plotterPlotLayer').addEventListener('click', async () => {
@@ -454,6 +476,9 @@
             
             logDebug(`Plotting layer ${layerLabel}...`);
             startProgressListener();  // Start listening for progress
+            
+            updatePlotterStatus('Plotting', true);  // Set status before starting plot
+            
             const svgData = new XMLSerializer().serializeToString(svg);
             if (await sendPlotterCommand('plot', { 
                 svg: svgData, 
@@ -461,7 +486,8 @@
                 layerLabel: layerLabel 
             })) {
                 logDebug(`Layer ${layerLabel} plot command sent successfully`);
-                updatePlotterStatus('Plotting', true);
+            } else {
+                updatePlotterStatus('Ready', true);  // Reset status if plot command fails
             }
         });
 
@@ -499,7 +525,7 @@
             logDebug('Sending stop plot command...');
             if (await sendPlotterCommand('stop_plot')) {
                 logDebug('Stop plot command sent successfully');
-                updatePlotterStatus('Ready', true);
+                updatePlotterStatus('Ready', true);  // Reset status after stopping
             }
         });
 
