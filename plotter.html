@@ -44,7 +44,8 @@
     </div>
 
     <script type="module">
-        function logDebug(message, type = 'info') {
+        // Make logDebug available globally
+        window.logDebug = function(message, type = 'info') {
             const debugLog = document.getElementById('debugLog');
             const entry = document.createElement('div');
             entry.className = `debug-entry debug-${type}`;
