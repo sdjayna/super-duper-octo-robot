@@ -12,7 +12,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Python virtual environment setup
 - Improved server startup and shutdown handling
 - Server auto-restart on file changes
-- Second plotter control panel (Plotter B)
 
 ### Changed
 - Updated development server to use hot-reloading
