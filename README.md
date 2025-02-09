@@ -73,9 +73,8 @@ A web-based tool for generating algorithmic art optimized for pen plotters. This
    # Create virtual environment
    python3 -m venv .
    
-   # Activate it (choose based on your system):
-   source ./bin/activate     # On macOS/Linux
-   .\Scripts\activate       # On Windows
+   # Activate it
+   source ./bin/activate
    ```
 
 3. Install required Python packages:

@@ -8,10 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.3.0] - 2025-02-04
 
 ### Added
+- Hilbert curve drawing implementation
 - Hot-reloading development server with watchdog
 - Python virtual environment setup
-- Improved server startup and shutdown handling
 - Server auto-restart on file changes
+- AxiDraw plotter integration with direct controls
 
 ### Changed
 - Updated development server to use hot-reloading
