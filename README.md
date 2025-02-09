@@ -106,32 +106,19 @@ The project is optimized for two specific pen types:
    cd super-duper-octo-robot
    ```
 
-2. Create and activate Python virtual environment in current directory:
+2. Install dependencies and set up environment:
    ```bash
-   # Create virtual environment
-   python3 -m venv .
-   
-   # Activate it
-   source ./bin/activate
+   make install
    ```
 
-3. Install required Python packages:
+3. Start the development server:
    ```bash
-   # Install requirements including watchdog
-   python3 -m pip install -r requirements.txt
-   
-   # Install AxiDraw API separately (not in PyPI)
-   python3 -m pip install https://cdn.evilmadscientist.com/dl/ad/public/AxiDraw_API.zip
+   make run
    ```
 
-4. Start the development server:
-   ```bash
-   python3 server_runner.py
+4. Open in your browser:
    ```
-
-5. Open in your browser:
-   ```
-   http://localhost:8000/plotter.html
+   http://localhost:8000
    ```
 
 ## Plotter Configuration
