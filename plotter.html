@@ -10,17 +10,6 @@
     <div class="layout">
         <button id="toggleDebug">Hide Panel</button>
         <div class="canvas-area">
-            <div id="controls">
-                <select id="drawingSelect"></select>
-                <select id="layerSelect">
-                    <option value="all">Show All Layers</option>
-                </select>
-                <button id="updateSvg">Update SVG</button>
-                <button id="exportSvg">Export SVG</button>
-                <button id="toggleRefresh" class="paused">Resume Refresh</button>
-                <button id="toggleOrientation">Portrait</button>
-                <span id="lastRefresh"></span>
-            </div>
             <div id="svgContainer"></div>
         </div>
         <div class="debug-panel">
@@ -39,6 +28,26 @@
                             <button id="plotterAlign" class="plotter-button">Align</button>
                             <button id="plotterToggle" class="plotter-button">Toggle</button>
                         </div>
+                    </div>
+                </div>
+            </div>
+            <div class="preview-section">
+                <h3>Preview Control</h3>
+                <div class="preview-controls">
+                    <div class="drawing-controls">
+                        <select id="drawingSelect"></select>
+                        <select id="layerSelect">
+                            <option value="all">Show All Layers</option>
+                        </select>
+                    </div>
+                    <div class="view-controls">
+                        <button id="toggleOrientation">Portrait</button>
+                        <button id="toggleRefresh" class="paused">Resume Refresh</button>
+                    </div>
+                    <div class="export-controls">
+                        <button id="updateSvg">Update SVG</button>
+                        <button id="exportSvg">Export SVG</button>
+                        <span id="lastRefresh"></span>
                     </div>
                 </div>
             </div>
