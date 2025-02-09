@@ -73,20 +73,20 @@ class PlotterHandler(SimpleHTTPRequestHandler):
             if 'layer' not in params:
                 print("Error: No layer specified in plot command")
                 raise ValueError("No layer specified in plot command")
-            
+        
             # Create temp file for SVG if present
             temp_svg_path = None
-            if 'svg' in params:
-                try:
+            try:
+                if 'svg' in params:
                     temp_svg_path = f'temp_{datetime.now().strftime("%Y%m%d_%H%M%S")}.svg'
                     with open(temp_svg_path, 'w', encoding='utf-8') as f:
                         f.write(params['svg'])
-                except IOError as e:
-                    print(f"Error writing temporary SVG file: {e}")
-                    return {
-                        'status': 'error',
-                        'message': f'Failed to create temporary file: {str(e)}'
-                    }
+            except IOError as e:
+                print(f"Error writing temporary SVG file: {e}")
+                return {
+                    'status': 'error',
+                    'message': f'Failed to create temporary file: {str(e)}'
+                }
             
             def run_plot():
                 try:
@@ -148,7 +148,10 @@ class PlotterHandler(SimpleHTTPRequestHandler):
                         # Send completion message via SSE
                         self.send_progress_update("Plot completed successfully")
                         self.send_progress_update("PLOT_COMPLETE")  # Special message for client
-                    
+                except Exception as e:
+                    print(f"Error in plot thread: {e}")
+                    self.send_progress_update(f"Error: {str(e)}")
+                    self.send_progress_update("PLOT_ERROR")  # New special message for client
                 finally:
                     # Clear the process reference
                     PlotterHandler.current_plot_process = None
