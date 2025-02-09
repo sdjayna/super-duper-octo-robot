@@ -18,15 +18,6 @@ class PlotterHandler(SimpleHTTPRequestHandler):
     sse_connections = set()  # Track active SSE connections
     keep_sse_alive = True  # Control SSE connection lifecycle
 
-    def translate_path(self, path):
-        """Override to handle /templates directory"""
-        if path == '/':
-            path = '/src/templates/plotter.html'
-        elif path.startswith('/templates/'):
-            # Keep the path as-is for template files
-            pass
-        return super().translate_path(path)
-
     def do_GET(self):
         # Redirect root to plotter.html
         if self.path == '/':
@@ -64,7 +55,7 @@ class PlotterHandler(SimpleHTTPRequestHandler):
             self.send_header('Content-Type', 'image/x-icon')
             self.end_headers()
             try:
-                with open('favicon.ico', 'rb') as f:
+                with open('static/favicon.ico', 'rb') as f:
                     self.wfile.write(f.read())
             except FileNotFoundError:
                 # If favicon.ico doesn't exist, return empty response
