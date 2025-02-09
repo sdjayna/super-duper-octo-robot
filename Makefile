@@ -6,7 +6,7 @@ PYTHON=python3
 # Install dependencies
 install:
 	$(PYTHON) -m pip install -r requirements.txt
-	$(PYTHON) -m pip install "https:\/\/cdn.evilmadscientist.com\/dl\/ad\/public\/AxiDraw_API.zip"
+	$(PYTHON) -m pip install "https://cdn.evilmadscientist.com/dl/ad/public/AxiDraw_API.zip"
 
 # Run the server
 run:
