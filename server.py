@@ -144,6 +144,10 @@ class PlotterHandler(SimpleHTTPRequestHandler):
                     # Get final return code
                     if process.returncode != 0:
                         raise subprocess.CalledProcessError(process.returncode, cmd)
+                    else:
+                        # Send completion message via SSE
+                        self.send_progress_update("Plot completed successfully")
+                        self.send_progress_update("PLOT_COMPLETE")  # Special message for client
                     
                 finally:
                     # Clear the process reference

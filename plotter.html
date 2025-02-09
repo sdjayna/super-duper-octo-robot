@@ -92,7 +92,17 @@
                     console.log('SSE message received:', event.data);  // Debug log
                     const data = JSON.parse(event.data);
                     if (data.progress) {
-                        logDebug(data.progress, 'info');  // Changed to directly show the progress message
+                        if (data.progress === 'PLOT_COMPLETE') {
+                            // Special message to re-enable controls
+                            updatePlotterStatus('Ready', true);
+                            // Close SSE connection as plot is complete
+                            if (progressEventSource) {
+                                progressEventSource.close();
+                                progressEventSource = null;
+                            }
+                        } else {
+                            logDebug(data.progress, 'info');
+                        }
                     }
                 } catch (error) {
                     console.error('SSE parse error:', error);  // Debug log
