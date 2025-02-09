@@ -402,7 +402,9 @@ See [CHANGELOG.md](CHANGELOG.md) for version history and updates.
 
 - Inspired by Jupiter Jayna's work with algorithmic plotter art and acrylic paint application
 - Built using the AxiDraw SE/A3 plotter from Evil Mad Scientist Laboratories
-- Color palette based on Molotow Acrylic Paint Markers and common plotter pen sets
+- Color palette specifically optimized for:
+  - Molotow ONE4ALL™ Acrylic Markers (1mm and 2mm tips)
+  - Sakura Pigma Micron® Fineliners (0.2mm - 0.8mm)
 - Polygon filling techniques inspired by both traditional hatching and polygon offsetting methods
 - Special thanks to:
   - Evil Mad Scientist for their excellent AxiDraw API and CLI tools
