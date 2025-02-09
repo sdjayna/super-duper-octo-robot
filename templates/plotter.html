@@ -71,6 +71,10 @@
             </div>
             <div class="debug-section">
                 <h3>Messages</h3>
+                <div class="debug-tabs">
+                    <button class="tab-button active" data-tab="all">All</button>
+                    <button class="tab-button" data-tab="plots">Just Plots</button>
+                </div>
                 <div id="debugLog"></div>
             </div>
         </div>
@@ -160,6 +164,7 @@
             
             const entry = document.createElement('div');
             entry.className = `debug-entry debug-${type}`;
+            entry.dataset.isPlot = message.startsWith('Plotting') ? 'true' : 'false';
             entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
             entry.style.fontWeight = 'bold';  // Make new entry bold
             console.log(entry);
@@ -170,7 +175,36 @@
             while (debugLog.children.length > 100) {
                 debugLog.removeChild(debugLog.firstChild);
             }
+
+            // Update visibility based on current tab
+            const activeTab = document.querySelector('.tab-button.active').dataset.tab;
+            if (activeTab === 'plots' && !message.startsWith('Plotting')) {
+                entry.style.display = 'none';
+            }
         }
+
+        // Add tab switching functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // Update active state
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Show/hide messages based on tab
+                    const entries = document.querySelectorAll('.debug-entry');
+                    entries.forEach(entry => {
+                        if (this.dataset.tab === 'all') {
+                            entry.style.display = '';
+                        } else if (this.dataset.tab === 'plots') {
+                            entry.style.display = entry.dataset.isPlot === 'true' ? '' : 'none';
+                        }
+                    });
+                });
+            });
+        });
         const select = document.getElementById('drawingSelect');
         const container = document.getElementById('svgContainer');
         const exportButton = document.getElementById('exportSvg');
