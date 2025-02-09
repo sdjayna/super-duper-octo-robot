@@ -1,4 +1,5 @@
 from http.server import HTTPServer, SimpleHTTPRequestHandler
+import glob
 import json
 import os
 from datetime import datetime
@@ -412,8 +413,26 @@ Configuration:
         self.send_header('Access-Control-Allow-Origin', '*')
         SimpleHTTPRequestHandler.end_headers(self)
 
+def cleanup_temp_files():
+    """Clean up any temporary SVG files from previous runs"""
+    try:
+        # Look for files matching the temp file pattern
+        temp_pattern = "temp_*.svg"
+        count = 0
+        for temp_file in glob.glob(temp_pattern):
+            try:
+                os.remove(temp_file)
+                count += 1
+            except OSError as e:
+                print(f"Error removing temporary file {temp_file}: {e}")
+        if count > 0:
+            print(f"🧹 Cleaned up {count} temporary SVG file{'s' if count != 1 else ''}")
+    except Exception as e:
+        print(f"❌ Error during cleanup: {e}")
+
 def create_server():
     try:
+        cleanup_temp_files()  # Add cleanup call
         server_address = ('', 8000)
         httpd = HTTPServer(server_address, PlotterHandler)
         print('🚀 Server running on http://localhost:8000')
