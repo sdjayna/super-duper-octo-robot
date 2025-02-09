@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.1] - 2025-02-06
+
+### Added
+- Stop Plot button to terminate running plot commands
+- Bold highlighting for most recent debug message
+
+### Changed
+- Simplified UI button labels ("Hide/Show Panel" to "Hide/Show")
+- Removed redundant "Last updated" message from preview section
+- Improved debug message panel scrolling behavior
+
+[1.4.1]: https://github.com/yourusername/plotter-art/compare/v1.4.0...v1.4.1
+
 ## [1.4.0] - 2025-02-05
 
 ### Added
