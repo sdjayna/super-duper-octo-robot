@@ -13,7 +13,8 @@ class PlotterHandler(SimpleHTTPRequestHandler):
     def handle_command(self, command_data):
         """Handle plotter commands by executing AxiDraw CLI commands"""
         command = command_data.get('command')
-        params = command_data.get('params', {})
+        # Use all data except 'command' as params
+        params = {k: v for k, v in command_data.items() if k != 'command'}
         
         # Dictionary mapping commands to their CLI parameters
         def plot_command(params):
