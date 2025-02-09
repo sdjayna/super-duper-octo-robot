@@ -375,8 +375,10 @@
             const currentLayer = document.getElementById('layerSelect').value;
             if (currentLayer === 'all') return;
             
+            logDebug(`Plotting layer ${currentLayer}...`);
             const svgData = new XMLSerializer().serializeToString(svg);
             if (await sendPlotterCommand('plot', { svg: svgData, layer: currentLayer })) {
+                logDebug(`Layer ${currentLayer} plot command sent successfully`);
                 updatePlotterStatus('Plotting', true);
             }
         });
@@ -384,13 +386,25 @@
 
         // Add event listeners for new plotter buttons
         document.getElementById('plotterCycle').addEventListener('click', async () => {
+            logDebug('Sending cycle command...');
             if (await sendPlotterCommand('cycle')) {
+                logDebug('Cycle command completed');
                 updatePlotterStatus('Ready', true);
             }
         });
 
         document.getElementById('plotterToggle').addEventListener('click', async () => {
+            logDebug('Sending toggle command...');
             if (await sendPlotterCommand('toggle')) {
+                logDebug('Toggle command completed');
+                updatePlotterStatus('Ready', true);
+            }
+        });
+
+        document.getElementById('plotterAlign').addEventListener('click', async () => {
+            logDebug('Sending align command...');
+            if (await sendPlotterCommand('align')) {
+                logDebug('Align command completed');
                 updatePlotterStatus('Ready', true);
             }
         });
