@@ -503,20 +503,31 @@
             const selectedOption = layerSelect.options[layerSelect.selectedIndex];
             const layerLabel = selectedOption.textContent;
             
-            logDebug(`Plotting layer ${layerLabel}...`);
-            startProgressListener();  // Start listening for progress
-            
-            updatePlotterStatus('Plotting', true);  // Set status before starting plot
-            
-            const svgData = new XMLSerializer().serializeToString(svg);
-            if (await sendPlotterCommand('plot', { 
-                svg: svgData, 
-                layer: currentLayer,
-                layerLabel: layerLabel 
-            })) {
-                logDebug(`Layer ${layerLabel} plot command sent successfully`);
-            } else {
-                updatePlotterStatus('Ready', true);  // Reset status if plot command fails
+            try {
+                logDebug(`Plotting layer ${layerLabel}...`);
+                startProgressListener();  // Start listening for progress
+                
+                updatePlotterStatus('Plotting', true);  // Set status before starting plot
+                
+                const svgData = new XMLSerializer().serializeToString(svg);
+                if (await sendPlotterCommand('plot', { 
+                    svg: svgData, 
+                    layer: currentLayer,
+                    layerLabel: layerLabel 
+                })) {
+                    logDebug(`Layer ${layerLabel} plot command sent successfully`);
+                } else {
+                    throw new Error('Plot command failed to start');
+                }
+            } catch (error) {
+                logDebug(`Plot failed: ${error.message}`, 'error');
+                // Clean up SSE connection if it was started
+                if (progressEventSource) {
+                    progressEventSource.close();
+                    progressEventSource = null;
+                }
+                // Re-enable all controls
+                updatePlotterStatus('Ready', true);
             }
         });
 
