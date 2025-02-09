@@ -4,6 +4,6 @@ psutil==5.9.5
 pytest==7.4.3
 
 # Development dependencies
-black==24.1.1
+black==24.3.0
 flake8==7.0.0
 pytest-cov==4.1.0
