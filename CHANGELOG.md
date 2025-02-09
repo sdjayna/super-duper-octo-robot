@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.5] - 2025-02-09
+
+### Added
+- Enhanced error handling for invalid Hilbert curve levels
+- Safety checks for Hilbert curve generation parameters
+- Improved debug logging for drawing operations
+
+### Changed
+- Optimized color selection algorithm performance
+- Updated Hilbert curve generation to prevent stack overflow
+- Refined wavy effect parameters for smoother curves
+
+### Fixed
+- Stack overflow risk with high Hilbert curve levels
+- Color adjacency detection edge cases
+- SVG viewBox calculation precision issues
+
 ## [1.4.4] - 2025-02-09
 
 ### Added
@@ -38,6 +55,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Thread management for failed plot commands
 - SSE connection cleanup on errors
 
+[1.4.5]: https://github.com/sdjayna/super-duper-octo-robot/compare/v1.4.4...v1.4.5
+[1.4.4]: https://github.com/sdjayna/super-duper-octo-robot/compare/v1.4.3...v1.4.4
 [1.4.3]: https://github.com/sdjayna/super-duper-octo-robot/compare/v1.4.2...v1.4.3
 
 ## [1.4.2] - 2025-02-07
