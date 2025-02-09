@@ -108,6 +108,10 @@ class PlotterHandler(SimpleHTTPRequestHandler):
             content_length = int(self.headers['Content-Length'])
             post_data = self.rfile.read(content_length)
             data = json.loads(post_data.decode('utf-8'))
+            
+            # Add this debug print
+            print(f"\nReceived command data:")
+            print(json.dumps(data, indent=2))
 
             if self.path == '/save-svg':
                 
