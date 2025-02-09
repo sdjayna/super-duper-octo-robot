@@ -25,7 +25,7 @@ class ServerRestartHandler(FileSystemEventHandler):
         print("\n🔄 Starting server...")
         # Start new process in its own process group
         self.server_process = subprocess.Popen(
-            [sys.executable, 'server.py'],
+            [sys.executable, os.path.join(os.path.dirname(__file__), 'server.py')],
             preexec_fn=os.setsid
         )
 
