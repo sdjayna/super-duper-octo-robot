@@ -94,7 +94,7 @@ The project is optimized for two specific pen types:
 
 ### Prerequisites
 
-- Python 3.x (for the development server)
+- Python 3.x
 - Modern web browser (Chrome, Firefox, Safari)
 - Git
 
@@ -106,17 +106,17 @@ The project is optimized for two specific pen types:
    cd super-duper-octo-robot
    ```
 
-2. Install dependencies and set up environment:
+2. Install dependencies:
    ```bash
    make install
    ```
 
-3. Start the development server:
+3. Start the server:
    ```bash
    make run
    ```
 
-4. Open in your browser:
+4. Visit in your browser:
    ```
    http://localhost:8000
    ```
