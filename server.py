@@ -16,15 +16,18 @@ class PlotterHandler(SimpleHTTPRequestHandler):
         params = command_data.get('params', {})
         
         # Dictionary mapping commands to their CLI parameters
-        commands = {
-            'plot': lambda params: [
-                self.AXIDRAW_PATH, 
-                '--mode', 'plot',
-                '--layer', str(params['layer'])  # Will raise KeyError if missing
-            ] if 'layer' in params else (
-                print("Error: No layer specified in plot command") or
+        def plot_command(params):
+            if 'layer' not in params:
+                print("Error: No layer specified in plot command")
                 raise ValueError("No layer specified in plot command")
-            ),
+            return [
+                self.AXIDRAW_PATH,
+                '--mode', 'plot',
+                '--layer', str(params['layer'])
+            ]
+
+        commands = {
+            'plot': plot_command,
             'toggle': lambda _: [
                 self.AXIDRAW_PATH,
                 '--mode', 'toggle'
