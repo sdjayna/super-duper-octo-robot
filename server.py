@@ -23,7 +23,7 @@ class PlotterHandler(SimpleHTTPRequestHandler):
                 raise ValueError("No layer specified in plot command")
             return [
                 self.AXIDRAW_PATH,
-                '--mode', 'plot',
+                '--mode', 'layers',
                 '--layer', str(params['layer'])
             ]
 
