@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.4] - 2025-02-09
+
+### Added
+- "Just Plots" tab to filter debug messages
+- Note about Mac-only testing in README prerequisites
+
+### Changed
+- Renamed "Preview Control" section to "Drawing Control"
+- Moved "Update SVG" button to Preview section and renamed to "Update Preview"
+- Improved handling of "estimated print time" messages to not show as errors
+
+### Fixed
+- Error logging for successful plot completion messages
+
 ## [1.4.3] - 2025-02-08
 
 ### Added
