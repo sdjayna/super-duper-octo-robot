@@ -1,8 +1,8 @@
 # Plotter Art Generator
 
-A web-based tool for generating algorithmic art optimized for the AxiDraw V3 pen plotter. This project creates SVG files with separated layers for multi-pen plotting, featuring perfect square subdivisions (Bouwkamp codes) and Delaunay triangulations.
+A web-based tool for generating algorithmic art optimized for AxiDraw pen plotters. This project creates SVG files with separated layers for multi-pen plotting, featuring perfect square subdivisions (Bouwkamp codes) and Delaunay triangulations.
 
-> **Note:** This tool is specifically designed for use with the AxiDraw V3 plotter and its API.
+> **Note:** While this tool works with any AxiDraw plotter, it has been specifically developed and tested with the AxiDraw SE/A3 Special Edition model.
 
 ![Plotter Art UI](ui-screenshot.png)
 
