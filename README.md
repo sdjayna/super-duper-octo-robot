@@ -4,6 +4,8 @@ A web-based tool for generating algorithmic art optimized for AxiDraw pen plotte
 
 > **Note:** While this tool works with any AxiDraw plotter, it has been specifically developed and tested with the AxiDraw SE/A3 Special Edition model.
 
+For examples of artwork created using similar techniques, visit [plotter.art](https://plotter.art), which showcases algorithmic plotter art with an emphasis on acrylic paint application and geometric patterns.
+
 ![Plotter Art UI](ui-screenshot.png)
 
 ## Features
