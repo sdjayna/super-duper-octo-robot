@@ -100,6 +100,30 @@ For examples of artwork created using similar techniques, visit [plotter.art](ht
    http://localhost:8000/plotter.html
    ```
 
+## Plotter Configuration
+
+The project includes specific support for the AxiDraw SE/A3 plotter through `plotter_config.py`. This configuration file contains model-specific settings:
+
+```python
+PLOTTER_CONFIGS = {
+    'AxiDraw SE/A3': {
+        'model': 2,   # Model number for AxiDraw SE/A3
+        'pen_pos_up': 90,    # Pen up position (0-100)
+        'pen_pos_down': 10,  # Pen down position (0-100)
+        'penlift': 3    # Narrow-band brushless servo (3rd position up)
+    }
+}
+```
+
+### Configuration Parameters
+
+- `model`: Specifies the plotter model (2 for AxiDraw SE/A3)
+- `pen_pos_up`: Height of the pen when raised (0-100)
+- `pen_pos_down`: Height of the pen when drawing (0-100)
+- `penlift`: Servo type configuration (3 for narrow-band brushless servo)
+
+These settings are automatically applied to all plotter commands, ensuring consistent behavior across plotting sessions.
+
 ## Usage
 
 ### Basic Operation
