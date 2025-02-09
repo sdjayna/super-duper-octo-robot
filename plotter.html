@@ -75,6 +75,27 @@
     </div>
 
     <script type="module">
+        let progressEventSource = null;
+
+        function startProgressListener() {
+            if (progressEventSource) {
+                progressEventSource.close();
+            }
+            
+            progressEventSource = new EventSource('http://localhost:8000/plot-progress');
+            progressEventSource.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                if (data.progress) {
+                    logDebug(data.progress);
+                }
+            };
+            
+            progressEventSource.onerror = function() {
+                progressEventSource.close();
+                progressEventSource = null;
+            };
+        }
+
         // Make logDebug available globally
         window.logDebug = function(message, type = 'info') {
             const debugLog = document.getElementById('debugLog');
@@ -412,6 +433,7 @@
             const layerLabel = selectedOption.textContent;
             
             logDebug(`Plotting layer ${layerLabel}...`);
+            startProgressListener();  // Start listening for progress
             const svgData = new XMLSerializer().serializeToString(svg);
             if (await sendPlotterCommand('plot', { 
                 svg: svgData, 
@@ -450,6 +472,10 @@
         });
 
         document.getElementById('plotterStopPlot').addEventListener('click', async () => {
+            if (progressEventSource) {
+                progressEventSource.close();
+                progressEventSource = null;
+            }
             logDebug('Sending stop plot command...');
             if (await sendPlotterCommand('stop_plot')) {
                 logDebug('Stop plot command sent successfully');

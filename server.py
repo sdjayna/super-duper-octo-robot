@@ -13,6 +13,14 @@ class PlotterHandler(SimpleHTTPRequestHandler):
     AXIDRAW_PATH = "./bin/axicli"  # Path to the AxiDraw executable
 
     def do_GET(self):
+        if self.path == '/plot-progress':
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/event-stream')
+            self.send_header('Cache-Control', 'no-cache')
+            self.send_header('Connection', 'keep-alive')
+            self.end_headers()
+            return
+            
         # Handle favicon.ico requests
         if self.path == '/favicon.ico':
             self.send_response(200)
@@ -67,16 +75,35 @@ class PlotterHandler(SimpleHTTPRequestHandler):
                 print(f"Executing command for layer label: {params.get('layerLabel', 'unknown')}")
                 print(f"Executing: {' '.join(cmd)}")
                 
-                result = subprocess.run(
+                # Use Popen instead of run to get real-time output
+                process = subprocess.Popen(
                     cmd,
-                    capture_output=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
                     text=True,
-                    check=True
+                    bufsize=1,
+                    universal_newlines=True
                 )
-                
+
+                # Stream output in real-time
+                while True:
+                    output = process.stdout.readline()
+                    if output:
+                        print(output.strip())
+                        # Send progress update via SSE
+                        self.send_progress_update(output.strip())
+            
+                    # Check if process has finished
+                    if process.poll() is not None:
+                        break
+        
+                # Get final return code
+                if process.returncode != 0:
+                    raise subprocess.CalledProcessError(process.returncode, cmd)
+        
                 return {
                     'status': 'success',
-                    'message': result.stdout.strip() or 'Command executed successfully'
+                    'message': 'Plot command completed successfully'
                 }
                 
             finally:
@@ -219,6 +246,14 @@ Configuration:
             self.end_headers()
             self.wfile.write(str(e).encode())
     
+    def send_progress_update(self, message):
+        if hasattr(self, 'wfile'):
+            try:
+                self.wfile.write(f"data: {json.dumps({'progress': message})}\n\n".encode())
+                self.wfile.flush()
+            except:
+                pass
+
     def end_headers(self):
         self.send_header('Access-Control-Allow-Origin', '*')
         SimpleHTTPRequestHandler.end_headers(self)
