@@ -94,6 +94,7 @@ The project is optimized for two specific pen types:
 
 ### Prerequisites
 
+- macOS (currently only tested on Mac)
 - Python 3.x
 - Modern web browser (Chrome, Firefox, Safari)
 - Git
