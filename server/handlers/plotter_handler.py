@@ -19,6 +19,8 @@ class PlotterHandler(SimpleHTTPRequestHandler):
             return self.sse_handler.handle_sse(self)
         if self.path.startswith('/css/'):
             return self.handle_css()
+        if self.path.startswith('/js/'):
+            self.path = '/src' + self.path
         if self.path == '/favicon.ico':
             return self.handle_favicon()
         return SimpleHTTPRequestHandler.do_GET(self)
