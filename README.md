@@ -1,16 +1,24 @@
 # Jupiter Jayna's Plotter Art Control Centre
 
-A web-based tool for generating algorithmic art optimized for AxiDraw pen plotters. This project creates SVG files with separated layers for multi-pen plotting, featuring perfect square subdivisions (Bouwkamp codes) and Delaunay triangulations.
+A web-based tool for generating algorithmic art optimized for AxiDraw pen plotters. This project creates SVG files with separated layers for multi-pen plotting, featuring perfect square subdivisions (Bouwkamp codes), Delaunay triangulations, and Hilbert curves.
 
 > **Note:** While this tool works with any AxiDraw plotter, it has been specifically developed and tested with the AxiDraw SE/A3 Special Edition model.
 
 For examples of artwork created using similar techniques, visit [plotter.art](https://plotter.art), which showcases algorithmic plotter art with an emphasis on acrylic paint application and geometric patterns.
+
+The project is optimized for two specific pen types:
+- Molotow ONE4ALL™ Acrylic Markers (1mm and 2mm tips)
+- Sakura Pigma Micron® Fineliners (0.2mm - 0.8mm)
 
 ![Plotter Art UI](ui-screenshot.png)
 
 ## Contents
 
 - [Features](#features)
+  - [Drawing Algorithms](#drawing-algorithms)
+  - [Real-time Development](#real-time-development)
+  - [SVG Generation](#svg-generation)
+  - [Multi-pen Support](#multi-pen-support)
 - [Project Structure](#project-structure)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
@@ -21,10 +29,12 @@ For examples of artwork created using similar techniques, visit [plotter.art](ht
   - [Creating Custom Drawings](#creating-custom-drawings)
 - [Development](#development)
   - [Adding New Drawing Types](#adding-new-drawing-types)
+  - [Error Handling and Recovery](#error-handling-and-recovery)
   - [Code Style](#code-style)
 - [Color System](#color-system)
 - [Plotter Configuration](#plotter-configuration)
 - [Contributing](#contributing)
+- [AI Development Assistance](#ai-development-assistance)
 - [License](#license)
 - [Support](#support)
 - [Changelog](#changelog)
