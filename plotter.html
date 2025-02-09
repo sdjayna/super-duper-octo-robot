@@ -319,6 +319,7 @@
         
         document.getElementById('layerSelect').addEventListener('change', (e) => {
             updateLayerVisibility();
+            updatePlotterStatus();  // Add this line to update plotter button states
             e.target.blur();
         });
         exportButton.addEventListener('click', exportSvg);
@@ -380,11 +381,6 @@
             }
         });
 
-        // Update Plot Layer button state when layer selection changes
-        document.getElementById('layerSelect').addEventListener('change', (e) => {
-            const isConnected = document.getElementById('plotterStatusText').className === 'connected';
-            updatePlotterStatus(document.getElementById('plotterStatusText').textContent, isConnected);
-        });
 
         // Add event listeners for new plotter buttons
         document.getElementById('plotterCycle').addEventListener('click', async () => {
