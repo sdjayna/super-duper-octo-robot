@@ -21,7 +21,7 @@ class PlotterHandler(SimpleHTTPRequestHandler):
     def translate_path(self, path):
         """Override to handle /templates directory"""
         if path == '/':
-            path = '/templates/plotter.html'
+            path = '/src/templates/plotter.html'
         elif path.startswith('/templates/'):
             # Keep the path as-is for template files
             pass
@@ -30,7 +30,7 @@ class PlotterHandler(SimpleHTTPRequestHandler):
     def do_GET(self):
         # Redirect root to plotter.html
         if self.path == '/':
-            self.path = '/templates/plotter.html'
+            self.path = '/src/templates/plotter.html'
         if self.path == '/plot-progress':
             self.send_response(200)
             self.send_header('Content-Type', 'text/event-stream')
