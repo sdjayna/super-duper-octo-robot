@@ -1,7 +1,2 @@
-.aider*
-.env
-output/
-pyvenv.cfg
-bin/
-lib/
-__pycache__/
+# Created by venv; see https://docs.python.org/3/library/venv.html
+*
