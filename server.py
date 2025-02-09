@@ -20,8 +20,11 @@ class PlotterHandler(SimpleHTTPRequestHandler):
             'plot': lambda params: [
                 self.AXIDRAW_PATH, 
                 '--mode', 'plot',
-                '--layer', str(params.get('layer', '1'))  # Use the layer number directly
-            ],
+                '--layer', str(params['layer'])  # Will raise KeyError if missing
+            ] if 'layer' in params else (
+                print("Error: No layer specified in plot command") or
+                raise ValueError("No layer specified in plot command")
+            ),
             'toggle': lambda _: [
                 self.AXIDRAW_PATH,
                 '--mode', 'toggle'
