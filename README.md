@@ -63,33 +63,39 @@ A web-based tool for generating algorithmic art optimized for pen plotters. This
 ### Installation
 
 1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/plotter-art.git
-cd plotter-art
-```
+   ```bash
+   git clone https://github.com/yourusername/plotter-art.git
+   cd plotter-art
+   ```
 
-2. Set up Python environment:
-```python3 -m venv ./```
-```source ./bin/activate```
+2. Create and activate Python virtual environment in current directory:
+   ```bash
+   # Create virtual environment
+   python3 -m venv .
+   
+   # Activate it (choose based on your system):
+   source ./bin/activate     # On macOS/Linux
+   .\Scripts\activate       # On Windows
+   ```
 
-3. Install axicli:
-``` bash
-python3 -m pip install https://cdn.evilmadscientist.com/dl/ad/public/AxiDraw_API.zip
-```
+3. Install required Python packages:
+   ```bash
+   # Install AxiDraw API
+   python3 -m pip install https://cdn.evilmadscientist.com/dl/ad/public/AxiDraw_API.zip
+   
+   # Install watchdog for development server
+   python3 -m pip install watchdog
+   ```
 
-4. Install watchdog:
-```bash
-python3 -m pip install watchdog```
+4. Start the development server:
+   ```bash
+   python3 server_runner.py
+   ```
 
-3. Start the development server:
-```bash
-python3 server_runner.py
-```
-
-4. Open in your browser:
-```
-http://localhost:8000/plotter.html
-```
+5. Open in your browser:
+   ```
+   http://localhost:8000/plotter.html
+   ```
 
 ## Usage
 
