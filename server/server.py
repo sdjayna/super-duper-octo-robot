@@ -51,7 +51,7 @@ class PlotterHandler(SimpleHTTPRequestHandler):
             
         # Handle CSS file requests
         if self.path.startswith('/css/'):
-            css_path = os.path.join('src', self.path.lstrip('/'))
+            css_path = os.path.join('src/static', self.path.lstrip('/'))
             if os.path.exists(css_path):
                 self.send_response(200)
                 self.send_header('Content-Type', 'text/css')
