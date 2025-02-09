@@ -186,19 +186,7 @@ class PlotterHandler(SimpleHTTPRequestHandler):
                 '--model', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['model']),
                 '--penlift', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['penlift'])
             ],
-            'home': lambda _: [
-                self.AXIDRAW_PATH,
-                '--mode', 'manual', 
-                '--manual_cmd', 'raise_pen',
-                '--model', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['model']),
-                '--penlift', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['penlift']),
-                ';',
-                self.AXIDRAW_PATH,
-                '--mode', 'manual',
-                '--manual_cmd', 'walk_home',
-                '--model', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['model']),
-                '--penlift', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['penlift'])
-            ],
+            'home': lambda _: None,  # Special case handled below
             'disable_motors': lambda _: [
                 self.AXIDRAW_PATH,
                 '--mode', 'manual',
@@ -254,8 +242,33 @@ class PlotterHandler(SimpleHTTPRequestHandler):
                     return {'status': 'success', 'message': 'No active plot to stop'}
             elif command == 'plot':
                 return commands[command](params)
+            elif command == 'home':
+                # Execute raise_pen command first
+                raise_pen_cmd = [
+                    self.AXIDRAW_PATH,
+                    '--mode', 'manual',
+                    '--manual_cmd', 'raise_pen',
+                    '--model', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['model']),
+                    '--penlift', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['penlift'])
+                ]
+                result = subprocess.run(raise_pen_cmd, capture_output=True, text=True, check=True)
+                
+                # Then execute walk_home command
+                walk_home_cmd = [
+                    self.AXIDRAW_PATH,
+                    '--mode', 'manual',
+                    '--manual_cmd', 'walk_home',
+                    '--model', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['model']),
+                    '--penlift', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['penlift'])
+                ]
+                result = subprocess.run(walk_home_cmd, capture_output=True, text=True, check=True)
+                
+                return {
+                    'status': 'success',
+                    'message': 'Home sequence completed successfully'
+                }
             else:
-                # Handle non-plot commands
+                # Handle other non-plot commands
                 cmd_array = commands[command](params)
                 result = subprocess.run(
                     cmd_array,
