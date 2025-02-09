@@ -116,6 +116,19 @@ body, html {
     font-size: 0.9em;
 }
 
+.plotter-setup {
+    margin-top: 20px;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+}
+
+.plotter-setup h4 {
+    margin: 0 0 10px 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+    font-size: 14px;
+    color: #666;
+}
+
 #plotterStatusText {
     font-weight: bold;
     color: #666;

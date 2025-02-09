@@ -32,12 +32,16 @@
                 <h3>Plotter Control</h3>
                 <div class="plotter-controls">
                     <button id="plotterConnect" class="plotter-button">Connect</button>
-                    <button id="plotterAlign" class="plotter-button" disabled>Align</button>
-                    <button id="plotterPlot" class="plotter-button" disabled>Plot Current Layer</button>
-                    <button id="plotterStop" class="plotter-button danger" disabled>Stop</button>
+                    <button id="plotterPlotLayer" class="plotter-button" disabled>Plot Current Layer</button>
                     <div class="plotter-status">
                         <span>Status: </span>
                         <span id="plotterStatusText">Disconnected</span>
+                    </div>
+                    <div class="plotter-setup">
+                        <h4>Setup</h4>
+                        <button id="plotterCycle" class="plotter-button" disabled>Cycle</button>
+                        <button id="plotterAlign" class="plotter-button" disabled>Align</button>
+                        <button id="plotterToggle" class="plotter-button" disabled>Toggle</button>
                     </div>
                 </div>
             </div>
@@ -362,9 +366,14 @@
             
             // Update button states
             document.getElementById('plotterConnect').disabled = isConnected;
-            document.getElementById('plotterHome').disabled = !isConnected;
-            document.getElementById('plotterPlot').disabled = !isConnected;
-            document.getElementById('plotterStop').disabled = !isConnected;
+            document.getElementById('plotterCycle').disabled = !isConnected;
+            document.getElementById('plotterAlign').disabled = !isConnected;
+            document.getElementById('plotterToggle').disabled = !isConnected;
+            
+            // Update Plot Layer button based on both connection and layer selection
+            const layerSelect = document.getElementById('layerSelect');
+            const canPlotLayer = isConnected && layerSelect.value !== 'all';
+            document.getElementById('plotterPlotLayer').disabled = !canPlotLayer;
         }
 
         // Plotter control event listeners
@@ -380,18 +389,34 @@
             }
         });
 
-        document.getElementById('plotterPlot').addEventListener('click', async () => {
+        document.getElementById('plotterPlotLayer').addEventListener('click', async () => {
             const svg = container.querySelector('svg');
             if (!svg) return;
             
+            const currentLayer = document.getElementById('layerSelect').value;
+            if (currentLayer === 'all') return;
+            
             const svgData = new XMLSerializer().serializeToString(svg);
-            if (await sendPlotterCommand('plot', { svg: svgData })) {
+            if (await sendPlotterCommand('plot', { svg: svgData, layer: currentLayer })) {
                 updatePlotterStatus('Plotting', true);
             }
         });
 
-        document.getElementById('plotterStop').addEventListener('click', async () => {
-            if (await sendPlotterCommand('stop')) {
+        // Update Plot Layer button state when layer selection changes
+        document.getElementById('layerSelect').addEventListener('change', (e) => {
+            const isConnected = document.getElementById('plotterStatusText').className === 'connected';
+            updatePlotterStatus(document.getElementById('plotterStatusText').textContent, isConnected);
+        });
+
+        // Add event listeners for new plotter buttons
+        document.getElementById('plotterCycle').addEventListener('click', async () => {
+            if (await sendPlotterCommand('cycle')) {
+                updatePlotterStatus('Ready', true);
+            }
+        });
+
+        document.getElementById('plotterToggle').addEventListener('click', async () => {
+            if (await sendPlotterCommand('toggle')) {
                 updatePlotterStatus('Ready', true);
             }
         });
