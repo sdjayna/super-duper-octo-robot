@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.3] - 2025-02-08
+
+### Added
+- Automatic cleanup of temporary SVG files on server startup
+- Error message highlighting in red in debug panel
+- Improved error handling and recovery for plot commands
+
+### Changed
+- Enhanced button state management during plotting operations
+- Improved thread and resource cleanup
+- Better error reporting in debug panel
+- More robust SSE connection handling
+
+### Fixed
+- Button re-enable logic when plot fails to start
+- Temporary file cleanup on server restart
+- Thread management for failed plot commands
+- SSE connection cleanup on errors
+
+[1.4.3]: https://github.com/sdjayna/super-duper-octo-robot/compare/v1.4.2...v1.4.3
+
 ## [1.4.2] - 2025-02-07
 
 ### Added

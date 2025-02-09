@@ -41,6 +41,8 @@ For examples of artwork created using similar techniques, visit [plotter.art](ht
 - **Real-time Development**
   - Live preview with auto-refresh
   - Debug panel with real-time logging
+    - Color-coded error messages
+    - Automatic error recovery
   - Hot module reloading
   - Layer visibility controls
 
@@ -316,6 +318,16 @@ The framework provides:
 - Portrait/landscape orientation support
 - Real-time preview updates
 - Debug logging
+
+### Error Handling and Recovery
+
+The system provides comprehensive error handling:
+- Automatic cleanup of temporary files on server startup
+- Robust thread management for plot operations
+- Visual error highlighting in debug panel
+- Automatic control re-enabling on errors
+- Resource cleanup on plot failures
+- SSE connection management
 
 ### Code Style
 
