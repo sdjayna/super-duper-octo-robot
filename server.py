@@ -4,26 +4,90 @@ import os
 from datetime import datetime
 import xml.dom.minidom
 import pprint
+import subprocess
+import shlex
 
 class PlotterHandler(SimpleHTTPRequestHandler):
+    AXIDRAW_PATH = "./bin/axidraw"  # Path to the AxiDraw executable
+
     def handle_command(self, command_data):
-        """Handle plotter commands and return appropriate responses"""
+        """Handle plotter commands by executing AxiDraw CLI commands"""
         command = command_data.get('command')
         params = command_data.get('params', {})
         
-        # Dictionary of supported commands and their responses
+        # Dictionary mapping commands to their CLI parameters
         commands = {
-            'status': lambda: {'status': 'success', 'battery': '100%'},
-            'connect': lambda: {'status': 'success', 'battery': '100%'},
-            'home': lambda: {'status': 'success', 'message': 'Plotter homed successfully'},
-            'calibrate': lambda: {'status': 'success', 'message': 'Calibration complete'},
-            'test': lambda: {'status': 'success', 'message': 'Test pattern completed'}
+            'plot': lambda params: [
+                self.AXIDRAW_PATH, 
+                '--mode', 'plot',
+                '--layer', str(params.get('layer', '1'))
+            ],
+            'toggle': lambda _: [
+                self.AXIDRAW_PATH,
+                '--mode', 'toggle'
+            ],
+            'align': lambda _: [
+                self.AXIDRAW_PATH,
+                '--mode', 'align'
+            ],
+            'cycle': lambda _: [
+                self.AXIDRAW_PATH,
+                '--mode', 'cycle'
+            ]
         }
         
-        if command in commands:
-            return commands[command]()
-        else:
+        if command not in commands:
             return {'status': 'error', 'message': f'Unknown command: {command}'}
+            
+        try:
+            # Get the command array for this command
+            cmd_array = commands[command](params)
+            
+            # If this is a plot command and we have SVG data, save it to a temp file
+            if command == 'plot' and 'svg' in params:
+                temp_svg_path = f'temp_{datetime.now().strftime("%Y%m%d_%H%M%S")}.svg'
+                with open(temp_svg_path, 'w') as f:
+                    f.write(params['svg'])
+                cmd_array.extend(['--file', temp_svg_path])
+            
+            # Execute the command
+            print(f"Executing: {' '.join(cmd_array)}")  # Debug log
+            result = subprocess.run(
+                cmd_array,
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            
+            # Clean up temp file if it was created
+            if command == 'plot' and 'svg' in params:
+                os.remove(temp_svg_path)
+            
+            # Check if the command was successful
+            if result.returncode == 0:
+                return {
+                    'status': 'success',
+                    'message': result.stdout.strip() or 'Command executed successfully'
+                }
+            else:
+                raise subprocess.CalledProcessError(
+                    result.returncode,
+                    cmd_array,
+                    result.stdout,
+                    result.stderr
+                )
+                
+        except subprocess.CalledProcessError as e:
+            error_msg = e.stderr.strip() if e.stderr else str(e)
+            return {
+                'status': 'error',
+                'message': f'Command failed: {error_msg}'
+            }
+        except Exception as e:
+            return {
+                'status': 'error',
+                'message': f'Error executing command: {str(e)}'
+            }
     def do_OPTIONS(self):
         self.send_response(200)
         self.send_header('Access-Control-Allow-Origin', '*')
