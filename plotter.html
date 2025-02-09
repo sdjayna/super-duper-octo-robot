@@ -94,7 +94,11 @@
                     if (data.progress) {
                         if (data.progress === 'PLOT_COMPLETE') {
                             // Special message to re-enable controls
-                            updatePlotterStatus('Ready', true);
+                            updatePlotterStatus('Ready', true);  // Ensure both parameters are passed
+                            // Re-enable all preview controls
+                            document.querySelectorAll('.preview-section button, .preview-section select').forEach(control => {
+                                control.disabled = false;
+                            });
                             // Close SSE connection as plot is complete
                             if (progressEventSource) {
                                 progressEventSource.close();
