@@ -8,6 +8,31 @@ For examples of artwork created using similar techniques, visit [plotter.art](ht
 
 ![Plotter Art UI](ui-screenshot.png)
 
+## Contents
+
+- [Features](#features)
+- [Project Structure](#project-structure)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+- [Usage](#usage)
+  - [Basic Operation](#basic-operation)
+  - [File Output](#file-output)
+  - [Creating Custom Drawings](#creating-custom-drawings)
+- [Development](#development)
+  - [Adding New Drawing Types](#adding-new-drawing-types)
+  - [Code Style](#code-style)
+- [Color System](#color-system)
+- [Plotter Configuration](#plotter-configuration)
+- [API Documentation](#api-documentation)
+  - [Save SVG](#save-svg)
+  - [Plotter Control](#plotter-control)
+- [Contributing](#contributing)
+- [License](#license)
+- [Support](#support)
+- [Changelog](#changelog)
+- [Acknowledgments](#acknowledgments)
+
 ## Features
 
 - **Multiple Drawing Algorithms**
