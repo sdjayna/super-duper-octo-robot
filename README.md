@@ -186,6 +186,98 @@ export const drawings = {
 };
 ```
 
+## API Endpoints
+
+The development server provides two main endpoints:
+
+### Save SVG
+```http
+POST /save-svg
+Content-Type: application/json
+```
+
+Saves an SVG file with configuration metadata and pretty-printing.
+
+#### Request Body
+```json
+{
+    "name": "drawingName",
+    "svg": "<svg>...</svg>",
+    "config": {
+        // Drawing configuration object
+    }
+}
+```
+
+#### Response
+```json
+{
+    "status": "success",
+    "filename": "output/drawingName/20250203-153022.svg"
+}
+```
+
+### Plotter Control
+```http
+POST /plotter
+Content-Type: application/json
+```
+
+Controls the AxiDraw plotter with various commands.
+
+#### Commands
+
+1. Plot a Layer
+```json
+{
+    "command": "plot",
+    "layer": "1",
+    "layerLabel": "0-Traffic Red",
+    "svg": "<svg>...</svg>"
+}
+```
+
+2. Toggle Pen
+```json
+{
+    "command": "toggle"
+}
+```
+
+3. Align Paper
+```json
+{
+    "command": "align"
+}
+```
+
+4. Cycle Pen Positions
+```json
+{
+    "command": "cycle"
+}
+```
+
+#### Responses
+
+Success:
+```json
+{
+    "status": "success",
+    "message": "Command executed successfully"
+}
+```
+
+Error:
+```json
+{
+    "status": "error",
+    "message": "Error description"
+}
+```
+
+All endpoints support CORS and return JSON responses. Error responses include descriptive messages for troubleshooting.
+
 ## Development
 
 ### Adding New Drawing Types
