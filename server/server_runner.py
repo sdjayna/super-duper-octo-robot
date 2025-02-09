@@ -37,8 +37,9 @@ class ServerRestartHandler(FileSystemEventHandler):
 if __name__ == "__main__":
     event_handler = ServerRestartHandler()
     observer = Observer()
-    observer.schedule(event_handler, path='.', recursive=False)
+    observer.schedule(event_handler, path='.', recursive=True)
     observer.start()
+    print("\n👀 Watching for changes in Python files...")
 
     try:
         while True:
