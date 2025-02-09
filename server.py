@@ -159,29 +159,42 @@ class PlotterHandler(SimpleHTTPRequestHandler):
             
         try:
             if command == 'stop_plot':
+                print("\nExecuting stop_plot command...")
                 if PlotterHandler.current_plot_process:
+                    print(f"Found current plot process (PID: {PlotterHandler.current_plot_process.pid})")
                     # Terminate the current process
                     PlotterHandler.current_plot_process.terminate()
                     try:
+                        print("Waiting for process to terminate...")
                         PlotterHandler.current_plot_process.wait(timeout=5)
+                        print("Process terminated successfully")
                     except subprocess.TimeoutExpired:
+                        print("Process did not terminate, attempting to kill...")
                         PlotterHandler.current_plot_process.kill()
+                        print("Process killed")
                     PlotterHandler.current_plot_process = None
                     return {'status': 'success', 'message': 'Plot stopped'}
                 else:
+                    print("No current plot process found, searching for stray processes...")
                     # Also check for any stray axicli processes
                     found_stray = False
                     for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
                         if 'axicli' in str(proc.info.get('name', '')) or \
                            (proc.info.get('cmdline') and any('axicli' in str(cmd) for cmd in proc.info['cmdline'])):
+                            print(f"Found stray axicli process (PID: {proc.pid})")
                             proc.terminate()
                             try:
+                                print(f"Waiting for stray process {proc.pid} to terminate...")
                                 proc.wait(timeout=5)
+                                print(f"Stray process {proc.pid} terminated successfully")
                             except psutil.TimeoutExpired:
+                                print(f"Stray process {proc.pid} did not terminate, attempting to kill...")
                                 proc.kill()
+                                print(f"Stray process {proc.pid} killed")
                             found_stray = True
                     if found_stray:
                         return {'status': 'success', 'message': 'Stray plot process stopped'}
+                    print("No axicli processes found")
                     return {'status': 'success', 'message': 'No active plot to stop'}
             elif command == 'plot':
                 return commands[command](params)
