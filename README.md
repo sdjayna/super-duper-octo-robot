@@ -384,6 +384,14 @@ See [CHANGELOG.md](CHANGELOG.md) for version history and updates.
 
 ## Acknowledgments
 
-- Inspired by C.J. Bouwkamp's work on perfect square subdivisions
-- Built for pen plotter art generation
-- Color palette based on common plotter pen sets
+- Inspired by Jupiter Jayna's work with algorithmic plotter art and acrylic paint application
+- Built using the AxiDraw SE/A3 plotter from Evil Mad Scientist Laboratories
+- Color palette based on Molotow Acrylic Paint Markers and common plotter pen sets
+- Polygon filling techniques inspired by both traditional hatching and polygon offsetting methods
+- Special thanks to:
+  - Evil Mad Scientist for their excellent AxiDraw API and CLI tools
+  - C.J. Bouwkamp's work on perfect square subdivisions
+  - The Clipper library for polygon operations
+  - The algorithmic art community for sharing techniques and inspiration
+
+For more information about Jupiter Jayna's work with algorithmic plotter art, visit [plotter.art](https://plotter.art).
