@@ -33,6 +33,7 @@ body, html {
     flex-direction: column;
     overflow-y: auto;
     min-width: 200px;
+    height: 100vh;
 }
 
 .debug-panel h3 {
@@ -47,20 +48,23 @@ body, html {
     font-family: monospace;
     font-size: 12px;
     white-space: pre-wrap;
+    height: calc(100% - 40px);
     overflow-y: auto;
-    flex: 1;
-    min-height: 0;
 }
 
-.debug-section, .plotter-section {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+.preview-section,
+.plotter-section,
+.debug-section {
+    flex: 0 0 33.333%;
+    min-height: 0;
+    overflow: auto;
+    padding: 10px;
+    box-sizing: border-box;
+    border-bottom: 1px solid #ccc;
 }
 
 .debug-section {
-    border-bottom: 1px solid #ccc;
+    border-bottom: none;
 }
 
 .plotter-controls {
