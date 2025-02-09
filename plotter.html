@@ -117,7 +117,12 @@
                                 progressEventSource = null;
                             }
                         } else {
-                            logDebug(data.progress, 'info');
+                            // Check if the message contains an error
+                            if (data.progress.toLowerCase().includes('error')) {
+                                logDebug(data.progress, 'error');
+                            } else {
+                                logDebug(data.progress, 'info');
+                            }
                         }
                     }
                 } catch (error) {
