@@ -66,7 +66,7 @@ class PlotterHandler(SimpleHTTPRequestHandler):
             self.send_header('Content-Type', 'image/x-icon')
             self.end_headers()
             try:
-                with open('static/favicon.ico', 'rb') as f:
+                with open('src/static/favicon.ico', 'rb') as f:
                     self.wfile.write(f.read())
             except FileNotFoundError:
                 # If favicon.ico doesn't exist, return empty response
