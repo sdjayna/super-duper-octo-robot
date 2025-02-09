@@ -62,7 +62,14 @@ class PlotterHandler(SimpleHTTPRequestHandler):
         
         # Handle JS file requests
         if self.path.startswith('/js/'):
-            self.path = '/src' + self.path
+            js_path = os.path.join('client', self.path.lstrip('/'))
+            if os.path.exists(js_path):
+                self.send_response(200)
+                self.send_header('Content-Type', 'application/javascript')
+                self.end_headers()
+                with open(js_path, 'rb') as f:
+                    self.wfile.write(f.read())
+                return
         
         # Handle favicon.ico requests
         if self.path == '/favicon.ico':
