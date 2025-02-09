@@ -25,7 +25,7 @@ body, html {
 }
 
 .debug-panel {
-    flex: 0 0 350px;
+    flex: 0 0 500px;
     background: white;
     border-left: 1px solid #ccc;
     display: flex;
