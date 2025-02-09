@@ -6,6 +6,7 @@ PYTHON=python3
 # Install dependencies
 install:
 	$(PYTHON) -m venv . --without-scm-ignore-files
+	. ./bin/activate && pip install --upgrade pip
 	. ./bin/activate && pip install -r requirements.txt
 	. ./bin/activate && pip install "https://cdn.evilmadscientist.com/dl/ad/public/AxiDraw_API.zip"
 
