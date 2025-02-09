@@ -372,10 +372,19 @@
             const currentLayer = document.getElementById('layerSelect').value;
             if (currentLayer === 'all') return;
             
-            logDebug(`Plotting layer ${currentLayer}...`);
+            // Get the full layer label to extract color information
+            const layerSelect = document.getElementById('layerSelect');
+            const selectedOption = layerSelect.options[layerSelect.selectedIndex];
+            const layerLabel = selectedOption.textContent;
+            
+            logDebug(`Plotting layer ${layerLabel}...`);
             const svgData = new XMLSerializer().serializeToString(svg);
-            if (await sendPlotterCommand('plot', { svg: svgData, layer: currentLayer })) {
-                logDebug(`Layer ${currentLayer} plot command sent successfully`);
+            if (await sendPlotterCommand('plot', { 
+                svg: svgData, 
+                layer: currentLayer,
+                layerLabel: layerLabel 
+            })) {
+                logDebug(`Layer ${layerLabel} plot command sent successfully`);
                 updatePlotterStatus('Plotting', true);
             }
         });
