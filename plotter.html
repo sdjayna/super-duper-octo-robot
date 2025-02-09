@@ -435,13 +435,15 @@
         }
 
         function updatePlotterStatus(status, isConnected = false) {
-            // Get all plotter control buttons
+            // Get all control elements
             const plotButtons = document.querySelectorAll('.plotter-button');
             const stopButton = document.getElementById('plotterStopPlot');
             const plotLayerButton = document.getElementById('plotterPlotLayer');
+            const layerSelect = document.getElementById('layerSelect');
+            const previewControls = document.querySelectorAll('.preview-section button, .preview-section select');
             
             if (status === 'Plotting') {
-                // During plotting, disable all buttons except Stop
+                // During plotting, disable all controls except Stop Plot button
                 plotButtons.forEach(button => {
                     if (button !== stopButton) {
                         button.disabled = true;
@@ -449,15 +451,27 @@
                 });
                 // Ensure stop button is enabled
                 stopButton.disabled = false;
+                // Disable layer select
+                layerSelect.disabled = true;
+                // Disable all preview controls
+                previewControls.forEach(control => {
+                    control.disabled = true;
+                });
             } else {
-                // When not plotting, enable all buttons except Plot Layer (which depends on layer selection)
+                // When not plotting, restore normal control states
                 plotButtons.forEach(button => {
                     if (button === plotLayerButton) {
                         // Plot Layer button is enabled only when a specific layer is selected
-                        button.disabled = document.getElementById('layerSelect').value === 'all';
+                        button.disabled = layerSelect.value === 'all';
                     } else {
                         button.disabled = false;
                     }
+                });
+                // Enable layer select
+                layerSelect.disabled = false;
+                // Enable all preview controls
+                previewControls.forEach(control => {
+                    control.disabled = false;
                 });
             }
         }
