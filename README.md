@@ -71,23 +71,49 @@ The project is optimized for two specific pen types:
 ## Project Structure
 
 ```
-├── js/
-│   ├── app.js              # Main application logic
-│   ├── DrawingConfig.js    # Base drawing configuration
-│   ├── BouwkampConfig.js   # Perfect square subdivision config
-│   ├── DelaunayConfig.js   # Triangulation configuration
-│   ├── ColorManager.js     # Smart color selection system
-│   ├── drawings/
-│   │   ├── bouwkamp.js    # Perfect square drawing implementation
-│   │   └── delaunay.js    # Triangulation drawing implementation
-│   ├── bouwkampUtils.js    # Square subdivision utilities
-│   ├── svgUtils.js        # SVG generation and manipulation
-│   └── colorPalette.js    # Color definitions and palettes
-├── server.py             # Python development server
-├── plotter.html         # Main application interface
-├── .eslintrc.json      # JavaScript linting rules
-├── CHANGELOG.md        # Version history
-└── README.md
+├── client/
+│   ├── js/
+│   │   ├── app.js                # Main application logic
+│   │   ├── BouwkampConfig.js     # Perfect square subdivision config
+│   │   ├── ColorManager.js       # Smart color selection system
+│   │   ├── DelaunayConfig.js     # Triangulation configuration
+│   │   ├── DrawingConfig.js      # Base drawing configuration
+│   │   ├── HilbertConfig.js      # Hilbert curve configuration
+│   │   ├── bouwkampUtils.js      # Square subdivision utilities
+│   │   ├── colorPalette.js       # Color definitions and palettes
+│   │   ├── configs/
+│   │   │   └── BaseConfig.js     # Base configuration class
+│   │   ├── drawings/
+│   │   │   ├── bouwkamp.js      # Perfect square implementation
+│   │   │   ├── delaunay.js      # Triangulation implementation
+│   │   │   ├── hilbert.js       # Hilbert curve implementation
+│   │   │   └── types.js         # Drawing type definitions
+│   │   └── svgUtils.js          # SVG generation and manipulation
+│   ├── static/
+│   │   ├── css/
+│   │   │   └── styles.css       # Application styles
+│   │   └── favicon.ico          # Site favicon
+│   └── templates/
+│       └── plotter.html         # Main application interface
+├── server/
+│   ├── handlers/
+│   │   ├── plotter_handler.py   # Main request handler
+│   │   └── sse_handler.py       # Server-sent events handler
+│   ├── services/
+│   │   └── __init__.py         # Service layer initialization
+│   ├── utils/
+│   │   └── __init__.py         # Utility functions initialization
+│   ├── __init__.py             # Server package initialization
+│   ├── plotter_config.py       # Plotter settings
+│   ├── server.py               # Main server implementation
+│   └── server_runner.py        # Development server with hot reload
+├── .eslintrc.json             # JavaScript linting rules
+├── CHANGELOG.md               # Version history
+├── CONTRIBUTING.md            # Contribution guidelines
+├── LICENSE                    # MIT license
+├── Makefile                  # Build and run commands
+├── README.md                 # Project documentation
+└── requirements.txt          # Python dependencies
 ```
 
 ## Getting Started
