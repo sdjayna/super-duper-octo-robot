@@ -353,16 +353,14 @@ See `colorPalette.js` for the complete list of available colors.
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on:
+- Development workflow
+- Code style
+- Documentation requirements
+- Pull request process
+- Code of conduct
 
-Please:
-- Follow the existing code style
-- Add JSDoc comments
-- Update documentation
-- Test thoroughly
+Before contributing, please review our contribution guidelines to ensure a smooth collaboration process.
 
 ## License
 
