@@ -93,8 +93,8 @@ For examples of artwork created using similar techniques, visit [plotter.art](ht
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/plotter-art.git
-   cd plotter-art
+   git clone https://github.com/sdjayna/super-duper-octo-robot.git
+   cd super-duper-octo-robot
    ```
 
 2. Create and activate Python virtual environment in current directory:
@@ -454,7 +454,7 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) for deta
 ## Support
 
 For support:
-1. Check existing [Issues](https://github.com/yourusername/plotter-art/issues)
+1. Check existing [Issues](https://github.com/sdjayna/super-duper-octo-robot/issues)
 2. Open a new issue with:
    - Browser version
    - Complete error message

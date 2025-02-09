@@ -26,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed redundant "Last updated" message from preview section
 - Improved debug message panel scrolling behavior
 
-[1.4.1]: https://github.com/yourusername/plotter-art/compare/v1.4.0...v1.4.1
+[1.4.1]: https://github.com/sdjayna/super-duper-octo-robot/compare/v1.4.0...v1.4.1
 
 ## [1.4.0] - 2025-02-05
 
@@ -42,7 +42,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced plot command to use configured pen positions
 - Improved plotter command logging and feedback
 
-[1.4.0]: https://github.com/yourusername/plotter-art/compare/v1.3.0...v1.4.0
+[1.4.0]: https://github.com/sdjayna/super-duper-octo-robot/compare/v1.3.0...v1.4.0
 
 ## [1.3.0] - 2025-02-04
 
@@ -130,7 +130,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Simple color separation
 - Development server with hot reload
 
-[1.3.0]: https://github.com/yourusername/plotter-art/compare/v1.2.0...v1.3.0
-[1.2.0]: https://github.com/yourusername/plotter-art/compare/v1.1.0...v1.2.0
-[1.1.0]: https://github.com/yourusername/plotter-art/compare/v1.0.0...v1.1.0
-[1.0.0]: https://github.com/yourusername/plotter-art/releases/tag/v1.0.0
+[1.3.0]: https://github.com/sdjayna/super-duper-octo-robot/compare/v1.2.0...v1.3.0
+[1.2.0]: https://github.com/sdjayna/super-duper-octo-robot/compare/v1.1.0...v1.2.0
+[1.1.0]: https://github.com/sdjayna/super-duper-octo-robot/compare/v1.0.0...v1.1.0
+[1.0.0]: https://github.com/sdjayna/super-duper-octo-robot/releases/tag/v1.0.0
