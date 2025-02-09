@@ -20,7 +20,7 @@ class PlotterHandler(SimpleHTTPRequestHandler):
             'plot': lambda params: [
                 self.AXIDRAW_PATH, 
                 '--mode', 'plot',
-                '--layer', str(params.get('layerLabel', '').split('-')[0])  # Extract layer number from label
+                '--layer', str(params.get('layer', '1'))  # Use the layer number directly
             ],
             'toggle': lambda _: [
                 self.AXIDRAW_PATH,
@@ -51,7 +51,8 @@ class PlotterHandler(SimpleHTTPRequestHandler):
                 cmd_array.extend(['--file', temp_svg_path])
             
             # Execute the command
-            print(f"Executing command for layer: {params.get('layerLabel', 'unknown')}")  # Add this line
+            print(f"Executing command for layer number: {params.get('layer', '1')}")
+            print(f"Executing command for layer label: {params.get('layerLabel', 'unknown')}")
             print(f"Executing: {' '.join(cmd_array)}")  # Debug log
             result = subprocess.run(
                 cmd_array,
