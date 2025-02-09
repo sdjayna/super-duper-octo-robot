@@ -32,7 +32,6 @@
                         <div class="control-section-content">
                             <button id="toggleOrientation">Portrait</button>
                             <button id="toggleRefresh" class="paused">Resume Refresh</button>
-                            <div class="last-update">Last updated: <span id="lastRefresh"></span></div>
                         </div>
                     </div>
                     
@@ -92,7 +91,6 @@
         }
         const select = document.getElementById('drawingSelect');
         const container = document.getElementById('svgContainer');
-        const lastRefreshSpan = document.getElementById('lastRefresh');
         const exportButton = document.getElementById('exportSvg');
 
         async function updateSvg() {
@@ -131,7 +129,6 @@
                 const result = await response.json();
                 if (result.status === 'success') {
                     console.log(`SVG saved to ${result.filename}`);
-                    lastRefreshSpan.textContent = `Saved: ${result.filename}`;
                     logDebug(`SVG saved to ${result.filename}`);
                 }
             } catch (error) {
@@ -234,7 +231,6 @@
                 populateLayerSelect();
                 document.getElementById('layerSelect').value = currentLayer;
                 updateLayerVisibility();
-                lastRefreshSpan.textContent = new Date().toLocaleTimeString();
             } catch (error) {
                 console.error('Error:', error);
                 logDebug('Error generating SVG: ' + error.message, 'error');
