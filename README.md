@@ -211,7 +211,7 @@ export const drawings = {
 };
 ```
 
-## API Endpoints
+## API Documentation
 
 The development server provides two main endpoints:
 
