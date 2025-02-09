@@ -2,6 +2,7 @@ from http.server import HTTPServer, SimpleHTTPRequestHandler
 import json
 import os
 from datetime import datetime
+import psutil
 import xml.dom.minidom
 import pprint
 import subprocess
@@ -102,14 +103,23 @@ class PlotterHandler(SimpleHTTPRequestHandler):
                 '--mode', 'cycle',
                 '--model', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['model']),
                 '--penlift', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['penlift'])
-            ]
+            ],
+            'stop_plot': lambda _: None  # Special case handled below
         }
         
         if command not in commands:
             return {'status': 'error', 'message': f'Unknown command: {command}'}
             
         try:
-            if command == 'plot':
+            if command == 'stop_plot':
+                # Find and terminate the running axicli process
+                for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+                    if 'axicli' in str(proc.info.get('name', '')) or \
+                       (proc.info.get('cmdline') and any('axicli' in str(cmd) for cmd in proc.info['cmdline'])):
+                        proc.terminate()
+                        proc.wait(timeout=5)  # Wait up to 5 seconds for the process to terminate
+                return {'status': 'success', 'message': 'Plot stopped'}
+            elif command == 'plot':
                 return commands[command](params)
             else:
                 # Handle non-plot commands
