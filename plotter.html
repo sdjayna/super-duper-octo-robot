@@ -77,10 +77,18 @@
         // Make logDebug available globally
         window.logDebug = function(message, type = 'info') {
             const debugLog = document.getElementById('debugLog');
+            
+            // Remove bold from previous last message if it exists
+            const previousLastEntry = debugLog.lastElementChild;
+            if (previousLastEntry) {
+                previousLastEntry.style.fontWeight = 'normal';
+            }
+            
             const entry = document.createElement('div');
             entry.className = `debug-entry debug-${type}`;
             entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
-	    console.log(entry);
+            entry.style.fontWeight = 'bold';  // Make new entry bold
+            console.log(entry);
             debugLog.appendChild(entry);
             debugLog.scrollTop = debugLog.scrollHeight;
             
