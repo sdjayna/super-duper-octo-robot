@@ -188,6 +188,12 @@ class PlotterHandler(SimpleHTTPRequestHandler):
             ],
             'home': lambda _: [
                 self.AXIDRAW_PATH,
+                '--mode', 'manual', 
+                '--manual_cmd', 'raise_pen',
+                '--model', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['model']),
+                '--penlift', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['penlift']),
+                ';',
+                self.AXIDRAW_PATH,
                 '--mode', 'manual',
                 '--manual_cmd', 'walk_home',
                 '--model', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['model']),
