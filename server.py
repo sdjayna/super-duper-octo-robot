@@ -40,7 +40,8 @@ class PlotterHandler(SimpleHTTPRequestHandler):
                     '--layer', str(params['layer']),
                     '--model', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['model']),
                     '--pen_pos_up', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['pen_pos_up']),
-                    '--pen_pos_down', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['pen_pos_down'])
+                    '--pen_pos_down', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['pen_pos_down']),
+                    '--penlift', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['penlift'])
                 ])
                 
                 print(f"Executing command for layer number: {params.get('layer', '1')}")
@@ -69,17 +70,20 @@ class PlotterHandler(SimpleHTTPRequestHandler):
             'toggle': lambda _: [
                 self.AXIDRAW_PATH,
                 '--mode', 'toggle',
-                '--model', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['model'])
+                '--model', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['model']),
+                '--penlift', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['penlift'])
             ],
             'align': lambda _: [
                 self.AXIDRAW_PATH,
                 '--mode', 'align',
-                '--model', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['model'])
+                '--model', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['model']),
+                '--penlift', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['penlift'])
             ],
             'cycle': lambda _: [
                 self.AXIDRAW_PATH,
                 '--mode', 'cycle',
-                '--model', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['model'])
+                '--model', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['model']),
+                '--penlift', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['penlift'])
             ]
         }
         
