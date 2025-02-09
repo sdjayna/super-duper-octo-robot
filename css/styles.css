@@ -185,6 +185,17 @@ body, html {
     font-size: 0.9em;
 }
 
+.last-update {
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+    color: #666;
+    padding: 6px 0;
+}
+
+#lastRefresh {
+    margin-left: 4px;
+}
 
 
 .debug-entry {
