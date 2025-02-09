@@ -38,7 +38,9 @@ class PlotterHandler(SimpleHTTPRequestHandler):
                 cmd.extend([
                     '--mode', 'layers',
                     '--layer', str(params['layer']),
-                    '--model', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['model'])
+                    '--model', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['model']),
+                    '--pen_pos_up', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['pen_pos_up']),
+                    '--pen_pos_down', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['pen_pos_down'])
                 ])
                 
                 print(f"Executing command for layer number: {params.get('layer', '1')}")
