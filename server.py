@@ -8,7 +8,7 @@ import subprocess
 import shlex
 
 class PlotterHandler(SimpleHTTPRequestHandler):
-    AXIDRAW_PATH = "./bin/axidraw"  # Path to the AxiDraw executable
+    AXIDRAW_PATH = "./bin/axicli"  # Path to the AxiDraw executable
 
     def handle_command(self, command_data):
         """Handle plotter commands by executing AxiDraw CLI commands"""
