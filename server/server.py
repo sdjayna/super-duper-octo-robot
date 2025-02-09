@@ -21,7 +21,7 @@ class PlotterHandler(SimpleHTTPRequestHandler):
     def do_GET(self):
         # Redirect root to plotter.html
         if self.path == '/':
-            self.path = '/src/templates/plotter.html'
+            self.path = '/client/templates/plotter.html'
         if self.path == '/plot-progress':
             self.send_response(200)
             self.send_header('Content-Type', 'text/event-stream')
@@ -51,7 +51,7 @@ class PlotterHandler(SimpleHTTPRequestHandler):
             
         # Handle CSS file requests
         if self.path.startswith('/css/'):
-            css_path = os.path.join('src/static', self.path.lstrip('/'))
+            css_path = os.path.join('client/static', self.path.lstrip('/'))
             if os.path.exists(css_path):
                 self.send_response(200)
                 self.send_header('Content-Type', 'text/css')
@@ -66,7 +66,7 @@ class PlotterHandler(SimpleHTTPRequestHandler):
             self.send_header('Content-Type', 'image/x-icon')
             self.end_headers()
             try:
-                with open('src/static/favicon.ico', 'rb') as f:
+                with open('client/static/favicon.ico', 'rb') as f:
                     self.wfile.write(f.read())
             except FileNotFoundError:
                 # If favicon.ico doesn't exist, return empty response
