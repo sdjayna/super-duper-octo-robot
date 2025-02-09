@@ -50,6 +50,7 @@
             const entry = document.createElement('div');
             entry.className = `debug-entry debug-${type}`;
             entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+	    console.log(entry);
             debugLog.appendChild(entry);
             debugLog.scrollTop = debugLog.scrollHeight;
             
@@ -361,13 +362,6 @@
             const layerSelect = document.getElementById('layerSelect');
             document.getElementById('plotterPlotLayer').disabled = layerSelect.value === 'all';
         }
-
-        // Plotter control event listeners
-        document.getElementById('plotterHome').addEventListener('click', async () => {
-            if (await sendPlotterCommand('home')) {
-                updatePlotterStatus('Ready', true);
-            }
-        });
 
         document.getElementById('plotterPlotLayer').addEventListener('click', async () => {
             const svg = container.querySelector('svg');
