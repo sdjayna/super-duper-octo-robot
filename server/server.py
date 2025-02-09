@@ -147,8 +147,12 @@ class PlotterHandler(SimpleHTTPRequestHandler):
                         error = process.stderr.readline()
                         if error:
                             error = error.strip()
-                            print(f"Plot error: {error}")  # Debug log
-                            self.send_progress_update(f"Error: {error}")
+                            if "estimated print time" in error.lower():
+                                print(f"Plot info: {error}")  # Debug log
+                                self.send_progress_update(error)
+                            else:
+                                print(f"Plot error: {error}")  # Debug log
+                                self.send_progress_update(f"Error: {error}")
 
                         # Check if process has finished
                         if process.poll() is not None:
