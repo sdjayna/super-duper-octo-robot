@@ -14,6 +14,7 @@ from plotter_config import PLOTTER_CONFIGS, CURRENT_PLOTTER
 class PlotterHandler(SimpleHTTPRequestHandler):
     AXIDRAW_PATH = "./bin/axicli"  # Path to the AxiDraw executable
     current_plot_process = None  # Track the current plotting process
+    sse_connections = set()  # Track active SSE connections
 
     def do_GET(self):
         if self.path == '/plot-progress':
@@ -24,6 +25,9 @@ class PlotterHandler(SimpleHTTPRequestHandler):
             self.send_header('Access-Control-Allow-Origin', '*')
             self.end_headers()
             
+            # Add this connection to the set
+            PlotterHandler.sse_connections.add(self)
+            
             # Keep connection alive
             try:
                 while True:
@@ -31,6 +35,9 @@ class PlotterHandler(SimpleHTTPRequestHandler):
                     time.sleep(1)
             except (BrokenPipeError, ConnectionResetError):
                 print("Client disconnected from SSE")
+            finally:
+                # Remove connection when client disconnects
+                PlotterHandler.sse_connections.remove(self)
             return
             
         # Handle favicon.ico requests
@@ -340,14 +347,19 @@ Configuration:
             self.wfile.write(str(e).encode())
     
     def send_progress_update(self, message):
-        if hasattr(self, 'wfile'):
+        data = f"data: {json.dumps({'progress': message})}\n\n".encode('utf-8')
+        # Send to all active connections
+        disconnected = set()
+        for connection in PlotterHandler.sse_connections:
             try:
-                print(f"Sending progress update: {message}")  # Debug log
-                data = json.dumps({'progress': message})
-                self.wfile.write(f"data: {data}\n\n".encode('utf-8'))
-                self.wfile.flush()
+                connection.wfile.write(data)
+                connection.wfile.flush()
             except Exception as e:
-                print(f"Error sending progress update: {e}")
+                print(f"Error sending progress update to client: {e}")
+                disconnected.add(connection)
+        
+        # Clean up any disconnected clients
+        PlotterHandler.sse_connections.difference_update(disconnected)
 
     def end_headers(self):
         self.send_header('Access-Control-Allow-Origin', '*')
