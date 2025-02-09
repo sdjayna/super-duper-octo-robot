@@ -7,6 +7,7 @@ import xml.dom.minidom
 import pprint
 import subprocess
 import shlex
+import threading
 from plotter_config import PLOTTER_CONFIGS, CURRENT_PLOTTER
 
 class PlotterHandler(SimpleHTTPRequestHandler):
@@ -64,72 +65,75 @@ class PlotterHandler(SimpleHTTPRequestHandler):
                         'message': f'Failed to create temporary file: {str(e)}'
                     }
             
-            try:
-                # Build command array with filename as first parameter after axicli
-                cmd = [self.AXIDRAW_PATH]
-                if temp_svg_path:
-                    cmd.append(temp_svg_path)
-                cmd.extend([
-                    '--mode', 'layers',
-                    '--layer', str(params['layer']),
-                    '--model', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['model']),
-                    '--pen_pos_up', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['pen_pos_up']),
-                    '--pen_pos_down', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['pen_pos_down']),
-                    '--penlift', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['penlift']),
-                    '--progress'
-                ])
-                
-                print(f"Executing command for layer number: {params.get('layer', '1')}")
-                print(f"Executing command for layer label: {params.get('layerLabel', 'unknown')}")
-                print(f"Executing: {' '.join(cmd)}")
-                
-                # Use Popen instead of run to get real-time output
-                process = subprocess.Popen(
-                    cmd,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    text=True,
-                    bufsize=1,
-                    universal_newlines=True
-                )
+            def run_plot():
+                try:
+                    # Build command array with filename as first parameter after axicli
+                    cmd = [self.AXIDRAW_PATH]
+                    if temp_svg_path:
+                        cmd.append(temp_svg_path)
+                    cmd.extend([
+                        '--mode', 'layers',
+                        '--layer', str(params['layer']),
+                        '--model', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['model']),
+                        '--pen_pos_up', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['pen_pos_up']),
+                        '--pen_pos_down', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['pen_pos_down']),
+                        '--penlift', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['penlift']),
+                        '--progress'
+                    ])
+                    
+                    print(f"Executing command for layer number: {params.get('layer', '1')}")
+                    print(f"Executing command for layer label: {params.get('layerLabel', 'unknown')}")
+                    print(f"Executing: {' '.join(cmd)}")
+                    
+                    # Use Popen instead of run to get real-time output
+                    process = subprocess.Popen(
+                        cmd,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        text=True,
+                        bufsize=1,
+                        universal_newlines=True
+                    )
 
-                # Store the process
-                PlotterHandler.current_plot_process = process
+                    # Store the process
+                    PlotterHandler.current_plot_process = process
 
-                # Stream output in real-time
-                while True:
-                    output = process.stdout.readline()
-                    if output:
-                        print(output.strip())
-                        # Send progress update via SSE
-                        self.send_progress_update(output.strip())
+                    # Stream output in real-time
+                    while True:
+                        output = process.stdout.readline()
+                        if output:
+                            print(output.strip())
+                            # Send progress update via SSE
+                            self.send_progress_update(output.strip())
+                
+                        # Check if process has finished
+                        if process.poll() is not None:
+                            break
             
-                    # Check if process has finished
-                    if process.poll() is not None:
-                        break
-        
-                # Get final return code
-                if process.returncode != 0:
-                    raise subprocess.CalledProcessError(process.returncode, cmd)
-                
-                # Clear the process reference
-                PlotterHandler.current_plot_process = None
-        
-                return {
-                    'status': 'success',
-                    'message': 'Plot command completed successfully'
-                }
-                
-            finally:
-                # Clear the process reference in case of error
-                PlotterHandler.current_plot_process = None
-                # Clean up temp file if it was created
-                if temp_svg_path:
-                    try:
-                        if os.path.exists(temp_svg_path):
-                            os.remove(temp_svg_path)
-                    except OSError as e:
-                        print(f"Error removing temporary file {temp_svg_path}: {e}")
+                    # Get final return code
+                    if process.returncode != 0:
+                        raise subprocess.CalledProcessError(process.returncode, cmd)
+                    
+                finally:
+                    # Clear the process reference
+                    PlotterHandler.current_plot_process = None
+                    # Clean up temp file if it was created
+                    if temp_svg_path:
+                        try:
+                            if os.path.exists(temp_svg_path):
+                                os.remove(temp_svg_path)
+                        except OSError as e:
+                            print(f"Error removing temporary file {temp_svg_path}: {e}")
+
+            # Start the plot in a separate thread
+            plot_thread = threading.Thread(target=run_plot)
+            plot_thread.daemon = True  # Make thread daemon so it doesn't block program exit
+            plot_thread.start()
+            
+            return {
+                'status': 'success',
+                'message': 'Plot command started'
+            }
 
         commands = {
             'plot': plot_command,
