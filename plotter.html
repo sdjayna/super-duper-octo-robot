@@ -60,6 +60,7 @@
                     <div class="control-section">
                         <h4>Setup</h4>
                         <div class="control-section-content">
+                            <button id="plotterHome" class="plotter-button">Home</button>
                             <button id="plotterCycle" class="plotter-button">Cycle</button>
                             <button id="plotterAlign" class="plotter-button">Align</button>
                             <button id="plotterToggle" class="plotter-button">Toggle</button>
@@ -498,6 +499,14 @@
             logDebug('Sending stop plot command...');
             if (await sendPlotterCommand('stop_plot')) {
                 logDebug('Stop plot command sent successfully');
+                updatePlotterStatus('Ready', true);
+            }
+        });
+
+        document.getElementById('plotterHome').addEventListener('click', async () => {
+            logDebug('Sending home command...');
+            if (await sendPlotterCommand('home')) {
+                logDebug('Home command completed');
                 updatePlotterStatus('Ready', true);
             }
         });
