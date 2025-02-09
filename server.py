@@ -6,6 +6,7 @@ import xml.dom.minidom
 import pprint
 import subprocess
 import shlex
+from plotter_config import PLOTTER_CONFIGS, CURRENT_PLOTTER
 
 class PlotterHandler(SimpleHTTPRequestHandler):
     AXIDRAW_PATH = "./bin/axicli"  # Path to the AxiDraw executable
@@ -36,7 +37,8 @@ class PlotterHandler(SimpleHTTPRequestHandler):
                     cmd.append(temp_svg_path)
                 cmd.extend([
                     '--mode', 'layers',
-                    '--layer', str(params['layer'])
+                    '--layer', str(params['layer']),
+                    '--model', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['model'])
                 ])
                 
                 print(f"Executing command for layer number: {params.get('layer', '1')}")
@@ -64,15 +66,18 @@ class PlotterHandler(SimpleHTTPRequestHandler):
             'plot': plot_command,
             'toggle': lambda _: [
                 self.AXIDRAW_PATH,
-                '--mode', 'toggle'
+                '--mode', 'toggle',
+                '--model', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['model'])
             ],
             'align': lambda _: [
                 self.AXIDRAW_PATH,
-                '--mode', 'align'
+                '--mode', 'align',
+                '--model', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['model'])
             ],
             'cycle': lambda _: [
                 self.AXIDRAW_PATH,
-                '--mode', 'cycle'
+                '--mode', 'cycle',
+                '--model', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['model'])
             ]
         }
         
