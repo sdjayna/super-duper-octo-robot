@@ -53,21 +53,27 @@ body, html {
 }
 
 .preview-section,
-.plotter-section,
-.debug-section {
-    flex: 1;
+.plotter-section {
+    flex: 0 0 auto;
     display: flex;
     flex-direction: column;
     padding: 15px;
     border-bottom: 1px solid #ccc;
 }
 
-.preview-controls {
+.debug-section {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    padding: 15px;
+    border-bottom: none;
+}
+
+.preview-controls,
+.plotter-controls {
     display: flex;
     flex-direction: column;
     gap: 15px;
-    flex: 1;
-    overflow: auto;
 }
 
 .control-section {
@@ -93,7 +99,6 @@ body, html {
     gap: 8px;
 }
 
-.plotter-controls,
 #debugLog {
     flex: 1;
     overflow: auto;
