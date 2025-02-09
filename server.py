@@ -102,10 +102,18 @@ class PlotterHandler(SimpleHTTPRequestHandler):
                     while True:
                         output = process.stdout.readline()
                         if output:
-                            print(output.strip())
+                            output = output.strip()
+                            print(f"Plot output: {output}")  # Debug log
                             # Send progress update via SSE
-                            self.send_progress_update(output.strip())
-                
+                            self.send_progress_update(output)
+                        
+                        # Also check stderr for any errors
+                        error = process.stderr.readline()
+                        if error:
+                            error = error.strip()
+                            print(f"Plot error: {error}")  # Debug log
+                            self.send_progress_update(f"Error: {error}")
+
                         # Check if process has finished
                         if process.poll() is not None:
                             break
@@ -324,10 +332,12 @@ Configuration:
     def send_progress_update(self, message):
         if hasattr(self, 'wfile'):
             try:
-                self.wfile.write(f"data: {json.dumps({'progress': message})}\n\n".encode())
+                print(f"Sending progress update: {message}")  # Debug log
+                data = json.dumps({'progress': message})
+                self.wfile.write(f"data: {data}\n\n".encode('utf-8'))
                 self.wfile.flush()
-            except:
-                pass
+            except Exception as e:
+                print(f"Error sending progress update: {e}")
 
     def end_headers(self):
         self.send_header('Access-Control-Allow-Origin', '*')

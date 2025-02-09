@@ -82,17 +82,32 @@
                 progressEventSource.close();
             }
             
+            logDebug('Starting progress listener...');
             progressEventSource = new EventSource('http://localhost:8000/plot-progress');
+            
             progressEventSource.onmessage = function(event) {
-                const data = JSON.parse(event.data);
-                if (data.progress) {
-                    logDebug(data.progress);
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.progress) {
+                        logDebug(`Plot progress: ${data.progress}`);
+                    }
+                } catch (error) {
+                    logDebug(`Error parsing progress data: ${error}`, 'error');
                 }
             };
             
-            progressEventSource.onerror = function() {
-                progressEventSource.close();
-                progressEventSource = null;
+            progressEventSource.onerror = function(error) {
+                logDebug('Progress listener error, reconnecting...', 'error');
+                if (progressEventSource) {
+                    progressEventSource.close();
+                    progressEventSource = null;
+                }
+                // Attempt to reconnect after a short delay
+                setTimeout(startProgressListener, 1000);
+            };
+
+            progressEventSource.onopen = function() {
+                logDebug('Progress listener connected');
             };
         }
 
