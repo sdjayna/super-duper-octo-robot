@@ -31,6 +31,7 @@
                         <h4>Preview</h4>
                         <div class="control-section-content">
                             <button id="toggleOrientation">Portrait</button>
+                            <button id="toggleRulers">Hide Rulers</button>
                             <button id="updateSvg">Update Preview</button>
                             <button id="toggleRefresh" class="paused">Resume Refresh</button>
                         </div>
@@ -481,6 +482,22 @@
         document.getElementById('toggleRefresh').addEventListener('click', toggleRefresh);
         document.getElementById('toggleDebug').addEventListener('click', toggleDebugPanel);
         document.getElementById('toggleOrientation').addEventListener('click', toggleOrientation);
+        
+        // Ruler visibility toggle
+        document.getElementById('toggleRulers').addEventListener('click', () => {
+            const button = document.getElementById('toggleRulers');
+            const svg = container.querySelector('svg');
+            const rulerGroup = svg.querySelector('g.preview-only');
+            const marginRect = svg.querySelector('rect.preview-only');
+            
+            if (rulerGroup && marginRect) {
+                const isVisible = rulerGroup.style.display !== 'none';
+                rulerGroup.style.display = isVisible ? 'none' : '';
+                marginRect.style.display = isVisible ? 'none' : '';
+                button.textContent = isVisible ? 'Show Rulers' : 'Hide Rulers';
+                logDebug(`${isVisible ? 'Hidden' : 'Showing'} rulers and margin`);
+            }
+        });
 
         // Plotter control functions
         async function sendPlotterCommand(command, data = {}) {
