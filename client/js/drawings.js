@@ -1,6 +1,6 @@
 import { drawingTypes } from './drawings/types.js';
 import { loadPaperConfig } from './paperConfig.js';
-import { colorPalette } from './colorPalette.js';
+import { colorPalette } from './utils/colorUtils.js';
 
 export class DrawingConfig {
     constructor(name, params) {

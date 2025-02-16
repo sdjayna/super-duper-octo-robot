@@ -1,5 +1,5 @@
 import { createSVG, createColorGroups, createPath } from '../svgUtils.js';
-import { ColorManager } from '../ColorManager.js';
+import { ColorManager } from '../utils/colorUtils.js';
 import { BaseConfig } from '../configs/BaseConfig.js';
 
 export class DelaunayConfig extends BaseConfig {
