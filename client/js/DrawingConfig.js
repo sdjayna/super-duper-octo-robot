@@ -6,7 +6,12 @@ export class DrawingConfig {
         this.name = name;
         this.type = params.type;
         this.drawingData = this.createDrawingData(params);
-        this.paper = params.paper || DEFAULT_PAPER;
+        // Use provided paper config or wait for default to load
+        this.paper = params.paper || DEFAULT_PAPER || {
+            width: 297,
+            height: 420,
+            margin: 59.4
+        };
         this.line = params.line;
         this.colorPalette = params.colorPalette;
     }
