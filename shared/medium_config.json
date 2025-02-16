@@ -1,0 +1,15 @@
+{
+    "mediums": {
+        "sakura": {
+            "name": "Sakura Pigma Micron",
+            "description": "Fineliner pens (0.2mm - 0.8mm)",
+            "id": "sakura"
+        },
+        "molotow": {
+            "name": "Molotow ONE4ALL",
+            "description": "Acrylic Markers (1mm and 2mm tips)",
+            "id": "molotow"
+        }
+    },
+    "default": "sakura"
+}

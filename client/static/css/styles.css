@@ -100,6 +100,17 @@ body, html {
     margin-bottom: 12px;
 }
 
+.control-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.half-width {
+    flex: 1;
+    margin-bottom: 0;
+}
+
 .control-section:last-child {
     margin-bottom: 0;
 }
