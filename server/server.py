@@ -296,7 +296,7 @@ class PlotterHandler(SimpleHTTPRequestHandler):
             elif command == 'plot':
                 return commands[command](params)
             elif command == 'home':
-                # Execute raise_pen command first
+                # Execute raise_pen command first with same pen_pos_up
                 raise_pen_cmd = [
                     self.AXIDRAW_PATH,
                     '--mode', 'manual',
