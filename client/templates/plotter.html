@@ -130,9 +130,9 @@
             // Set constant volume
             gainNode.gain.setValueAtTime(0.6, audioContext.currentTime);
             
-            // Simple oscillation between frequencies over 6 seconds
-            const duration = 6.0;
-            const steps = 12;
+            // Simple oscillation between frequencies over 10 seconds
+            const duration = 10.0;
+            const steps = 20;  // More steps for longer duration
             const stepTime = duration / steps;
             
             for (let i = 0; i < steps; i++) {
