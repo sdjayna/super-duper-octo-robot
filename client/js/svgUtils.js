@@ -124,8 +124,8 @@ export function setViewBox(svg, paperWidth, paperHeight, contentWidth, contentHe
     const rulerGroup = document.createElementNS(svgNS, "g");
     rulerGroup.setAttribute("class", "preview-only");
     
-    // Horizontal ruler
-    for (let i = 0; i <= width; i += 10) {
+    // Horizontal ruler (skip first 20mm)
+    for (let i = 20; i <= width; i += 10) {
         const tick = document.createElementNS(svgNS, "line");
         tick.setAttribute("x1", i);
         tick.setAttribute("y1", 0);
@@ -147,8 +147,8 @@ export function setViewBox(svg, paperWidth, paperHeight, contentWidth, contentHe
         }
     }
 
-    // Vertical ruler
-    for (let i = 0; i <= height; i += 10) {
+    // Vertical ruler (skip first 20mm)
+    for (let i = 20; i <= height; i += 10) {
         const tick = document.createElementNS(svgNS, "line");
         tick.setAttribute("x1", 0);
         tick.setAttribute("y1", i);
