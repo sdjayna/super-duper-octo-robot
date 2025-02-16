@@ -817,11 +817,18 @@
             
             // Update the current drawing's paper properties
             const currentDrawing = drawings[select.value];
-            currentDrawing.paper = config.papers[paperSize];
+            const newPaper = config.papers[paperSize];
+            currentDrawing.paper = newPaper;
+            
+            // Update drawing data dimensions
+            if (currentDrawing.drawingData) {
+                currentDrawing.drawingData.width = newPaper.width;
+                currentDrawing.drawingData.height = newPaper.height;
+            }
             
             // Redraw with new paper properties
             await draw();
-            logDebug(`Updated drawing with ${paperSize} paper properties`);
+            logDebug(`Updated drawing with ${paperSize} paper properties (${newPaper.width}×${newPaper.height}mm)`);
         });
 
         // Medium selection handler
