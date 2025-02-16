@@ -66,8 +66,26 @@ export function drawHilbertCurve(drawingConfig, isPortrait = false) {
     
     const colorGroups = createColorGroups(svg, drawingConfig.colorPalette);
     const colorManager = new ColorManager(drawingConfig.colorPalette);
+
+    // Calculate scaling to fit within paper size while maintaining aspect ratio
+    const scaleX = (drawingConfig.paper.width - 2 * drawingConfig.paper.margin) / hilbert.width;
+    const scaleY = (drawingConfig.paper.height - 2 * drawingConfig.paper.margin) / hilbert.height;
+    const scale = Math.min(scaleX, scaleY) * 0.8; // Use 80% of available space like Delaunay
     
-    const points = generateHilbertPoints(hilbert.level, hilbert.width, hilbert.height);
+    // Calculate the center of the paper
+    const paperCenterX = drawingConfig.paper.width / 2;
+    const paperCenterY = drawingConfig.paper.height / 2;
+    
+    // Calculate the center of the hilbert points
+    const hilbertCenterX = hilbert.width / 2;
+    const hilbertCenterY = hilbert.height / 2;
+    
+    // Generate and scale points
+    const rawPoints = generateHilbertPoints(hilbert.level, hilbert.width, hilbert.height);
+    const points = rawPoints.map(p => ({
+        x: paperCenterX + (p.x - hilbertCenterX) * scale,
+        y: paperCenterY + (p.y - hilbertCenterY) * scale
+    }));
 
     // Process points in chunks of 3 for coloring
     for (let i = 0; i < points.length - 1; i += 3) {
