@@ -324,6 +324,9 @@
                 });
         }
 
+        // Store ruler visibility state
+        let rulersVisible = false;
+
         async function draw() {
             try {
                 logDebug('Reloading modules...');
@@ -363,6 +366,14 @@
                 populateLayerSelect();
                 document.getElementById('layerSelect').value = currentLayer;
                 updateLayerVisibility();
+                
+                // Apply stored ruler visibility
+                const rulerGroup = svg.querySelector('g.preview-only');
+                const marginRect = svg.querySelector('rect.preview-only');
+                if (rulerGroup && marginRect) {
+                    rulerGroup.style.display = rulersVisible ? '' : 'none';
+                    marginRect.style.display = rulersVisible ? '' : 'none';
+                }
             } catch (error) {
                 console.error('Error:', error);
                 logDebug('Error generating SVG: ' + error.message, 'error');
@@ -501,8 +512,8 @@
             const marginRect = svg.querySelector('rect.preview-only');
             
             if (rulerGroup && marginRect) {
-                const isVisible = rulerGroup.style.display !== 'none';
-                if (!isVisible) {
+                rulersVisible = rulerGroup.style.display !== 'none';
+                if (!rulersVisible) {
                     rulerGroup.style.display = '';
                     marginRect.style.display = '';
                     button.textContent = 'Hide Ruler';
@@ -513,6 +524,7 @@
                     button.textContent = 'Show Ruler';
                     logDebug('Hidden ruler and margin');
                 }
+                rulersVisible = !rulersVisible;
             }
         });
 
