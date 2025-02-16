@@ -1,7 +1,12 @@
 {
-    "A3": {
-        "width": 297,
-        "height": 420,
-        "margin": 59.4
-    }
+    "papers": {
+        "A3": {
+            "width": 297,
+            "height": 420,
+            "margin": 59.4,
+            "name": "A3",
+            "description": "ISO A3 Paper"
+        }
+    },
+    "default": "A3"
 }

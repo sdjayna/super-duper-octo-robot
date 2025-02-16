@@ -1,19 +1,22 @@
 import { drawingTypes } from './drawings/types.js';
-import { DEFAULT_PAPER } from './paperConfig.js';
+import { loadPaperConfig } from './paperConfig.js';
 
 export class DrawingConfig {
     constructor(name, params) {
         this.name = name;
         this.type = params.type;
         this.drawingData = this.createDrawingData(params);
-        // Use provided paper config or wait for default to load
-        this.paper = params.paper || DEFAULT_PAPER || {
-            width: 297,
-            height: 420,
-            margin: 59.4
-        };
         this.line = params.line;
         this.colorPalette = params.colorPalette;
+        this.paper = params.paper;
+    }
+
+    static async create(name, params) {
+        if (!params.paper) {
+            const config = await loadPaperConfig();
+            params.paper = config?.default;
+        }
+        return new DrawingConfig(name, params);
     }
 
     createDrawingData(params) {
