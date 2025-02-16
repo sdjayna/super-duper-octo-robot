@@ -117,6 +117,34 @@
     <script type="module">
         let progressEventSource = null;
 
+        // Create audio context for siren
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playCompletionSiren() {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            // Start with no volume
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            
+            // Fade in
+            gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.1);
+            
+            // Set frequency for siren effect
+            oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+            oscillator.frequency.linearRampToValueAtTime(880, audioContext.currentTime + 0.2);
+            oscillator.frequency.linearRampToValueAtTime(440, audioContext.currentTime + 0.4);
+            
+            // Fade out
+            gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.5);
+            
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.5);
+        }
+
         function startProgressListener() {
             if (progressEventSource) {
                 progressEventSource.close();
@@ -137,6 +165,8 @@
                             document.querySelectorAll('.preview-section button, .preview-section select').forEach(control => {
                                 control.disabled = false;
                             });
+                            // Play completion siren
+                            playCompletionSiren();
                             // Close SSE connection as plot is complete
                             if (progressEventSource) {
                                 progressEventSource.close();
