@@ -300,15 +300,18 @@
             // Clear existing options except "Show All Layers"
             layerSelect.innerHTML = '<option value="all">Show All Layers</option>';
             
-            // Get all unique labels and their indices
+            // Get all unique labels and their indices, but only for layers that have content
             const layerInfo = new Map();
             layers.forEach(layer => {
-                const label = layer.getAttribute('inkscape:label');
-                const index = label.split('-')[0];
-                layerInfo.set(index, label);
+                // Only include layers that have child elements (paths, etc)
+                if (layer.children.length > 0) {
+                    const label = layer.getAttribute('inkscape:label');
+                    const index = label.split('-')[0];
+                    layerInfo.set(index, label);
+                }
             });
 
-            // Add an option for each layer
+            // Add an option for each layer that has content
             Array.from(layerInfo.entries())
                 .sort(([a], [b]) => Number(a) - Number(b))
                 .forEach(([index, label]) => {
