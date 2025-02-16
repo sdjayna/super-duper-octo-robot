@@ -136,6 +136,13 @@ body, html {
     font-size: 16px;
 }
 
+/* Make setup section icons bigger */
+.control-section-content .plotter-button .power-icon,
+.control-section-content .plotter-button .speaker-icon,
+.control-section-content .plotter-button .setup-icon {
+    font-size: 24px;
+}
+
 .pen-controls {
     margin-top: 12px;
     display: flex;
