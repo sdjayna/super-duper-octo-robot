@@ -64,31 +64,17 @@ export function createPath(points) {
 }
 
 export function setViewBox(svg, paperWidth, paperHeight, contentWidth, contentHeight, margin, isPortrait = false) {
-    // Parse all dimensions to ensure we're working with numbers
+    // Parse dimensions
     const width = parseFloat(paperWidth);
     const height = parseFloat(paperHeight);
     const drawingWidth = parseFloat(contentWidth);
     const drawingHeight = parseFloat(contentHeight);
     const marginValue = parseFloat(margin);
 
-    // Calculate available space for content (paper size minus margins)
-    const availableWidth = width - (2 * marginValue);
-    const availableHeight = height - (2 * marginValue);
+    // Set viewBox to paper dimensions
+    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
 
-    // Scale content to fit within margins while maintaining aspect ratio
-    const scale = Math.min(
-        availableWidth / drawingWidth,
-        availableHeight / drawingHeight
-    );
-
-    const scaledWidth = drawingWidth * scale;
-    const scaledHeight = drawingHeight * scale;
-
-    // Create a group for the content
-    const contentGroup = document.createElementNS(svgNS, "g");
-    svg.appendChild(contentGroup);
-
-    // Add a visible margin rectangle for debugging
+    // Create margin rectangle
     const marginRect = document.createElementNS(svgNS, "rect");
     marginRect.setAttribute("x", marginValue);
     marginRect.setAttribute("y", marginValue);
@@ -98,31 +84,37 @@ export function setViewBox(svg, paperWidth, paperHeight, contentWidth, contentHe
     marginRect.setAttribute("stroke", "#ccc");
     marginRect.setAttribute("stroke-width", "0.5");
     marginRect.setAttribute("stroke-dasharray", "2,2");
-    svg.insertBefore(marginRect, contentGroup);
+    svg.appendChild(marginRect);
 
-    // Set the content group to match margin rectangle dimensions
-    if (isPortrait) {
-        const viewBox = `0 0 ${height} ${width}`;
-        svg.setAttribute('viewBox', viewBox);
-        contentGroup.setAttribute("transform", 
-            `translate(${marginValue}, ${marginValue}) scale(${scale})`);
-        contentGroup.setAttribute("width", width - (2 * marginValue));
-        contentGroup.setAttribute("height", height - (2 * marginValue));
-    } else {
-        const viewBox = `0 0 ${width} ${height}`;
-        svg.setAttribute('viewBox', viewBox);
-        contentGroup.setAttribute("transform", 
-            `translate(${marginValue}, ${marginValue}) scale(${scale})`);
-        contentGroup.setAttribute("width", width - (2 * marginValue));
-        contentGroup.setAttribute("height", height - (2 * marginValue));
-    }
+    // Create content group
+    const contentGroup = document.createElementNS(svgNS, "g");
+    svg.appendChild(contentGroup);
 
-    // Move all existing content (except margin rect) into the content group
+    // Calculate scale to fit content within margins
+    const availableWidth = width - (2 * marginValue);
+    const availableHeight = height - (2 * marginValue);
+    const scale = Math.min(
+        availableWidth / drawingWidth,
+        availableHeight / drawingHeight
+    );
+
+    // Center the scaled content within the margins
+    const scaledWidth = drawingWidth * scale;
+    const scaledHeight = drawingHeight * scale;
+    const translateX = marginValue + (availableWidth - scaledWidth) / 2;
+    const translateY = marginValue + (availableHeight - scaledHeight) / 2;
+
+    // Apply transformation to content group
+    contentGroup.setAttribute("transform", `translate(${translateX}, ${translateY}) scale(${scale})`);
+
+    // Move all existing content (except margin rect) into content group
     Array.from(svg.children).forEach(child => {
         if (child !== marginRect && child !== contentGroup) {
             contentGroup.appendChild(child);
         }
     });
+
+    return contentGroup;
 
 }
 
