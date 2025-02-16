@@ -40,10 +40,7 @@
                             <h4>Paper</h4>
                             <div class="control-section-content">
                                 <select id="paperSelect" class="plotter-button">
-                                    <option value="A3">A3 (297×420mm)</option>
-                                    <option value="A4">A4 (210×297mm)</option>
-                                    <option value="Square297">Square (297×297mm)</option>
-                                    <option value="Bristol">Bristol (432×279mm)</option>
+                                    <!-- Populated dynamically from paper config -->
                                 </select>
                             </div>
                         </div>
@@ -491,9 +488,40 @@
             toggleButton.textContent = debugPanel.classList.contains('hidden') ? 'Show' : 'Hide';
         }
 
-        // Draw once but don't start refresh
-        draw();
-        logDebug('Initial draw complete. Auto-refresh is off.');
+        // Populate paper select and initialize drawing
+        async function initialize() {
+            try {
+                const { loadPaperConfig } = await import('./js/paperConfig.js?v=' + Date.now());
+                const config = await loadPaperConfig();
+                const paperSelect = document.getElementById('paperSelect');
+                
+                // Sort papers by name
+                const papers = Object.entries(config.papers)
+                    .sort(([,a], [,b]) => a.name.localeCompare(b.name));
+                
+                // Populate dropdown
+                papers.forEach(([id, paper]) => {
+                    const option = document.createElement('option');
+                    option.value = id;
+                    option.textContent = `${paper.name} (${paper.width}×${paper.height}mm)`;
+                    paperSelect.appendChild(option);
+                });
+                
+                // Set default paper
+                if (config.default) {
+                    paperSelect.value = config.default;
+                }
+                
+                // Draw once but don't start refresh
+                await draw();
+                logDebug('Initial draw complete. Auto-refresh is off.');
+            } catch (error) {
+                console.error('Initialization error:', error);
+                logDebug('Error during initialization: ' + error.message, 'error');
+            }
+        }
+        
+        initialize();
 
         // Handle drawing selection changes
         select.addEventListener('change', async () => {
