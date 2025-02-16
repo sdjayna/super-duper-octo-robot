@@ -85,19 +85,43 @@ export function setViewBox(svg, paperWidth, paperHeight, contentWidth, contentHe
     const scaledHeight = drawingHeight * scale;
 
     // Calculate centering offsets including margins
-    const horizontalOffset = (width - scaledWidth) / 2;
-    const verticalOffset = (height - scaledHeight) / 2;
+    const horizontalOffset = marginValue;
+    const verticalOffset = marginValue;
 
     if (isPortrait) {
         // In portrait mode:
         // - Content is rotated 90 degrees clockwise
         // - Paper dimensions are swapped
-        const viewBox = `${verticalOffset} ${-horizontalOffset} ${height} ${width}`;
+        const viewBox = `0 0 ${height} ${width}`;
         svg.setAttribute('viewBox', viewBox);
+        
+        // Create a group for the content with proper transformation
+        const contentGroup = document.createElementNS(svgNS, "g");
+        contentGroup.setAttribute("transform", `translate(${horizontalOffset}, ${verticalOffset})`);
+        svg.appendChild(contentGroup);
+        
+        // Move existing content into the group
+        while (svg.firstChild !== contentGroup) {
+            if (svg.firstChild) {
+                contentGroup.appendChild(svg.firstChild);
+            }
+        }
     } else {
         // In landscape mode:
-        const viewBox = `${-horizontalOffset} ${-verticalOffset} ${width} ${height}`;
+        const viewBox = `0 0 ${width} ${height}`;
         svg.setAttribute('viewBox', viewBox);
+        
+        // Create a group for the content with proper transformation
+        const contentGroup = document.createElementNS(svgNS, "g");
+        contentGroup.setAttribute("transform", `translate(${horizontalOffset}, ${verticalOffset})`);
+        svg.appendChild(contentGroup);
+        
+        // Move existing content into the group
+        while (svg.firstChild !== contentGroup) {
+            if (svg.firstChild) {
+                contentGroup.appendChild(svg.firstChild);
+            }
+        }
     }
 
     // Add a visible margin rectangle for debugging
