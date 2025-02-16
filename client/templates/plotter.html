@@ -685,7 +685,9 @@
         // Add event listeners for new plotter buttons
         document.getElementById('plotterCycle').addEventListener('click', async () => {
             logDebug('Sending cycle command...');
-            if (await sendPlotterCommand('cycle')) {
+            const penPosUp = parseInt(document.getElementById('penPosUp').value);
+            const penPosDown = parseInt(document.getElementById('penPosDown').value);
+            if (await sendPlotterCommand('cycle', { pen_pos_up: penPosUp, pen_pos_down: penPosDown })) {
                 logDebug('Cycle command completed');
                 updatePlotterStatus('Ready', true);
             }
@@ -693,7 +695,9 @@
 
         document.getElementById('plotterToggle').addEventListener('click', async () => {
             logDebug('Sending toggle command...');
-            if (await sendPlotterCommand('toggle')) {
+            const penPosUp = parseInt(document.getElementById('penPosUp').value);
+            const penPosDown = parseInt(document.getElementById('penPosDown').value);
+            if (await sendPlotterCommand('toggle', { pen_pos_up: penPosUp, pen_pos_down: penPosDown })) {
                 logDebug('Toggle command completed');
                 updatePlotterStatus('Ready', true);
             }
@@ -701,7 +705,9 @@
 
         document.getElementById('plotterAlign').addEventListener('click', async () => {
             logDebug('Sending align command...');
-            if (await sendPlotterCommand('align')) {
+            const penPosUp = parseInt(document.getElementById('penPosUp').value);
+            const penPosDown = parseInt(document.getElementById('penPosDown').value);
+            if (await sendPlotterCommand('align', { pen_pos_up: penPosUp, pen_pos_down: penPosDown })) {
                 logDebug('Align command completed');
                 updatePlotterStatus('Ready', true);
             }
@@ -724,7 +730,9 @@
 
         document.getElementById('plotterHome').addEventListener('click', async () => {
             logDebug('Sending home command...');
-            if (await sendPlotterCommand('home')) {
+            const penPosUp = parseInt(document.getElementById('penPosUp').value);
+            const penPosDown = parseInt(document.getElementById('penPosDown').value);
+            if (await sendPlotterCommand('home', { pen_pos_up: penPosUp, pen_pos_down: penPosDown })) {
                 logDebug('Home command completed');
                 updatePlotterStatus('Ready', true);
             }

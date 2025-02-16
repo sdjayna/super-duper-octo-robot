@@ -207,22 +207,28 @@ class PlotterHandler(SimpleHTTPRequestHandler):
 
         commands = {
             'plot': plot_command,
-            'toggle': lambda _: [
+            'toggle': lambda params: [
                 self.AXIDRAW_PATH,
                 '--mode', 'toggle',
                 '--model', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['model']),
+                '--pen_pos_up', str(params['pen_pos_up']),
+                '--pen_pos_down', str(params['pen_pos_down']),
                 '--penlift', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['penlift'])
             ],
-            'align': lambda _: [
+            'align': lambda params: [
                 self.AXIDRAW_PATH,
                 '--mode', 'align',
                 '--model', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['model']),
+                '--pen_pos_up', str(params['pen_pos_up']),
+                '--pen_pos_down', str(params['pen_pos_down']),
                 '--penlift', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['penlift'])
             ],
-            'cycle': lambda _: [
+            'cycle': lambda params: [
                 self.AXIDRAW_PATH,
                 '--mode', 'cycle',
                 '--model', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['model']),
+                '--pen_pos_up', str(params['pen_pos_up']),
+                '--pen_pos_down', str(params['pen_pos_down']),
                 '--penlift', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['penlift'])
             ],
             'home': lambda _: None,  # Special case handled below
