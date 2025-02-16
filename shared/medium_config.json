@@ -19,7 +19,9 @@
                 "royalBlue": { "hex": "#4169E1", "name": "Royal Blue" },
                 "hunterGreen": { "hex": "#355E3B", "name": "Hunter Green" },
                 "freshGreen": { "hex": "#69B076", "name": "Fresh Green" },
-                "yellow": { "hex": "#FFD700", "name": "Yellow" }
+                "yellow": { "hex": "#FFD700", "name": "Yellow" },
+                "coolGray": { "hex": "#8C8C8C", "name": "Cool Gray" },
+                "lightCoolGray": { "hex": "#CCCCCC", "name": "Light Cool Gray" }
             }
         },
         "molotow": {
