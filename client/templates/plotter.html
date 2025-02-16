@@ -721,7 +721,8 @@
             logDebug('Sending stop plot command...');
             if (await sendPlotterCommand('stop_plot')) {
                 logDebug('Stop plot command sent successfully');
-                if (await sendPlotterCommand('raise_pen')) {
+                const penPosUp = parseInt(document.getElementById('penPosUp').value);
+                if (await sendPlotterCommand('raise_pen', { pen_pos_up: penPosUp })) {
                     logDebug('Pen raised after stop');
                 }
                 updatePlotterStatus('Ready', true);  // Reset status after stopping
