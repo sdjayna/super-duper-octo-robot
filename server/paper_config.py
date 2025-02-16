@@ -7,7 +7,7 @@ Values must match client/js/paperConfig.js
 A3_PAPER = {
     'width': 297,
     'height': 420,
-    'margin': 29.7  # 10% of width margin from paper edge
+    'margin': 59.4  # 20% of width margin from paper edge
 }
 
 # Current paper configuration
