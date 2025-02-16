@@ -12,15 +12,12 @@ export function createSVG(drawingConfig, contentWidth, contentHeight, isPortrait
     const svg = document.createElementNS(svgNS, "svg");
     const { width, height, margin } = drawingConfig.paper;
     
-    // Add margin to overall dimensions
-    const totalWidth = width + (2 * margin);
-    const totalHeight = height + (2 * margin);
+    // Set SVG dimensions to paper size without margins
+    svg.setAttribute("width", `${width}mm`);
+    svg.setAttribute("height", `${height}mm`);
     
-    svg.setAttribute("width", `${totalWidth}mm`);
-    svg.setAttribute("height", `${totalHeight}mm`);
-    
-    // Set initial viewBox
-    setViewBox(svg, totalWidth, totalHeight, contentWidth, contentHeight, isPortrait);
+    // Set initial viewBox including margins
+    setViewBox(svg, width, height, contentWidth, contentHeight, margin, isPortrait);
     svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
     svg.setAttribute("xmlns:svg", "http://www.w3.org/2000/svg");
     svg.setAttribute("xmlns:inkscape", "http://www.inkscape.org/namespaces/inkscape");
@@ -66,31 +63,54 @@ export function createPath(points) {
     return pathElement;
 }
 
-export function setViewBox(svg, paperWidth, paperHeight, contentWidth, contentHeight, isPortrait = false) {
+export function setViewBox(svg, paperWidth, paperHeight, contentWidth, contentHeight, margin, isPortrait = false) {
     // Parse all dimensions to ensure we're working with numbers
-    const totalWidth = parseFloat(paperWidth);
-    const totalHeight = parseFloat(paperHeight);
+    const width = parseFloat(paperWidth);
+    const height = parseFloat(paperHeight);
     const drawingWidth = parseFloat(contentWidth);
     const drawingHeight = parseFloat(contentHeight);
+    const marginValue = parseFloat(margin);
 
-    // Calculate centering offsets
-    const horizontalOffset = (totalWidth - drawingWidth) / 2;
-    const verticalOffset = (totalHeight - drawingHeight) / 2;
+    // Calculate available space for content (paper size minus margins)
+    const availableWidth = width - (2 * marginValue);
+    const availableHeight = height - (2 * marginValue);
+
+    // Scale content to fit within margins while maintaining aspect ratio
+    const scale = Math.min(
+        availableWidth / drawingWidth,
+        availableHeight / drawingHeight
+    );
+
+    const scaledWidth = drawingWidth * scale;
+    const scaledHeight = drawingHeight * scale;
+
+    // Calculate centering offsets including margins
+    const horizontalOffset = (width - scaledWidth) / 2;
+    const verticalOffset = (height - scaledHeight) / 2;
 
     if (isPortrait) {
         // In portrait mode:
         // - Content is rotated 90 degrees clockwise
         // - Paper dimensions are swapped
-        // - Horizontal offset becomes negative to account for rotation
-        const viewBox = `${verticalOffset} ${-horizontalOffset} ${totalHeight} ${totalWidth}`;
+        const viewBox = `${verticalOffset} ${-horizontalOffset} ${height} ${width}`;
         svg.setAttribute('viewBox', viewBox);
     } else {
         // In landscape mode:
-        // - No rotation
-        // - Use negative offsets to move content into view from origin
-        const viewBox = `${-horizontalOffset} ${-verticalOffset} ${totalWidth} ${totalHeight}`;
+        const viewBox = `${-horizontalOffset} ${-verticalOffset} ${width} ${height}`;
         svg.setAttribute('viewBox', viewBox);
     }
+
+    // Add a visible margin rectangle for debugging
+    const marginRect = document.createElementNS(svgNS, "rect");
+    marginRect.setAttribute("x", marginValue);
+    marginRect.setAttribute("y", marginValue);
+    marginRect.setAttribute("width", width - (2 * marginValue));
+    marginRect.setAttribute("height", height - (2 * marginValue));
+    marginRect.setAttribute("fill", "none");
+    marginRect.setAttribute("stroke", "#ccc");
+    marginRect.setAttribute("stroke-width", "0.5");
+    marginRect.setAttribute("stroke-dasharray", "2,2");
+    svg.insertBefore(marginRect, svg.firstChild);
 }
 
 export function setOrientation(svg, isPortrait, drawingWidth, drawingHeight) {
