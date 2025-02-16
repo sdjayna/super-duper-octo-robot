@@ -24,9 +24,22 @@ export class BouwkampConfig extends BaseConfig {
 export function drawBouwkampCode(drawingConfig, isPortrait = false) {
     const bouwkamp = drawingConfig.drawingData;
     const svg = createSVG(drawingConfig, bouwkamp.width, bouwkamp.height, isPortrait);
-
+    
     const colorGroups = createColorGroups(svg, drawingConfig.colorPalette);
     const colorManager = new ColorManager(drawingConfig.colorPalette);
+
+    // Calculate scaling to fit within paper size while maintaining aspect ratio
+    const scaleX = (drawingConfig.paper.width - 2 * drawingConfig.paper.margin) / bouwkamp.width;
+    const scaleY = (drawingConfig.paper.height - 2 * drawingConfig.paper.margin) / bouwkamp.height;
+    const scale = Math.min(scaleX, scaleY) * 0.8; // Use 80% of available space
+    
+    // Calculate the center of the paper
+    const paperCenterX = drawingConfig.paper.width / 2;
+    const paperCenterY = drawingConfig.paper.height / 2;
+    
+    // Calculate the center of the bouwkamp drawing
+    const bouwkampCenterX = (bouwkamp.width / 2);
+    const bouwkampCenterY = (bouwkamp.height / 2);
 
     const helper = new Array(900).fill(0);
 
@@ -41,11 +54,13 @@ export function drawBouwkampCode(drawingConfig, isPortrait = false) {
         const position = { x: i, y: helper[i] };
         const size = bouwkamp.squares[rect];
         const vertexGap = drawingConfig.line.vertexGap;
-        const rectData = { 
-            x: position.x + vertexGap, 
-            y: position.y + vertexGap, 
-            width: size - (2 * vertexGap), 
-            height: size - (2 * vertexGap)
+        
+        // Scale and center the rectangle position and size
+        const rectData = {
+            x: paperCenterX + (position.x - bouwkampCenterX) * scale + vertexGap,
+            y: paperCenterY + (position.y - bouwkampCenterY) * scale + vertexGap,
+            width: (size - 2 * vertexGap) * scale,
+            height: (size - 2 * vertexGap) * scale
         };
         const points = generateSingleSerpentineLine(rectData, drawingConfig.line.spacing, drawingConfig.line.strokeWidth);
         
