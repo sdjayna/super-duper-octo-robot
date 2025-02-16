@@ -1,11 +1,4 @@
-# A3 paper dimensions in mm
-PAPER_DIMENSIONS = {
-    'A3': {
-        'width': 297,
-        'height': 420,
-        'margin': 29.7  # 10% of width margin from paper edge
-    }
-}
+from .paper_config import CURRENT_PAPER
 
 # Configuration for different plotter models
 PLOTTER_CONFIGS = {
@@ -14,7 +7,7 @@ PLOTTER_CONFIGS = {
         'pen_pos_up': 90,    # Pen up position (0-100)
         'pen_pos_down': 10,   # Pen down position (0-100)
         'penlift': 3,    # Narrow-band brushless servo (3rd position up)
-        'paper': PAPER_DIMENSIONS['A3']  # Maximum paper dimensions
+        'paper': CURRENT_PAPER  # Maximum paper dimensions
     }
 }
 
