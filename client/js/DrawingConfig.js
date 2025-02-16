@@ -1,11 +1,12 @@
 import { drawingTypes } from './drawings/types.js';
+import { DEFAULT_PAPER } from './paperConfig.js';
 
 export class DrawingConfig {
     constructor(name, params) {
         this.name = name;
         this.type = params.type;
         this.drawingData = this.createDrawingData(params);
-        this.paper = params.paper;
+        this.paper = params.paper || DEFAULT_PAPER;
         this.line = params.line;
         this.colorPalette = params.colorPalette;
     }
