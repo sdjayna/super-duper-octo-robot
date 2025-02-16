@@ -608,6 +608,9 @@
             }
         }
 
+        // Track last plotted layer
+        let lastPlottedLayer = null;
+
         document.getElementById('plotterPlotLayer').addEventListener('click', async () => {
             const svg = container.querySelector('svg');
             if (!svg) return;
@@ -619,6 +622,17 @@
             const layerSelect = document.getElementById('layerSelect');
             const selectedOption = layerSelect.options[layerSelect.selectedIndex];
             const layerLabel = selectedOption.textContent;
+
+            // Check if this layer was just plotted
+            if (currentLayer === lastPlottedLayer) {
+                if (!confirm(`Are you sure you want to plot "${layerLabel}" again?`)) {
+                    logDebug('Plot cancelled - same layer');
+                    return;
+                }
+            }
+            
+            // Update last plotted layer
+            lastPlottedLayer = currentLayer;
             
             try {
                 logDebug(`Plotting layer ${layerLabel}...`);
