@@ -74,18 +74,6 @@ export function setViewBox(svg, paperWidth, paperHeight, contentWidth, contentHe
     // Set viewBox to paper dimensions
     svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
 
-    // Create margin rectangle
-    const marginRect = document.createElementNS(svgNS, "rect");
-    marginRect.setAttribute("x", marginValue);
-    marginRect.setAttribute("y", marginValue);
-    marginRect.setAttribute("width", width - (2 * marginValue));
-    marginRect.setAttribute("height", height - (2 * marginValue));
-    marginRect.setAttribute("fill", "none");
-    marginRect.setAttribute("stroke", "#ccc");
-    marginRect.setAttribute("stroke-width", "0.5");
-    marginRect.setAttribute("stroke-dasharray", "2,2");
-    svg.appendChild(marginRect);
-
     // Create content group
     const contentGroup = document.createElementNS(svgNS, "g");
     svg.appendChild(contentGroup);
