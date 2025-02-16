@@ -1,4 +1,4 @@
-import { createSVG, createColorGroups, createPath } from '../svgUtils.js';
+import { createSVG, createColorGroups, createPath } from '../utils/svgUtils.js';
 import { ColorManager } from '../utils/colorUtils.js';
 import { BaseConfig } from '../configs/BaseConfig.js';
 

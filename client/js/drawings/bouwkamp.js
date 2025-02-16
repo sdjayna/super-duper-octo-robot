@@ -1,4 +1,4 @@
-import { createSVG, createColorGroups, createPath } from '../svgUtils.js';
+import { createSVG, createColorGroups, createPath } from '../utils/svgUtils.js';
 import { validateBouwkampCode } from '../utils/validationUtils.js';
 import { generateSingleSerpentineLine } from '../utils/patternUtils.js';
 import { ColorManager } from '../utils/colorUtils.js';
