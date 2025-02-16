@@ -92,6 +92,16 @@
                             <button id="plotterToggle" class="plotter-button">Toggle</button>
                             <button id="plotterDisableMotors" class="plotter-button">Disable Motors</button>
                         </div>
+                        <div class="pen-controls">
+                            <div class="slider-group">
+                                <label for="penPosDown">Pen Down: <span id="penPosDownValue">10</span></label>
+                                <input type="range" id="penPosDown" min="0" max="100" value="10">
+                            </div>
+                            <div class="slider-group">
+                                <label for="penPosUp">Pen Up: <span id="penPosUpValue">90</span></label>
+                                <input type="range" id="penPosUp" min="0" max="100" value="90">
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -720,6 +730,36 @@
             if (await sendPlotterCommand('disable_motors')) {
                 logDebug('Disable motors command completed');
                 updatePlotterStatus('Ready', true);
+            }
+        });
+
+        // Pen position sliders
+        document.getElementById('penPosDown').addEventListener('input', (e) => {
+            document.getElementById('penPosDownValue').textContent = e.target.value;
+        });
+
+        document.getElementById('penPosUp').addEventListener('input', (e) => {
+            document.getElementById('penPosUpValue').textContent = e.target.value;
+        });
+
+        // Update pen positions when sliders are released
+        document.getElementById('penPosDown').addEventListener('change', async (e) => {
+            logDebug(`Setting pen down position to ${e.target.value}...`);
+            if (await sendPlotterCommand('manual', { 
+                manual_cmd: 'pen_pos_down', 
+                pen_value: parseInt(e.target.value)
+            })) {
+                logDebug('Pen down position updated');
+            }
+        });
+
+        document.getElementById('penPosUp').addEventListener('change', async (e) => {
+            logDebug(`Setting pen up position to ${e.target.value}...`);
+            if (await sendPlotterCommand('manual', { 
+                manual_cmd: 'pen_pos_up', 
+                pen_value: parseInt(e.target.value)
+            })) {
+                logDebug('Pen up position updated');
             }
         });
 
