@@ -33,6 +33,8 @@ export function drawBouwkampCode(drawingConfig, isPortrait = false) {
     const scaleY = (drawingConfig.paper.height - 2 * drawingConfig.paper.margin) / bouwkamp.height;
     const scale = Math.min(scaleX, scaleY); // Use 100% of available space
     
+    console.log(`Plot dimensions: ${drawingConfig.paper.width}×${drawingConfig.paper.height}mm`);
+    
     // Calculate the center of the paper
     const paperCenterX = drawingConfig.paper.width / 2;
     const paperCenterY = drawingConfig.paper.height / 2;
