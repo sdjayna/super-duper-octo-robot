@@ -5,10 +5,11 @@ export class DrawingConfig {
     constructor(name, params) {
         this.name = name;
         this.type = params.type;
-        this.drawingData = this.createDrawingData(params);
+        this.paper = params.paper;
         this.line = params.line;
         this.colorPalette = params.colorPalette;
-        this.paper = params.paper;
+        // Create drawing data after all properties are set
+        this.drawingData = this.createDrawingData(params);
     }
 
     static async create(name, params) {
