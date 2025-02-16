@@ -1,5 +1,6 @@
-export class BouwkampConfig {
+export class BouwkampConfig extends BaseConfig {
     constructor(params) {
+        super(params);
         // Extract code array from params
         const code = params.code;
         if (!Array.isArray(code)) {
