@@ -5,7 +5,6 @@ export class BouwkampConfig {
         if (!Array.isArray(code)) {
             throw new Error('Bouwkamp code must be an array');
         }
-        
         this.order = code[0];
         this.width = code[1];
         this.height = code[2];
