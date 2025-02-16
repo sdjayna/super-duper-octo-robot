@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.8] - 2025-02-16
+
+### Added
+- Added support for custom paper configurations
+- Added dynamic SVG scaling based on paper size
+- Added improved margin handling for all drawing types
+- Added paper size validation checks
+
+### Changed
+- Enhanced SVG viewBox calculations for better precision
+- Improved paper configuration loading system
+- Updated margin visualization for clarity
+- Refined drawing area calculations
+
+### Fixed
+- Paper size handling edge cases
+- SVG scaling issues with custom paper sizes
+- Margin calculation precision
+- ViewBox updates during paper size changes
+
 ## [1.4.7] - 2025-02-16
 
 ### Added
@@ -108,6 +128,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Thread management for failed plot commands
 - SSE connection cleanup on errors
 
+[1.4.8]: https://github.com/sdjayna/super-duper-octo-robot/compare/v1.4.7...v1.4.8
 [1.4.5]: https://github.com/sdjayna/super-duper-octo-robot/compare/v1.4.4...v1.4.5
 [1.4.4]: https://github.com/sdjayna/super-duper-octo-robot/compare/v1.4.3...v1.4.4
 [1.4.3]: https://github.com/sdjayna/super-duper-octo-robot/compare/v1.4.2...v1.4.3
