@@ -2,6 +2,8 @@
 
 A web-based tool for generating algorithmic art optimized for AxiDraw pen plotters. This project creates SVG files with separated layers for multi-pen plotting, featuring perfect square subdivisions (Bouwkamp codes), Delaunay triangulations, and Hilbert curves.
 
+![Plotter Art UI](ui-screenshot.png)
+
 > **Note:** While this tool works with any AxiDraw plotter, it has been specifically developed and tested with the AxiDraw SE/A3 Special Edition model.
 
 For examples of artwork created using similar techniques, visit [plotter.art](https://plotter.art), which showcases algorithmic plotter art with an emphasis on acrylic paint application and geometric patterns.
@@ -50,6 +52,10 @@ The project is optimized for two specific pen types:
   - Content-aware SVG scaling
   - Millimeter-precise ruler visualization
   - Completion sound notifications with mute option
+  - Debug message filtering with "All" and "Just Plots" tabs
+  - Automatic temporary file cleanup
+  - Error message highlighting in red
+  - Bold highlighting for most recent debug message
 
 - **Real-time Development**
   - Live preview with auto-refresh

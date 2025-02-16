@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.7] - 2025-02-16
+
+### Added
+- Added debug message filtering with "All" and "Just Plots" tabs
+- Added bold highlighting for most recent debug message
+- Added automatic cleanup of temporary SVG files
+- Added error message highlighting in red
+- Added improved SSE connection management
+- Added automatic control re-enabling after plot completion
+- Added completion sound with mute toggle
+
+### Changed
+- Enhanced error handling and recovery for plot commands
+- Improved thread and resource cleanup
+- Better error reporting in debug panel
+- More robust SSE connection handling
+- Updated UI with tabbed message filtering
+
+### Fixed
+- Button re-enable logic when plot fails to start
+- Temporary file cleanup on server restart
+- Thread management for failed plot commands
+- SSE connection cleanup on errors
+
 ## [1.4.6] - 2025-02-16
 
 ### Added
