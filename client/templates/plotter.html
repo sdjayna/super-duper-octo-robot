@@ -58,6 +58,15 @@
                         </div>
                     </div>
                     <div class="control-section">
+                        <h4>Paper</h4>
+                        <div class="control-section-content">
+                            <select id="paperSelect" class="plotter-button">
+                                <option value="A3">A3 (297×420mm)</option>
+                                <option value="A4">A4 (210×297mm)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="control-section">
                         <h4>Setup</h4>
                         <div class="control-section-content">
                             <button id="plotterHome" class="plotter-button">Home</button>
@@ -634,6 +643,14 @@
                 logDebug('Disable motors command completed');
                 updatePlotterStatus('Ready', true);
             }
+        });
+
+        // Paper size selection handler
+        document.getElementById('paperSelect').addEventListener('change', async (e) => {
+            const paperSize = e.target.value;
+            logDebug(`Changing paper size to ${paperSize}`);
+            // Reload the drawing with new paper size
+            await draw();
         });
     </script>
 </body>
