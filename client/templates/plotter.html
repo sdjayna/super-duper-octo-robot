@@ -684,7 +684,7 @@
                 logDebug('Stop plot command sent successfully');
                 // Schedule pen up command after 2 seconds
                 setTimeout(async () => {
-                    if (await sendPlotterCommand('manual', { manual_cmd: 'raise_pen', mode: 'manual' })) {
+                    if (await sendPlotterCommand('raise_pen')) {
                         logDebug('Pen raised after stop');
                     }
                 }, 2000);
