@@ -49,6 +49,7 @@ The project is optimized for two specific pen types:
   - Portrait/Landscape orientation support
   - Content-aware SVG scaling
   - Millimeter-precise ruler visualization
+  - Completion sound notifications with mute option
 
 - **Real-time Development**
   - Live preview with auto-refresh
@@ -158,7 +159,7 @@ The project includes specific support for the AxiDraw SE/A3 plotter through `plo
 ```json
 {
     "papers": {
-        "A3": {
+        "a3": {
             "width": 297,
             "height": 420,
             "margin": 59.4,
@@ -171,6 +172,13 @@ The project includes specific support for the AxiDraw SE/A3 plotter through `plo
             "margin": 42,
             "name": "A4",
             "description": "ISO A4 Paper"
+        },
+        "bristol": {
+            "width": 432,
+            "height": 279,
+            "margin": 86.4,
+            "name": "Bristol",
+            "description": "Bristol Paper 432×279mm"
         }
     }
 }
@@ -193,6 +201,7 @@ PLOTTER_CONFIGS = {
 - `model`: Specifies the plotter model (2 for AxiDraw SE/A3)
 - `pen_pos_up`: Height of the pen when raised (0-100)
 - `pen_pos_down`: Height of the pen when drawing (0-100)
+- `pen_rate_lower`: Speed of pen lowering movement (1-100)
 - `penlift`: Servo type configuration (3 for narrow-band brushless servo)
 
 These settings are automatically applied to all plotter commands, ensuring consistent behavior across plotting sessions.

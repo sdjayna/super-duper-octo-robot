@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.6] - 2025-02-16
+
+### Added
+- Added completion sound with mute toggle
+- Added Bristol paper size (432×279mm)
+- Added icon-based controls for plotter operations
+- Added tooltips to all control buttons
+- Added pen rate lower control slider
+
+### Changed
+- Updated UI controls to use intuitive icons
+- Simplified plotter control button labels
+- Improved paper size handling with dynamic configuration
+- Enhanced setup controls with larger icons
+- Centralized paper configuration management
+
 ## [1.4.5] - 2025-02-16
 
 ### Added
