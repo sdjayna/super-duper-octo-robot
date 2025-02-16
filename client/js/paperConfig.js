@@ -1,10 +1,8 @@
+import paperConfig from '../../shared/paper_config.json';
+
 // A3 paper dimensions in mm
 export const PAPER_SIZES = {
-    A3: {
-        width: 297,
-        height: 420,
-        margin: 59.4  // 20% of width margin from paper edge
-    }
+    A3: paperConfig.A3
 };
 
 // Default paper configuration
