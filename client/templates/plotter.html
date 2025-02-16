@@ -9,7 +9,7 @@
 </head>
 <body>
     <div class="layout">
-        <button id="toggleDebug">Hide</button>
+        <button id="toggleDebug" title="Show/hide control panel">Hide</button>
         <div class="canvas-area">
             <div id="svgContainer"></div>
         </div>
@@ -30,7 +30,7 @@
                         <div class="control-section half-width">
                             <h4>SVG</h4>
                             <div class="control-section-content">
-                                <button id="exportSvg">Export SVG</button>
+                                <button id="exportSvg" title="Save current drawing as SVG file">Export SVG</button>
                             </div>
                         </div>
                     </div>
@@ -59,10 +59,10 @@
                     <div class="control-section">
                         <h4>Preview</h4>
                         <div class="control-section-content">
-                            <button id="toggleOrientation">Portrait</button>
-                            <button id="toggleRulers">Show Ruler</button>
-                            <button id="updateSvg">Update Preview</button>
-                            <button id="toggleRefresh" class="paused">Resume Refresh</button>
+                            <button id="toggleOrientation" title="Switch between portrait and landscape orientation">Portrait</button>
+                            <button id="toggleRulers" title="Show/hide ruler and margin guides">Show Ruler</button>
+                            <button id="updateSvg" title="Manually update the preview">Update Preview</button>
+                            <button id="toggleRefresh" class="paused" title="Toggle automatic preview refresh">Resume Refresh</button>
                         </div>
                     </div>
                     
@@ -77,21 +77,21 @@
                             <select id="layerSelect">
                                 <option value="all">Show All Layers</option>
                             </select>
-                            <button id="plotterPlotLayer" class="plotter-button" disabled>Plot Current Layer</button>
-                            <button id="plotterStopPlot" class="plotter-button danger">Stop Plot</button>
+                            <button id="plotterPlotLayer" class="plotter-button" disabled title="Plot the currently selected layer">Plot Current Layer</button>
+                            <button id="plotterStopPlot" class="plotter-button danger" title="Stop the current plotting operation">Stop Plot</button>
                         </div>
                     </div>
                     <div class="control-section">
                         <h4>Setup</h4>
                         <div class="control-section-content">
-                            <button id="plotterHome" class="plotter-button">🏠</button>
-                            <button id="plotterCycle" class="plotter-button">Cycle</button>
-                            <button id="plotterAlign" class="plotter-button">Align</button>
-                            <button id="plotterToggle" class="plotter-button">Toggle</button>
-                            <button id="plotterDisableMotors" class="plotter-button">
+                            <button id="plotterHome" class="plotter-button" title="Return plotter to home position">🏠</button>
+                            <button id="plotterCycle" class="plotter-button" title="Cycle pen up and down">Cycle</button>
+                            <button id="plotterAlign" class="plotter-button" title="Align pen with paper">Align</button>
+                            <button id="plotterToggle" class="plotter-button" title="Toggle pen position">Toggle</button>
+                            <button id="plotterDisableMotors" class="plotter-button" title="Turn off plotter motors">
                                 <span class="power-icon" style="text-decoration: line-through;">⏻</span>
                             </button>
-                            <button id="toggleMute" class="plotter-button">
+                            <button id="toggleMute" class="plotter-button" title="Toggle completion sound">
                                 <span class="speaker-icon">🔊</span>
                             </button>
                         </div>
