@@ -127,30 +127,21 @@
             oscillator.connect(gainNode);
             gainNode.connect(audioContext.destination);
             
-            // Start with no volume
-            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            // Set constant volume
+            gainNode.gain.setValueAtTime(0.6, audioContext.currentTime);
             
-            // Fade in
-            gainNode.gain.linearRampToValueAtTime(0.6, audioContext.currentTime + 0.1);
+            // Simple oscillation between frequencies over 6 seconds
+            const duration = 6.0;
+            const steps = 12;
+            const stepTime = duration / steps;
             
-            // Set frequency for siren effect - multiple oscillations over 6 seconds
-            oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
-            oscillator.frequency.linearRampToValueAtTime(880, audioContext.currentTime + 0.6);
-            oscillator.frequency.linearRampToValueAtTime(440, audioContext.currentTime + 1.2);
-            oscillator.frequency.linearRampToValueAtTime(880, audioContext.currentTime + 1.8);
-            oscillator.frequency.linearRampToValueAtTime(440, audioContext.currentTime + 2.4);
-            oscillator.frequency.linearRampToValueAtTime(880, audioContext.currentTime + 3.0);
-            oscillator.frequency.linearRampToValueAtTime(440, audioContext.currentTime + 3.6);
-            oscillator.frequency.linearRampToValueAtTime(880, audioContext.currentTime + 4.2);
-            oscillator.frequency.linearRampToValueAtTime(440, audioContext.currentTime + 4.8);
-            oscillator.frequency.linearRampToValueAtTime(880, audioContext.currentTime + 5.4);
-            oscillator.frequency.linearRampToValueAtTime(440, audioContext.currentTime + 6.0);
-            
-            // Fade out
-            gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 6.0);
+            for (let i = 0; i < steps; i++) {
+                const freq = i % 2 === 0 ? 440 : 880;
+                oscillator.frequency.setValueAtTime(freq, audioContext.currentTime + (i * stepTime));
+            }
             
             oscillator.start();
-            oscillator.stop(audioContext.currentTime + 6.0);
+            oscillator.stop(audioContext.currentTime + duration);
         }
 
         function startProgressListener() {
