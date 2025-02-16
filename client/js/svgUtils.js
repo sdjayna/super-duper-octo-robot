@@ -84,45 +84,9 @@ export function setViewBox(svg, paperWidth, paperHeight, contentWidth, contentHe
     const scaledWidth = drawingWidth * scale;
     const scaledHeight = drawingHeight * scale;
 
-    // Calculate centering offsets including margins
-    const horizontalOffset = marginValue + (availableWidth - scaledWidth) / 2;
-    const verticalOffset = marginValue + (availableHeight - scaledHeight) / 2;
-
-    if (isPortrait) {
-        // In portrait mode:
-        // - Content is rotated 90 degrees clockwise
-        // - Paper dimensions are swapped
-        const viewBox = `0 0 ${height} ${width}`;
-        svg.setAttribute('viewBox', viewBox);
-        
-        // Create a group for the content with proper transformation
-        const contentGroup = document.createElementNS(svgNS, "g");
-        contentGroup.setAttribute("transform", `translate(${horizontalOffset}, ${verticalOffset}) scale(${scale})`);
-        svg.appendChild(contentGroup);
-        
-        // Move existing content into the group
-        while (svg.firstChild !== contentGroup) {
-            if (svg.firstChild) {
-                contentGroup.appendChild(svg.firstChild);
-            }
-        }
-    } else {
-        // In landscape mode:
-        const viewBox = `0 0 ${width} ${height}`;
-        svg.setAttribute('viewBox', viewBox);
-        
-        // Create a group for the content with proper transformation
-        const contentGroup = document.createElementNS(svgNS, "g");
-        contentGroup.setAttribute("transform", `translate(${horizontalOffset}, ${verticalOffset}) scale(${scale})`);
-        svg.appendChild(contentGroup);
-        
-        // Move existing content into the group
-        while (svg.firstChild !== contentGroup) {
-            if (svg.firstChild) {
-                contentGroup.appendChild(svg.firstChild);
-            }
-        }
-    }
+    // Create a group for the content
+    const contentGroup = document.createElementNS(svgNS, "g");
+    svg.appendChild(contentGroup);
 
     // Add a visible margin rectangle for debugging
     const marginRect = document.createElementNS(svgNS, "rect");
@@ -134,7 +98,31 @@ export function setViewBox(svg, paperWidth, paperHeight, contentWidth, contentHe
     marginRect.setAttribute("stroke", "#ccc");
     marginRect.setAttribute("stroke-width", "0.5");
     marginRect.setAttribute("stroke-dasharray", "2,2");
-    svg.insertBefore(marginRect, svg.firstChild);
+    svg.insertBefore(marginRect, contentGroup);
+
+    // Calculate centering offsets including margins
+    const horizontalOffset = marginValue + (availableWidth - scaledWidth) / 2;
+    const verticalOffset = marginValue + (availableHeight - scaledHeight) / 2;
+
+    if (isPortrait) {
+        const viewBox = `0 0 ${height} ${width}`;
+        svg.setAttribute('viewBox', viewBox);
+        contentGroup.setAttribute("transform", 
+            `translate(${horizontalOffset}, ${verticalOffset}) scale(${scale})`);
+    } else {
+        const viewBox = `0 0 ${width} ${height}`;
+        svg.setAttribute('viewBox', viewBox);
+        contentGroup.setAttribute("transform", 
+            `translate(${horizontalOffset}, ${verticalOffset}) scale(${scale})`);
+    }
+
+    // Move all existing content (except margin rect) into the content group
+    Array.from(svg.children).forEach(child => {
+        if (child !== marginRect && child !== contentGroup) {
+            contentGroup.appendChild(child);
+        }
+    });
+
 }
 
 export function setOrientation(svg, isPortrait, drawingWidth, drawingHeight) {
