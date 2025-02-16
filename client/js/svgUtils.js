@@ -106,20 +106,19 @@ export function setViewBox(svg, paperWidth, paperHeight, contentWidth, contentHe
         }
     });
 
-    // Add debug margin rectangle if in preview mode
-    if (window.location.pathname.includes('preview')) {
-        const marginRect = document.createElementNS(svgNS, "rect");
-        marginRect.setAttribute("x", marginValue);
-        marginRect.setAttribute("y", marginValue);
-        marginRect.setAttribute("width", width - (2 * marginValue));
-        marginRect.setAttribute("height", height - (2 * marginValue));
-        marginRect.setAttribute("fill", "none");
-        marginRect.setAttribute("stroke", "#ff0000");
-        marginRect.setAttribute("stroke-width", "0.5");
-        marginRect.setAttribute("stroke-dasharray", "2,2");
-        marginRect.setAttribute("data-debug", "margin-rect");
-        svg.appendChild(marginRect);
-    }
+    // Add debug margin rectangle for preview
+    const marginRect = document.createElementNS(svgNS, "rect");
+    marginRect.setAttribute("x", marginValue);
+    marginRect.setAttribute("y", marginValue);
+    marginRect.setAttribute("width", width - (2 * marginValue));
+    marginRect.setAttribute("height", height - (2 * marginValue));
+    marginRect.setAttribute("fill", "none");
+    marginRect.setAttribute("stroke", "#ff0000");
+    marginRect.setAttribute("stroke-width", "0.5");
+    marginRect.setAttribute("stroke-dasharray", "2,2");
+    marginRect.setAttribute("data-debug", "margin-rect");
+    marginRect.setAttribute("class", "preview-only");
+    svg.appendChild(marginRect);
 
     return contentGroup;
 
