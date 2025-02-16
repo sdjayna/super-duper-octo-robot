@@ -6,6 +6,13 @@
             "margin": 59.4,
             "name": "A3",
             "description": "ISO A3 Paper"
+        },
+        "A4": {
+            "width": 210,
+            "height": 297,
+            "margin": 42,
+            "name": "A4",
+            "description": "ISO A4 Paper"
         }
     },
     "default": "A3"
