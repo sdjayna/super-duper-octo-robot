@@ -223,6 +223,8 @@
         async function updateSvg() {
             stopRefresh();  // Stop auto-refresh
             await draw();   // Do a single draw
+            populateLayerSelect();
+            updatePlotterStatus();
             logDebug('Manual SVG update triggered');
         }
 
@@ -457,7 +459,11 @@
         logDebug('Initial draw complete. Auto-refresh is off.');
 
         // Handle drawing selection changes
-        select.addEventListener('change', draw);
+        select.addEventListener('change', async () => {
+            await draw();
+            populateLayerSelect();
+            updatePlotterStatus();
+        });
         
         // Handle layer select interactions
         document.getElementById('layerSelect').addEventListener('focus', () => {
