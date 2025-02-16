@@ -6,18 +6,16 @@ import { BaseConfig } from '../configs/BaseConfig.js';
 export class BouwkampConfig extends BaseConfig {
     constructor(params) {
         super(params);
-        if (!Array.isArray(params.code)) {
-            throw new Error('Bouwkamp code must be an array');
-        }
+        validateBouwkampCode(params.code);
         
-        this.order = params.code[0];
-        this.width = params.code[1];
-        this.height = params.code[2];
-        this.squares = params.code.slice(3);
-    }
-
-    toArray() {
-        return [this.order, this.width, this.height, ...this.squares];
+        // Extract values from the Bouwkamp code array
+        const [order, width, height, ...squares] = params.code;
+        
+        // Store the values
+        this.order = order;
+        this.width = width;
+        this.height = height;
+        this.squares = squares;
     }
 }
 
