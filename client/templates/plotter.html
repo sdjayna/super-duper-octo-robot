@@ -31,7 +31,7 @@
                         <h4>Preview</h4>
                         <div class="control-section-content">
                             <button id="toggleOrientation">Portrait</button>
-                            <button id="toggleRulers">Hide Rulers</button>
+                            <button id="toggleRulers">Show Ruler</button>
                             <button id="updateSvg">Update Preview</button>
                             <button id="toggleRefresh" class="paused">Resume Refresh</button>
                         </div>
@@ -493,10 +493,17 @@
             
             if (rulerGroup && marginRect) {
                 const isVisible = rulerGroup.style.display !== 'none';
-                rulerGroup.style.display = isVisible ? 'none' : '';
-                marginRect.style.display = isVisible ? 'none' : '';
-                button.textContent = isVisible ? 'Show Rulers' : 'Hide Rulers';
-                logDebug(`${isVisible ? 'Hidden' : 'Showing'} rulers and margin`);
+                if (!isVisible) {
+                    rulerGroup.style.display = '';
+                    marginRect.style.display = '';
+                    button.textContent = 'Hide Ruler';
+                    logDebug('Showing ruler and margin');
+                } else {
+                    rulerGroup.style.display = 'none';
+                    marginRect.style.display = 'none';
+                    button.textContent = 'Show Ruler';
+                    logDebug('Hidden ruler and margin');
+                }
             }
         });
 
