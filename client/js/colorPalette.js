@@ -48,14 +48,21 @@ export const colorPalettes = {
         shockBlueMiddle: { hex: '#00a2e2', name: 'Shock Blue Middle', pen: 'Molotow ONE4ALL™' }
     },
     sakuraPalette: {
-        signalBlack: { hex: '#000000', name: 'Signal Black', pen: 'Sakura Pigma Micron®' },
-        signalWhite: { hex: '#ffffff', name: 'Signal White', pen: 'Sakura Pigma Micron®' },
-        trafficRed: { hex: '#d51023', name: 'Traffic Red', pen: 'Sakura Pigma Micron®' },
-        trueBlue: { hex: '#004b9a', name: 'True Blue', pen: 'Sakura Pigma Micron®' },
-        turquoise: { hex: '#00794d', name: 'Turquoise', pen: 'Sakura Pigma Micron®' },
-        vanillaPastel: { hex: '#ffeb91', name: 'Vanilla Pastel', pen: 'Sakura Pigma Micron®' },
-        violetDark: { hex: '#1e1056', name: 'Violet Dark', pen: 'Sakura Pigma Micron®' },
-        zincYellow: { hex: '#fff713', name: 'Zinc Yellow', pen: 'Sakura Pigma Micron®' }
+        black: { hex: '#000000', name: 'Black', pen: 'Sakura Pigma Micron®' },
+        red: { hex: '#FF0000', name: 'Red', pen: 'Sakura Pigma Micron®' },
+        blue: { hex: '#0000FF', name: 'Blue', pen: 'Sakura Pigma Micron®' },
+        green: { hex: '#008000', name: 'Green', pen: 'Sakura Pigma Micron®' },
+        orange: { hex: '#FFA500', name: 'Orange', pen: 'Sakura Pigma Micron®' },
+        brown: { hex: '#8B4513', name: 'Brown', pen: 'Sakura Pigma Micron®' },
+        sepia: { hex: '#704214', name: 'Sepia', pen: 'Sakura Pigma Micron®' },
+        rose: { hex: '#FF69B4', name: 'Rose', pen: 'Sakura Pigma Micron®' },
+        purple: { hex: '#800080', name: 'Purple', pen: 'Sakura Pigma Micron®' },
+        burgundy: { hex: '#800020', name: 'Burgundy', pen: 'Sakura Pigma Micron®' },
+        blueBlack: { hex: '#000033', name: 'Blue Black', pen: 'Sakura Pigma Micron®' },
+        royalBlue: { hex: '#4169E1', name: 'Royal Blue', pen: 'Sakura Pigma Micron®' },
+        hunterGreen: { hex: '#355E3B', name: 'Hunter Green', pen: 'Sakura Pigma Micron®' },
+        freshGreen: { hex: '#69B076', name: 'Fresh Green', pen: 'Sakura Pigma Micron®' },
+        yellow: { hex: '#FFD700', name: 'Yellow', pen: 'Sakura Pigma Micron®' }
     }
 };
 
