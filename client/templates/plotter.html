@@ -740,11 +740,29 @@
 
         // Pen position sliders
         document.getElementById('penPosDown').addEventListener('input', (e) => {
-            document.getElementById('penPosDownValue').textContent = e.target.value;
+            const downValue = parseInt(e.target.value);
+            const upValue = parseInt(document.getElementById('penPosUp').value);
+            
+            // Ensure down position is less than up position
+            if (downValue >= upValue) {
+                e.target.value = upValue - 1;
+                document.getElementById('penPosDownValue').textContent = upValue - 1;
+            } else {
+                document.getElementById('penPosDownValue').textContent = downValue;
+            }
         });
 
         document.getElementById('penPosUp').addEventListener('input', (e) => {
-            document.getElementById('penPosUpValue').textContent = e.target.value;
+            const upValue = parseInt(e.target.value);
+            const downValue = parseInt(document.getElementById('penPosDown').value);
+            
+            // Ensure up position is greater than down position
+            if (upValue <= downValue) {
+                e.target.value = downValue + 1;
+                document.getElementById('penPosUpValue').textContent = downValue + 1;
+            } else {
+                document.getElementById('penPosUpValue').textContent = upValue;
+            }
         });
 
         // Update pen positions when sliders are released
