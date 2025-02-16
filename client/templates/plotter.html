@@ -88,7 +88,8 @@
                             <button id="plotterCycle" class="plotter-button">Cycle</button>
                             <button id="plotterAlign" class="plotter-button">Align</button>
                             <button id="plotterToggle" class="plotter-button">Toggle</button>
-                            <button id="plotterDisableMotors" class="plotter-button">Disable Motors</button>
+                            <button id="plotterDisableMotors" class="plotter-button">Power Off</button>
+                            <button id="toggleMute" class="plotter-button">Mute</button>
                         </div>
                         <div class="pen-controls">
                             <div class="slider-group">
@@ -121,10 +122,12 @@
     <script type="module">
         let progressEventSource = null;
 
-        // Create audio context for siren
+        // Audio state
+        let isMuted = false;
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         
         function playCompletionSiren() {
+            if (isMuted) return;
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
             
@@ -812,9 +815,17 @@
         document.getElementById('plotterDisableMotors').addEventListener('click', async () => {
             logDebug('Sending disable motors command...');
             if (await sendPlotterCommand('disable_motors')) {
-                logDebug('Disable motors command completed');
+                logDebug('Power off command completed');
                 updatePlotterStatus('Ready', true);
             }
+        });
+
+        // Mute button handler
+        document.getElementById('toggleMute').addEventListener('click', () => {
+            isMuted = !isMuted;
+            const button = document.getElementById('toggleMute');
+            button.textContent = isMuted ? 'Unmute' : 'Mute';
+            logDebug(`Sound ${isMuted ? 'muted' : 'unmuted'}`);
         });
 
         // Pen position sliders
