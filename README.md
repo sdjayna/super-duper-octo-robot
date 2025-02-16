@@ -459,17 +459,12 @@ See the full [LICENSE](LICENSE) file for details.
 
 ## Known Issues & TODO
 
-### Current Issues
+See [TODOs.md](TODOs.md) for a complete list of planned improvements and known issues.
+
+Key issues:
 - Portrait mode orientation is currently broken and needs fixing
 - Margin handling needs improvement for consistent scaling across drawing types
 - Some drawings may not scale correctly within margins
-
-### TODO
-- Fix portrait mode orientation handling
-- Standardize margin and scaling logic across all drawing types
-- Add unit tests for SVG transformation logic
-- Improve documentation around paper size and margin configuration
-- Add visual debugging tools for margin and scaling issues
 
 ## Server Commands
 
