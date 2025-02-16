@@ -85,8 +85,8 @@ export function setViewBox(svg, paperWidth, paperHeight, contentWidth, contentHe
     const scaledHeight = drawingHeight * scale;
 
     // Calculate centering offsets including margins
-    const horizontalOffset = marginValue;
-    const verticalOffset = marginValue;
+    const horizontalOffset = marginValue + (availableWidth - scaledWidth) / 2;
+    const verticalOffset = marginValue + (availableHeight - scaledHeight) / 2;
 
     if (isPortrait) {
         // In portrait mode:
@@ -97,7 +97,7 @@ export function setViewBox(svg, paperWidth, paperHeight, contentWidth, contentHe
         
         // Create a group for the content with proper transformation
         const contentGroup = document.createElementNS(svgNS, "g");
-        contentGroup.setAttribute("transform", `translate(${horizontalOffset}, ${verticalOffset})`);
+        contentGroup.setAttribute("transform", `translate(${horizontalOffset}, ${verticalOffset}) scale(${scale})`);
         svg.appendChild(contentGroup);
         
         // Move existing content into the group
@@ -113,7 +113,7 @@ export function setViewBox(svg, paperWidth, paperHeight, contentWidth, contentHe
         
         // Create a group for the content with proper transformation
         const contentGroup = document.createElementNS(svgNS, "g");
-        contentGroup.setAttribute("transform", `translate(${horizontalOffset}, ${verticalOffset})`);
+        contentGroup.setAttribute("transform", `translate(${horizontalOffset}, ${verticalOffset}) scale(${scale})`);
         svg.appendChild(contentGroup);
         
         // Move existing content into the group
