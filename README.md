@@ -461,11 +461,6 @@ See the full [LICENSE](LICENSE) file for details.
 
 See [TODOs.md](TODOs.md) for a complete list of planned improvements and known issues.
 
-Key issues:
-- Portrait mode orientation is currently broken and needs fixing
-- Margin handling needs improvement for consistent scaling across drawing types
-- Some drawings may not scale correctly within margins
-
 ## Server Commands
 
 For detailed documentation of all available plotter server commands, see [Server Commands Documentation](docs/server_commands.md).

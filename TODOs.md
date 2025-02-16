@@ -1,5 +1,11 @@
 # TODOs
 
+## Known Issues
+
+- Portrait mode orientation is currently broken and needs fixing
+- Margin handling needs improvement for consistent scaling across drawing types
+- Some drawings may not scale correctly within margins
+
 ## High Priority
 
 1. Fix paper and medium handling in client
