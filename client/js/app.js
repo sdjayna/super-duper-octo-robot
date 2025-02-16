@@ -1,4 +1,4 @@
-import { drawingTypes } from './drawings/types.js';
+import { drawingTypes } from './drawings.js';
 
 export function generateSVG(drawingConfig) {
     try {

@@ -2,11 +2,10 @@ import { createSVG, createColorGroups, createPath } from '../utils/svgUtils.js';
 import { validateBouwkampCode } from '../utils/validationUtils.js';
 import { generateSingleSerpentineLine } from '../utils/patternUtils.js';
 import { ColorManager } from '../utils/colorUtils.js';
-import { BaseConfig } from '../configs/BaseConfig.js';
-
-export class BouwkampConfig extends BaseConfig {
+export class BouwkampConfig {
     constructor(params) {
-        super(params);
+        this.width = params.paper?.width || 420;
+        this.height = params.paper?.height || 297;
         // Extract code array from params
         const code = params.code;
         if (!Array.isArray(code)) {
