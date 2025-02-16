@@ -100,20 +100,21 @@ export function setViewBox(svg, paperWidth, paperHeight, contentWidth, contentHe
     marginRect.setAttribute("stroke-dasharray", "2,2");
     svg.insertBefore(marginRect, contentGroup);
 
-    // Calculate centering offsets
-    const horizontalOffset = marginValue;
-    const verticalOffset = marginValue;
-
+    // Set the content group to match margin rectangle dimensions
     if (isPortrait) {
         const viewBox = `0 0 ${height} ${width}`;
         svg.setAttribute('viewBox', viewBox);
         contentGroup.setAttribute("transform", 
-            `translate(${horizontalOffset}, ${verticalOffset}) scale(${scale})`);
+            `translate(${marginValue}, ${marginValue}) scale(${scale})`);
+        contentGroup.setAttribute("width", width - (2 * marginValue));
+        contentGroup.setAttribute("height", height - (2 * marginValue));
     } else {
         const viewBox = `0 0 ${width} ${height}`;
         svg.setAttribute('viewBox', viewBox);
         contentGroup.setAttribute("transform", 
-            `translate(${horizontalOffset}, ${verticalOffset}) scale(${scale})`);
+            `translate(${marginValue}, ${marginValue}) scale(${scale})`);
+        contentGroup.setAttribute("width", width - (2 * marginValue));
+        contentGroup.setAttribute("height", height - (2 * marginValue));
     }
 
     // Move all existing content (except margin rect) into the content group
