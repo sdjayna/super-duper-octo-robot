@@ -31,7 +31,7 @@ export function drawBouwkampCode(drawingConfig, isPortrait = false) {
     // Calculate scaling to fit within paper size while maintaining aspect ratio
     const scaleX = (drawingConfig.paper.width - 2 * drawingConfig.paper.margin) / bouwkamp.width;
     const scaleY = (drawingConfig.paper.height - 2 * drawingConfig.paper.margin) / bouwkamp.height;
-    const scale = Math.min(scaleX, scaleY) * 0.8; // Use 80% of available space
+    const scale = Math.min(scaleX, scaleY) * 0.95; // Use 95% of available space
     
     // Calculate the center of the paper
     const paperCenterX = drawingConfig.paper.width / 2;
