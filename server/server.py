@@ -214,6 +214,7 @@ class PlotterHandler(SimpleHTTPRequestHandler):
                 '--model', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['model']),
                 '--pen_pos_up', str(params['pen_pos_up']),
                 '--pen_pos_down', str(params['pen_pos_down']),
+                '--pen_rate_lower', str(params.get('pen_rate_lower', 25)),
                 '--penlift', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['penlift'])
             ],
             'align': lambda params: [
@@ -230,6 +231,7 @@ class PlotterHandler(SimpleHTTPRequestHandler):
                 '--model', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['model']),
                 '--pen_pos_up', str(params['pen_pos_up']),
                 '--pen_pos_down', str(params['pen_pos_down']),
+                '--pen_rate_lower', str(params.get('pen_rate_lower', 25)),
                 '--penlift', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['penlift'])
             ],
             'home': lambda _: None,  # Special case handled below
