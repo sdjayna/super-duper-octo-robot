@@ -8,9 +8,9 @@ export const drawings = {
             type: 'bouwkamp',
             code: [17, 403, 285, 148, 111, 144, 75, 36, 3, 141, 39, 58, 37, 53, 21, 16, 15, 99, 84, 79],
             paper: {
-                width: 420,
-                height: 297,
-                margin: 12.5
+                width: 432,
+                height: 279,
+                margin: 10,
             },
             line: {
                 spacing: 2,
@@ -64,9 +64,9 @@ export const drawings = {
             type: 'hilbert',
             level: 7,
             paper: {
-                width: 420,
-                height: 297,
-                margin: 12.5
+                width: 432,
+                height: 279,
+                margin: 10,
             },
             line: {
                 spacing: 1.5,
