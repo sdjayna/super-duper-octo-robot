@@ -458,6 +458,10 @@ See the full [LICENSE](LICENSE) file for details.
 - Improve documentation around paper size and margin configuration
 - Add visual debugging tools for margin and scaling issues
 
+## Server Commands
+
+For detailed documentation of all available plotter server commands, see [Server Commands Documentation](docs/server_commands.md).
+
 ## Support
 
 For support:
