@@ -1,4 +1,4 @@
-import { areRectanglesAdjacent } from './bouwkampUtils.js';
+import { areRectanglesAdjacent } from './drawingUtils.js';
 
 export class ColorManager {
     constructor(palette) {

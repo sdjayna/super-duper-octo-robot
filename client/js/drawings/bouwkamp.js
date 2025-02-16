@@ -1,5 +1,5 @@
 import { createSVG, createColorGroups, createPath } from '../svgUtils.js';
-import { validateBouwkampCode, generateSingleSerpentineLine } from '../bouwkampUtils.js';
+import { validateBouwkampCode, generateSingleSerpentineLine } from '../drawingUtils.js';
 import { ColorManager } from '../ColorManager.js';
 import { BaseConfig } from '../configs/BaseConfig.js';
 
