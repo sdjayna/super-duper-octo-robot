@@ -89,7 +89,9 @@
                             <button id="plotterAlign" class="plotter-button">Align</button>
                             <button id="plotterToggle" class="plotter-button">Toggle</button>
                             <button id="plotterDisableMotors" class="plotter-button">Power Off</button>
-                            <button id="toggleMute" class="plotter-button">Mute</button>
+                            <button id="toggleMute" class="plotter-button">
+                                <span class="speaker-icon">🔊</span>
+                            </button>
                         </div>
                         <div class="pen-controls">
                             <div class="slider-group">
@@ -824,7 +826,9 @@
         document.getElementById('toggleMute').addEventListener('click', () => {
             isMuted = !isMuted;
             const button = document.getElementById('toggleMute');
-            button.textContent = isMuted ? 'Unmute' : 'Mute';
+            const icon = button.querySelector('.speaker-icon');
+            icon.textContent = isMuted ? '🔇' : '🔊';
+            icon.style.textDecoration = isMuted ? 'line-through' : 'none';
             logDebug(`Sound ${isMuted ? 'muted' : 'unmuted'}`);
         });
 
