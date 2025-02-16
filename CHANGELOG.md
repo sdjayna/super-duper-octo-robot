@@ -12,17 +12,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Safety checks for Hilbert curve generation parameters
 - Improved debug logging for drawing operations
 - Added Known Issues section to README
+- Added A4 paper size support
+- Added paper size selection in UI
+- Added mm ruler visualization for preview
+- Added centralized paper configuration
 
 ### Changed
 - Optimized color selection algorithm performance
 - Updated Hilbert curve generation to prevent stack overflow
 - Refined wavy effect parameters for smoother curves
 - Standardized margin configuration across drawing types
+- Centralized paper configuration in shared JSON
+- Improved margin visualization with red dashed line
 
 ### Fixed
 - Stack overflow risk with high Hilbert curve levels
 - Color adjacency detection edge cases
 - SVG viewBox calculation precision issues
+- Paper margin consistency across drawing types
 
 ### Known Issues
 - Portrait mode orientation is not working correctly

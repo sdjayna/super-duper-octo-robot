@@ -45,8 +45,10 @@ The project is optimized for two specific pen types:
 - **Multiple Drawing Algorithms**
   - Bouwkamp codes (perfect square subdivisions)
   - Delaunay triangulations
+  - Hilbert curves with configurable complexity
   - Portrait/Landscape orientation support
   - Content-aware SVG scaling
+  - Millimeter-precise ruler visualization
 
 - **Real-time Development**
   - Live preview with auto-refresh
@@ -150,8 +152,31 @@ The project is optimized for two specific pen types:
 
 ## Plotter Configuration
 
-The project includes specific support for the AxiDraw SE/A3 plotter through `plotter_config.py`. This configuration file contains model-specific settings:
+The project includes specific support for the AxiDraw SE/A3 plotter through `plotter_config.py` and paper configuration through `paper_config.json`.
 
+### Paper Configuration
+```json
+{
+    "papers": {
+        "A3": {
+            "width": 297,
+            "height": 420,
+            "margin": 59.4,
+            "name": "A3",
+            "description": "ISO A3 Paper"
+        },
+        "A4": {
+            "width": 210,
+            "height": 297,
+            "margin": 42,
+            "name": "A4",
+            "description": "ISO A4 Paper"
+        }
+    }
+}
+```
+
+### Plotter Settings
 ```python
 PLOTTER_CONFIGS = {
     'AxiDraw SE/A3': {
