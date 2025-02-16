@@ -133,16 +133,19 @@
             // Fade in
             gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.1);
             
-            // Set frequency for siren effect
+            // Set frequency for siren effect - multiple oscillations
             oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
             oscillator.frequency.linearRampToValueAtTime(880, audioContext.currentTime + 0.2);
             oscillator.frequency.linearRampToValueAtTime(440, audioContext.currentTime + 0.4);
+            oscillator.frequency.linearRampToValueAtTime(880, audioContext.currentTime + 0.6);
+            oscillator.frequency.linearRampToValueAtTime(440, audioContext.currentTime + 0.8);
+            oscillator.frequency.linearRampToValueAtTime(880, audioContext.currentTime + 1.0);
             
             // Fade out
-            gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.5);
+            gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 1.0);
             
             oscillator.start();
-            oscillator.stop(audioContext.currentTime + 0.5);
+            oscillator.stop(audioContext.currentTime + 1.0);
         }
 
         function startProgressListener() {
