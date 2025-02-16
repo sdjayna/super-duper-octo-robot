@@ -14,13 +14,6 @@
             "name": "A4",
             "description": "ISO A4 Paper"
         },
-        "Square297": {
-            "width": 297,
-            "height": 297,
-            "margin": 59.4,
-            "name": "297mm Square",
-            "description": "297mm Square Paper (A3 width)"
-        },
         "bristol": {
             "width": 432,
             "height": 279,
