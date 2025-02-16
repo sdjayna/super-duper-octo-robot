@@ -126,8 +126,8 @@ class PlotterHandler(SimpleHTTPRequestHandler):
                         '--mode', 'layers',
                         '--layer', str(params['layer']),
                         '--model', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['model']),
-                        '--pen_pos_up', str(params.get('pen_pos_up', PLOTTER_CONFIGS[CURRENT_PLOTTER]['pen_pos_up'])),
-                        '--pen_pos_down', str(params.get('pen_pos_down', PLOTTER_CONFIGS[CURRENT_PLOTTER]['pen_pos_down'])),
+                        '--pen_pos_up', str(params['pen_pos_up']),
+                        '--pen_pos_down', str(params['pen_pos_down']),
                         '--penlift', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['penlift']),
                         '--progress'
                     ])
