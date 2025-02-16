@@ -498,6 +498,9 @@
         select.addEventListener('change', async () => {
             await draw();
             populateLayerSelect();
+            // Set layer select to "all" when drawing changes
+            document.getElementById('layerSelect').value = 'all';
+            updateLayerVisibility();
             updatePlotterStatus();
         });
         
