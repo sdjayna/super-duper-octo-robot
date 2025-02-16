@@ -1,6 +1,30 @@
-import { drawingTypes } from './drawings/types.js';
+import { drawBouwkampCode, BouwkampConfig } from './drawings/bouwkamp.js';
+import { drawDelaunayTriangulation, DelaunayConfig } from './drawings/delaunay.js';
+import { drawHilbertCurve, HilbertConfig } from './drawings/hilbert.js';
 import { loadPaperConfig } from './paperConfig.js';
 import { colorPalettes } from './utils/colorUtils.js';
+
+export const drawingTypes = {
+    bouwkamp: {
+        name: 'Bouwkamp Code',
+        configClass: BouwkampConfig,
+        drawFunction: drawBouwkampCode,
+        validator: (config) => {
+            // Add any validation specific to Bouwkamp
+            return true;
+        }
+    },
+    delaunay: {
+        name: 'Delaunay Triangulation',
+        configClass: DelaunayConfig,
+        drawFunction: drawDelaunayTriangulation
+    },
+    hilbert: {
+        name: 'Hilbert Curve',
+        configClass: HilbertConfig,
+        drawFunction: drawHilbertCurve
+    }
+};
 
 export class DrawingConfig {
     constructor(name, params) {
