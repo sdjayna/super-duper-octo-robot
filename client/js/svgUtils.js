@@ -90,17 +90,21 @@ export function setViewBox(svg, paperWidth, paperHeight, contentWidth, contentHe
     const contentGroup = document.createElementNS(svgNS, "g");
     svg.appendChild(contentGroup);
 
-    // Calculate scale to fit content within margins
+    // Adjust content dimensions to account for margins
+    const adjustedDrawingWidth = drawingWidth - (2 * marginValue);
+    const adjustedDrawingHeight = drawingHeight - (2 * marginValue);
+
+    // Calculate scale to fit adjusted content within margins
     const availableWidth = width - (2 * marginValue);
     const availableHeight = height - (2 * marginValue);
     const scale = Math.min(
-        availableWidth / drawingWidth,
-        availableHeight / drawingHeight
+        availableWidth / adjustedDrawingWidth,
+        availableHeight / adjustedDrawingHeight
     );
 
     // Center the scaled content within the margins
-    const scaledWidth = drawingWidth * scale;
-    const scaledHeight = drawingHeight * scale;
+    const scaledWidth = adjustedDrawingWidth * scale;
+    const scaledHeight = adjustedDrawingHeight * scale;
     const translateX = marginValue + (availableWidth - scaledWidth) / 2;
     const translateY = marginValue + (availableHeight - scaledHeight) / 2;
 
