@@ -70,7 +70,7 @@ export function drawHilbertCurve(drawingConfig, isPortrait = false) {
     // Calculate scaling to fit within paper size while maintaining aspect ratio
     const scaleX = (drawingConfig.paper.width - 2 * drawingConfig.paper.margin) / hilbert.width;
     const scaleY = (drawingConfig.paper.height - 2 * drawingConfig.paper.margin) / hilbert.height;
-    const scale = Math.min(scaleX, scaleY) * 0.8; // Use 80% of available space like Delaunay
+    const scale = Math.min(scaleX, scaleY) * 0.9; // Use 90% of available space
     
     // Calculate the center of the paper
     const paperCenterX = drawingConfig.paper.width / 2;
