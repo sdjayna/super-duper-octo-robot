@@ -1,3 +1,5 @@
+import { BaseConfig } from './configs/BaseConfig.js';
+
 export class BouwkampConfig extends BaseConfig {
     constructor(params) {
         super(params);
