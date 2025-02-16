@@ -773,26 +773,6 @@
             }
         });
 
-        // Update pen positions when sliders are released
-        document.getElementById('penPosDown').addEventListener('change', async (e) => {
-            logDebug(`Setting pen down position to ${e.target.value}...`);
-            if (await sendPlotterCommand('manual', { 
-                manual_cmd: 'pen_pos_down', 
-                pen_value: parseInt(e.target.value)
-            })) {
-                logDebug('Pen down position updated');
-            }
-        });
-
-        document.getElementById('penPosUp').addEventListener('change', async (e) => {
-            logDebug(`Setting pen up position to ${e.target.value}...`);
-            if (await sendPlotterCommand('manual', { 
-                manual_cmd: 'pen_pos_up', 
-                pen_value: parseInt(e.target.value)
-            })) {
-                logDebug('Pen up position updated');
-            }
-        });
 
         // Paper size selection handler
         document.getElementById('paperSelect').addEventListener('change', async (e) => {
