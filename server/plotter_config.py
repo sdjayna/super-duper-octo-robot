@@ -1,4 +1,4 @@
-from .paper_config import CURRENT_PAPER
+from paper_config import CURRENT_PAPER
 
 # Configuration for different plotter models
 PLOTTER_CONFIGS = {
