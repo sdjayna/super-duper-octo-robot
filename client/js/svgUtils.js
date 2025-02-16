@@ -141,7 +141,7 @@ export function setViewBox(svg, paperWidth, paperHeight, contentWidth, contentHe
             text.setAttribute("y", 10);
             text.setAttribute("text-anchor", "middle");
             text.setAttribute("font-size", "6");
-            text.setAttribute("fill", "#666");
+            text.setAttribute("fill", i % 20 === 0 ? "#333" : "#999");
             text.textContent = i;
             rulerGroup.appendChild(text);
         }
@@ -161,10 +161,10 @@ export function setViewBox(svg, paperWidth, paperHeight, contentWidth, contentHe
         if (i % 10 === 0) {
             const text = document.createElementNS(svgNS, "text");
             text.setAttribute("x", 10);
-            text.setAttribute("y", i + 3);
+            text.setAttribute("y", i + 1);
             text.setAttribute("text-anchor", "start");
             text.setAttribute("font-size", "6");
-            text.setAttribute("fill", "#666");
+            text.setAttribute("fill", i % 20 === 0 ? "#333" : "#999");
             text.textContent = i;
             rulerGroup.appendChild(text);
         }
