@@ -25,7 +25,7 @@ Plots a specific layer of an SVG drawing.
 ```
 
 ### Stop Plot
-Stops the current plotting operation.
+Stops the current plotting operation. Automatically raises the pen after stopping.
 
 ```json
 {
@@ -38,7 +38,8 @@ Raises the pen to the up position.
 
 ```json
 {
-    "command": "raise_pen"
+    "command": "raise_pen",
+    "pen_pos_up": 90
 }
 ```
 
