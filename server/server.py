@@ -233,6 +233,13 @@ class PlotterHandler(SimpleHTTPRequestHandler):
                 '--model', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['model']),
                 '--penlift', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['penlift'])
             ],
+            'raise_pen': lambda _: [
+                self.AXIDRAW_PATH,
+                '--mode', 'manual',
+                '--manual_cmd', 'raise_pen',
+                '--model', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['model']),
+                '--penlift', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['penlift'])
+            ],
             'stop_plot': lambda _: None  # Special case handled below
         }
         
