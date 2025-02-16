@@ -20,14 +20,14 @@
             "margin": 59.4,
             "name": "297mm Square",
             "description": "297mm Square Paper (A3 width)"
+        },
+        "bristol": {
+            "width": 432,
+            "height": 279,
+            "margin": 86.4,
+            "name": "Bristol",
+            "description": "Bristol Paper 432×279mm"
         }
-    },
-    "Bristol": {
-        "width": 432,
-        "height": 279,
-        "margin": 86.4,
-        "name": "Bristol",
-        "description": "Bristol Paper 432×279mm"
     },
     "default": "a3"
 }
