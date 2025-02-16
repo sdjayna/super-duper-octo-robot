@@ -5,22 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.4.5] - 2025-02-09
+## [1.4.5] - 2025-02-16
 
 ### Added
 - Enhanced error handling for invalid Hilbert curve levels
 - Safety checks for Hilbert curve generation parameters
 - Improved debug logging for drawing operations
+- Added Known Issues section to README
 
 ### Changed
 - Optimized color selection algorithm performance
 - Updated Hilbert curve generation to prevent stack overflow
 - Refined wavy effect parameters for smoother curves
+- Standardized margin configuration across drawing types
 
 ### Fixed
 - Stack overflow risk with high Hilbert curve levels
 - Color adjacency detection edge cases
 - SVG viewBox calculation precision issues
+
+### Known Issues
+- Portrait mode orientation is not working correctly
+- Margin handling needs improvement for consistent scaling
 
 ## [1.4.4] - 2025-02-09
 
