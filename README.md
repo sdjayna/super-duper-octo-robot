@@ -77,21 +77,22 @@ The project is optimized for two specific pen types:
 ├── client/
 │   ├── js/
 │   │   ├── app.js                # Main application logic
-│   │   ├── BouwkampConfig.js     # Perfect square subdivision config
-│   │   ├── ColorManager.js       # Smart color selection system
-│   │   ├── DelaunayConfig.js     # Triangulation configuration
-│   │   ├── DrawingConfig.js      # Base drawing configuration
-│   │   ├── HilbertConfig.js      # Hilbert curve configuration
-│   │   ├── bouwkampUtils.js      # Square subdivision utilities
 │   │   ├── colorPalette.js       # Color definitions and palettes
 │   │   ├── configs/
 │   │   │   └── BaseConfig.js     # Base configuration class
+│   │   ├── drawings.js           # Drawing configurations
 │   │   ├── drawings/
 │   │   │   ├── bouwkamp.js      # Perfect square implementation
 │   │   │   ├── delaunay.js      # Triangulation implementation
 │   │   │   ├── hilbert.js       # Hilbert curve implementation
 │   │   │   └── types.js         # Drawing type definitions
-│   │   └── svgUtils.js          # SVG generation and manipulation
+│   │   ├── paperConfig.js        # Paper size configurations
+│   │   └── utils/
+│   │       ├── colorUtils.js     # Color management utilities
+│   │       ├── geometryUtils.js  # Geometric calculations
+│   │       ├── patternUtils.js   # Pattern generation
+│   │       ├── svgUtils.js       # SVG creation and manipulation
+│   │       └── validationUtils.js # Input validation
 │   ├── static/
 │   │   ├── css/
 │   │   │   └── styles.css       # Application styles
@@ -99,17 +100,16 @@ The project is optimized for two specific pen types:
 │   └── templates/
 │       └── plotter.html         # Main application interface
 ├── server/
-│   ├── handlers/
-│   │   ├── plotter_handler.py   # Main request handler
-│   │   └── sse_handler.py       # Server-sent events handler
-│   ├── services/
-│   │   └── __init__.py         # Service layer initialization
-│   ├── utils/
-│   │   └── __init__.py         # Utility functions initialization
 │   ├── __init__.py             # Server package initialization
+│   ├── paper_config.py         # Paper configuration
 │   ├── plotter_config.py       # Plotter settings
 │   ├── server.py               # Main server implementation
 │   └── server_runner.py        # Development server with hot reload
+├── shared/
+│   ├── medium_config.json      # Pen and medium configurations
+│   └── paper_config.json       # Paper size definitions
+├── docs/
+│   └── server_commands.md      # Server API documentation
 ├── .eslintrc.json             # JavaScript linting rules
 ├── CHANGELOG.md               # Version history
 ├── CONTRIBUTING.md            # Contribution guidelines
