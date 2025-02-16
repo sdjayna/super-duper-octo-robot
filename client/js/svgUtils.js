@@ -120,6 +120,58 @@ export function setViewBox(svg, paperWidth, paperHeight, contentWidth, contentHe
     marginRect.setAttribute("class", "preview-only");
     svg.appendChild(marginRect);
 
+    // Add rulers
+    const rulerGroup = document.createElementNS(svgNS, "g");
+    rulerGroup.setAttribute("class", "preview-only");
+    
+    // Horizontal ruler
+    for (let i = 0; i <= width; i += 10) {
+        const tick = document.createElementNS(svgNS, "line");
+        tick.setAttribute("x1", i);
+        tick.setAttribute("y1", 0);
+        tick.setAttribute("x2", i);
+        tick.setAttribute("y2", i % 50 === 0 ? 5 : (i % 10 === 0 ? 3 : 2));
+        tick.setAttribute("stroke", "#666");
+        tick.setAttribute("stroke-width", "0.5");
+        rulerGroup.appendChild(tick);
+
+        if (i % 50 === 0) {
+            const text = document.createElementNS(svgNS, "text");
+            text.setAttribute("x", i);
+            text.setAttribute("y", 10);
+            text.setAttribute("text-anchor", "middle");
+            text.setAttribute("font-size", "8");
+            text.setAttribute("fill", "#666");
+            text.textContent = i;
+            rulerGroup.appendChild(text);
+        }
+    }
+
+    // Vertical ruler
+    for (let i = 0; i <= height; i += 10) {
+        const tick = document.createElementNS(svgNS, "line");
+        tick.setAttribute("x1", 0);
+        tick.setAttribute("y1", i);
+        tick.setAttribute("x2", i % 50 === 0 ? 5 : (i % 10 === 0 ? 3 : 2));
+        tick.setAttribute("y2", i);
+        tick.setAttribute("stroke", "#666");
+        tick.setAttribute("stroke-width", "0.5");
+        rulerGroup.appendChild(tick);
+
+        if (i % 50 === 0) {
+            const text = document.createElementNS(svgNS, "text");
+            text.setAttribute("x", 10);
+            text.setAttribute("y", i + 3);
+            text.setAttribute("text-anchor", "start");
+            text.setAttribute("font-size", "8");
+            text.setAttribute("fill", "#666");
+            text.textContent = i;
+            rulerGroup.appendChild(text);
+        }
+    }
+
+    svg.appendChild(rulerGroup);
+
     return contentGroup;
 
 }
