@@ -131,7 +131,7 @@ export function setViewBox(svg, paperWidth, paperHeight, contentWidth, contentHe
         tick.setAttribute("y1", 0);
         tick.setAttribute("x2", i);
         tick.setAttribute("y2", i % 50 === 0 ? 5 : (i % 10 === 0 ? 3 : 2));
-        tick.setAttribute("stroke", "#666");
+        tick.setAttribute("stroke", "#ff9999");
         tick.setAttribute("stroke-width", "0.5");
         rulerGroup.appendChild(tick);
 
@@ -141,7 +141,7 @@ export function setViewBox(svg, paperWidth, paperHeight, contentWidth, contentHe
             text.setAttribute("y", 10);
             text.setAttribute("text-anchor", "middle");
             text.setAttribute("font-size", "3");
-            text.setAttribute("fill", i % 20 === 0 ? "#333" : "#999");
+            text.setAttribute("fill", i % 20 === 0 ? "#cc0000" : "#ff6666");
             text.textContent = i;
             rulerGroup.appendChild(text);
         }
@@ -154,7 +154,7 @@ export function setViewBox(svg, paperWidth, paperHeight, contentWidth, contentHe
         tick.setAttribute("y1", i);
         tick.setAttribute("x2", i % 50 === 0 ? 5 : (i % 10 === 0 ? 3 : 2));
         tick.setAttribute("y2", i);
-        tick.setAttribute("stroke", "#666");
+        tick.setAttribute("stroke", "#ff9999");
         tick.setAttribute("stroke-width", "0.5");
         rulerGroup.appendChild(tick);
 
@@ -164,7 +164,7 @@ export function setViewBox(svg, paperWidth, paperHeight, contentWidth, contentHe
             text.setAttribute("y", i + 1);
             text.setAttribute("text-anchor", "start");
             text.setAttribute("font-size", "3");
-            text.setAttribute("fill", i % 20 === 0 ? "#333" : "#999");
+            text.setAttribute("fill", i % 20 === 0 ? "#cc0000" : "#ff6666");
             text.textContent = i;
             rulerGroup.appendChild(text);
         }
