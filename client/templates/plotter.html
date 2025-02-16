@@ -507,10 +507,8 @@
                     paperSelect.appendChild(option);
                 });
                 
-                // Set default paper
-                if (config.default) {
-                    paperSelect.value = config.default;
-                }
+                // Always set to A3 by default
+                paperSelect.value = 'a3';
                 
                 // Draw once but don't start refresh
                 await draw();

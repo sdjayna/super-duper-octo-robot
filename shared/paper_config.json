@@ -1,6 +1,6 @@
 {
     "papers": {
-        "A3": {
+        "a3": {
             "width": 297,
             "height": 420,
             "margin": 59.4,
@@ -29,5 +29,5 @@
         "name": "Bristol",
         "description": "Bristol Paper 432×279mm"
     },
-    "default": "A3"
+    "default": "a3"
 }
