@@ -1,6 +1,6 @@
 import { drawingTypes } from './drawings/types.js';
 import { loadPaperConfig } from './paperConfig.js';
-import { colorPalette } from './utils/colorUtils.js';
+import { colorPalettes } from './utils/colorUtils.js';
 
 export class DrawingConfig {
     constructor(name, params) {
@@ -46,7 +46,7 @@ export const drawings = {
                 strokeWidth: 0.85,
                 vertexGap: 0.20
             },
-            colorPalette
+            colorPalette: colorPalettes.sakuraPalette
         }
     ),
     
@@ -83,7 +83,7 @@ export const drawings = {
                 strokeWidth: 0.3,
                 vertexGap: 0
             },
-            colorPalette
+            colorPalette: colorPalettes.sakuraPalette
         }
     ),
     
@@ -102,7 +102,7 @@ export const drawings = {
                 strokeWidth: 0.5,
                 vertexGap: 0
             },
-            colorPalette
+            colorPalette: colorPalettes.sakuraPalette
         }
     )
 };
