@@ -302,6 +302,7 @@ class PlotterHandler(SimpleHTTPRequestHandler):
                     '--mode', 'manual',
                     '--manual_cmd', 'raise_pen',
                     '--model', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['model']),
+                    '--pen_pos_up', str(params['pen_pos_up']),
                     '--penlift', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['penlift'])
                 ]
                 result = subprocess.run(raise_pen_cmd, capture_output=True, text=True, check=True)
