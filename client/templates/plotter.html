@@ -904,7 +904,7 @@
             logDebug(`Changing medium to ${medium}`);
             
             // Load color palettes
-            const { colorPalettes } = await import('./js/colorPalette.js?v=' + Date.now());
+            const { colorPalettes } = await import('./js/colorConfig.js?v=' + Date.now());
             const { drawings } = await import('./js/drawings.js?v=' + Date.now());
             
             // Get the palette for this medium
