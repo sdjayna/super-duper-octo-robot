@@ -1,10 +1,9 @@
 import { createSVG, createColorGroups, createPath } from '../utils/svgUtils.js';
 import { ColorManager } from '../utils/colorUtils.js';
-import { BaseConfig } from '../configs/BaseConfig.js';
-
-export class HilbertConfig extends BaseConfig {
+export class HilbertConfig {
     constructor(params) {
-        super(params);
+        this.width = params.paper?.width || 420;
+        this.height = params.paper?.height || 297;
         // Extract level from params, default to 7 if not provided
         this.level = params.level || 7;
         // Use paper dimensions if provided, otherwise default values

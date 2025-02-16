@@ -1,10 +1,9 @@
 import { createSVG, createColorGroups, createPath } from '../utils/svgUtils.js';
 import { ColorManager } from '../utils/colorUtils.js';
-import { BaseConfig } from '../configs/BaseConfig.js';
-
-export class DelaunayConfig extends BaseConfig {
+export class DelaunayConfig {
     constructor(params) {
-        super(params);
+        this.width = params.paper?.width || 420;
+        this.height = params.paper?.height || 297;
         const triangulation = params.triangulation;
         if (!triangulation) {
             throw new Error('Triangulation data is required');
