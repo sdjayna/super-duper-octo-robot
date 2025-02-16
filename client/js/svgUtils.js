@@ -160,7 +160,7 @@ export function setViewBox(svg, paperWidth, paperHeight, contentWidth, contentHe
 
         if (i % 10 === 0) {
             const text = document.createElementNS(svgNS, "text");
-            text.setAttribute("x", 10);
+            text.setAttribute("x", 6);
             text.setAttribute("y", i + 1);
             text.setAttribute("text-anchor", "start");
             text.setAttribute("font-size", "6");
