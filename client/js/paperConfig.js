@@ -3,7 +3,7 @@ export const PAPER_SIZES = {
     A3: {
         width: 297,
         height: 420,
-        margin: 10  // Safe margin from paper edge
+        margin: 29.7  // 10% of width margin from paper edge
     }
 };
 

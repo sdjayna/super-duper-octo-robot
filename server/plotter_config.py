@@ -3,7 +3,7 @@ PAPER_DIMENSIONS = {
     'A3': {
         'width': 297,
         'height': 420,
-        'margin': 10  # Minimum safe margin from paper edge
+        'margin': 29.7  # 10% of width margin from paper edge
     }
 }
 
