@@ -12,8 +12,6 @@ The project is optimized for two specific pen types:
 - Molotow ONE4ALL™ Acrylic Markers (1mm and 2mm tips)
 - Sakura Pigma Micron® Fineliners (0.2mm - 0.8mm)
 
-![Plotter Art UI](ui-screenshot.png)
-
 ## Contents
 
 - [Features](#features)
