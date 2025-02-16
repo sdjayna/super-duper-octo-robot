@@ -1,4 +1,4 @@
-import { areRectanglesAdjacent } from './drawingUtils.js';
+import { areRectanglesAdjacent } from './utils/geometryUtils.js';
 
 export class ColorManager {
     constructor(palette) {
