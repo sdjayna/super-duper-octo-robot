@@ -695,8 +695,19 @@
         document.getElementById('paperSelect').addEventListener('change', async (e) => {
             const paperSize = e.target.value;
             logDebug(`Changing paper size to ${paperSize}`);
-            // Reload the drawing with new paper size
+            
+            // Load paper config and update current drawing
+            const { loadPaperConfig } = await import('./js/paperConfig.js?v=' + Date.now());
+            const { drawings } = await import('./js/drawings.js?v=' + Date.now());
+            const config = await loadPaperConfig();
+            
+            // Update the current drawing's paper properties
+            const currentDrawing = drawings[select.value];
+            currentDrawing.paper = config.papers[paperSize];
+            
+            // Redraw with new paper properties
             await draw();
+            logDebug(`Updated drawing with ${paperSize} paper properties`);
         });
     </script>
 </body>
