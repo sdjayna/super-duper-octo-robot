@@ -616,6 +616,11 @@
             }
         });
 
+        // Pen rate lower slider
+        document.getElementById('penRateLower').addEventListener('input', (e) => {
+            document.getElementById('penRateLowerValue').textContent = e.target.value;
+        });
+
         // Plotter control functions
         async function sendPlotterCommand(command, data = {}) {
             try {
