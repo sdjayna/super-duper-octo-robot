@@ -720,6 +720,28 @@
             await draw();
             logDebug(`Updated drawing with ${paperSize} paper properties`);
         });
+
+        // Medium selection handler
+        document.getElementById('mediumSelect').addEventListener('change', async (e) => {
+            const medium = e.target.value;
+            logDebug(`Changing medium to ${medium}`);
+            
+            // Load color palettes
+            const { colorPalettes } = await import('./js/colorPalette.js?v=' + Date.now());
+            const { drawings } = await import('./js/drawings.js?v=' + Date.now());
+            
+            // Get the palette for this medium
+            const paletteName = medium === 'sakura' ? 'sakuraPalette' : 'molotowPalette';
+            
+            // Update the current drawing's color palette
+            const currentDrawing = drawings[select.value];
+            currentDrawing.colorPalette = colorPalettes[paletteName];
+            
+            // Redraw with new color palette
+            await draw();
+            populateLayerSelect();
+            logDebug(`Updated drawing with ${medium} color palette`);
+        });
     </script>
 </body>
 </html>
