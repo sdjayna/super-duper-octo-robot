@@ -100,7 +100,7 @@ export function setViewBox(svg, paperWidth, paperHeight, contentWidth, contentHe
     marginRect.setAttribute("stroke-dasharray", "2,2");
     svg.insertBefore(marginRect, contentGroup);
 
-    // Calculate centering offsets including margins
+    // Calculate centering offsets for the scaled content
     const horizontalOffset = marginValue + (availableWidth - scaledWidth) / 2;
     const verticalOffset = marginValue + (availableHeight - scaledHeight) / 2;
 
@@ -108,12 +108,12 @@ export function setViewBox(svg, paperWidth, paperHeight, contentWidth, contentHe
         const viewBox = `0 0 ${height} ${width}`;
         svg.setAttribute('viewBox', viewBox);
         contentGroup.setAttribute("transform", 
-            `translate(${horizontalOffset}, ${verticalOffset}) scale(${scale})`);
+            `scale(${scale}) translate(${horizontalOffset/scale}, ${verticalOffset/scale})`);
     } else {
         const viewBox = `0 0 ${width} ${height}`;
         svg.setAttribute('viewBox', viewBox);
         contentGroup.setAttribute("transform", 
-            `translate(${horizontalOffset}, ${verticalOffset}) scale(${scale})`);
+            `scale(${scale}) translate(${horizontalOffset/scale}, ${verticalOffset/scale})`);
     }
 
     // Move all existing content (except margin rect) into the content group
