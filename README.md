@@ -144,13 +144,12 @@ The project is optimized for two specific pen types:
    cd super-duper-octo-robot
    ```
 
-2. Install dependencies:
+2. Install dependencies (Python virtualenv + npm packages):
    ```bash
-   make install        # Python/server bits
-   npm install         # Front-end tooling & tests
+   make install
    ```
 
-3. Start the server:
+3. Start the development server:
    ```bash
    make run
    ```
@@ -162,13 +161,23 @@ The project is optimized for two specific pen types:
 
 5. Run the automated tests:
    ```bash
-   npm test
+   make test
    ```
 
-6. Launch in development mode (installs both stacks):
+6. For a full dev setup (install + run):
    ```bash
    make dev
    ```
+
+### Available Make targets
+
+| Command       | Description                                      |
+|---------------|--------------------------------------------------|
+| make install  | Create the Python virtualenv and install npm deps |
+| make run      | Start the development server                      |
+| make clean    | Remove temp files, virtualenv, and node_modules   |
+| make test     | Run the Vitest suite (frontend + helper tests)    |
+| make dev      | Convenience target: install then run              |
 
 ## Plotter Configuration
 
