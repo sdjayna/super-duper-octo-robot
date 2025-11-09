@@ -8,19 +8,22 @@ export const svgNS = "http://www.w3.org/2000/svg";
  * @param {number} contentHeight - Height of the content to be centered
  * @returns {SVGElement} The created SVG element
  */
-export function createSVG(drawingConfig, contentWidth, contentHeight, isPortrait) {
+export function createSVG(renderContext) {
     const svg = document.createElementNS(svgNS, "svg");
-    const { width, height, margin } = drawingConfig.paper;
+    const { paperWidth, paperHeight } = renderContext;
     
-    // Set SVG dimensions to paper size without margins
-    svg.setAttribute("width", `${width}mm`);
-    svg.setAttribute("height", `${height}mm`);
+    svg.setAttribute("width", `${paperWidth}mm`);
+    svg.setAttribute("height", `${paperHeight}mm`);
+    svg.setAttribute('viewBox', `0 0 ${paperWidth} ${paperHeight}`);
+    svg.dataset.orientation = renderContext.orientation;
     
-    // Set initial viewBox including margins
-    setViewBox(svg, width, height, contentWidth, contentHeight, margin, isPortrait);
     svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
     svg.setAttribute("xmlns:svg", "http://www.w3.org/2000/svg");
     svg.setAttribute("xmlns:inkscape", "http://www.inkscape.org/namespaces/inkscape");
+
+    appendDrawingGroup(svg);
+    appendGuides(svg, renderContext);
+
     return svg;
 }
 
@@ -33,6 +36,7 @@ export function createSVG(drawingConfig, contentWidth, contentHeight, isPortrait
 export function createColorGroups(svg, colorPalette) {
     const groups = {};
     let index = 0;
+    const drawingLayer = getDrawingLayer(svg);
 
     for (const [key, color] of Object.entries(colorPalette)) {
         const group = document.createElementNS(svgNS, "g");
@@ -40,7 +44,7 @@ export function createColorGroups(svg, colorPalette) {
         group.setAttribute("inkscape:groupmode", "layer");
         group.setAttribute("inkscape:label", `${index}-${color.name}`);
         groups[color.hex] = group;
-        svg.appendChild(group);
+        drawingLayer.appendChild(group);
         index++;
     }
     return groups;
@@ -63,55 +67,20 @@ export function createPath(points) {
     return pathElement;
 }
 
-export function setViewBox(svg, paperWidth, paperHeight, contentWidth, contentHeight, margin, isPortrait = false) {
-    // Parse dimensions
-    const width = parseFloat(paperWidth);
-    const height = parseFloat(paperHeight);
-    const drawingWidth = parseFloat(contentWidth);
-    const drawingHeight = parseFloat(contentHeight);
-    const marginValue = parseFloat(margin);
+function appendDrawingGroup(svg) {
+    const drawingLayer = document.createElementNS(svgNS, 'g');
+    drawingLayer.setAttribute('data-role', 'drawing-content');
+    svg.appendChild(drawingLayer);
+    return drawingLayer;
+}
 
-    // Set viewBox to paper dimensions
-    svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
-
-    // Create content group
-    const contentGroup = document.createElementNS(svgNS, "g");
-    svg.appendChild(contentGroup);
-
-    // Adjust content dimensions to account for margins
-    const adjustedDrawingWidth = drawingWidth - (2 * marginValue);
-    const adjustedDrawingHeight = drawingHeight - (2 * marginValue);
-
-    // Calculate scale to fit adjusted content within margins
-    const availableWidth = width - (2 * marginValue);
-    const availableHeight = height - (2 * marginValue);
-    const scale = Math.min(
-        availableWidth / adjustedDrawingWidth,
-        availableHeight / adjustedDrawingHeight
-    );
-
-    // Center the scaled content within the margins
-    const scaledWidth = adjustedDrawingWidth * scale;
-    const scaledHeight = adjustedDrawingHeight * scale;
-    const translateX = marginValue + (availableWidth - scaledWidth) / 2;
-    const translateY = marginValue + (availableHeight - scaledHeight) / 2;
-
-    // Apply transformation to content group
-    contentGroup.setAttribute("transform", `translate(${translateX}, ${translateY}) scale(${scale})`);
-
-    // Move all existing content into content group
-    Array.from(svg.children).forEach(child => {
-        if (child !== contentGroup) {
-            contentGroup.appendChild(child);
-        }
-    });
-
-    // Add debug margin rectangle for preview
+function appendGuides(svg, renderContext) {
+    const { paperWidth, paperHeight, margin } = renderContext;
     const marginRect = document.createElementNS(svgNS, "rect");
-    marginRect.setAttribute("x", marginValue);
-    marginRect.setAttribute("y", marginValue);
-    marginRect.setAttribute("width", width - (2 * marginValue));
-    marginRect.setAttribute("height", height - (2 * marginValue));
+    marginRect.setAttribute("x", margin);
+    marginRect.setAttribute("y", margin);
+    marginRect.setAttribute("width", paperWidth - (2 * margin));
+    marginRect.setAttribute("height", paperHeight - (2 * margin));
     marginRect.setAttribute("fill", "none");
     marginRect.setAttribute("stroke", "#ff0000");
     marginRect.setAttribute("stroke-width", "0.5");
@@ -120,12 +89,10 @@ export function setViewBox(svg, paperWidth, paperHeight, contentWidth, contentHe
     marginRect.setAttribute("class", "preview-only");
     svg.appendChild(marginRect);
 
-    // Add rulers
     const rulerGroup = document.createElementNS(svgNS, "g");
     rulerGroup.setAttribute("class", "preview-only");
-    
-    // Horizontal ruler (skip first 20mm)
-    for (let i = 20; i <= width; i += 10) {
+
+    for (let i = 20; i <= paperWidth; i += 10) {
         const tick = document.createElementNS(svgNS, "line");
         tick.setAttribute("x1", i);
         tick.setAttribute("y1", 0);
@@ -147,8 +114,7 @@ export function setViewBox(svg, paperWidth, paperHeight, contentWidth, contentHe
         }
     }
 
-    // Vertical ruler (skip first 20mm)
-    for (let i = 20; i <= height; i += 10) {
+    for (let i = 20; i <= paperHeight; i += 10) {
         const tick = document.createElementNS(svgNS, "line");
         tick.setAttribute("x1", 0);
         tick.setAttribute("y1", i);
@@ -171,45 +137,12 @@ export function setViewBox(svg, paperWidth, paperHeight, contentWidth, contentHe
     }
 
     svg.appendChild(rulerGroup);
-
-    return contentGroup;
-
 }
 
-export function setOrientation(svg, isPortrait, drawingWidth, drawingHeight) {
-    // Get or create the content group that will be rotated
-    let contentGroup = svg.querySelector('g.content-group');
-    if (!contentGroup) {
-        contentGroup = document.createElementNS(svgNS, "g");
-        contentGroup.setAttribute('class', 'content-group');
-        // Move all existing content into the group
-        while (svg.firstChild) {
-            contentGroup.appendChild(svg.firstChild);
-        }
-        svg.appendChild(contentGroup);
+export function getDrawingLayer(svg) {
+    const layer = svg.querySelector('[data-role="drawing-content"]');
+    if (!layer) {
+        throw new Error('Drawing layer not initialized. Call createSVG(renderContext) first.');
     }
-
-    // Get paper dimensions without units
-    const paperWidth = svg.getAttribute('width').replace('mm', '');
-    const paperHeight = svg.getAttribute('height').replace('mm', '');
-
-    if (isPortrait) {
-        // In portrait mode:
-        // - Swap paper dimensions
-        // - Translate content to new origin then rotate
-        svg.setAttribute('width', paperHeight + 'mm');
-        svg.setAttribute('height', paperWidth + 'mm');
-        setViewBox(svg, paperWidth, paperHeight, drawingWidth, drawingHeight, true);
-        contentGroup.setAttribute('transform', `translate(${paperHeight} 0) rotate(90)`);
-    } else {
-        // In landscape mode:
-        // - Keep original dimensions
-        // - Remove any transformation
-        svg.setAttribute('width', paperWidth + 'mm');
-        svg.setAttribute('height', paperHeight + 'mm');
-        setViewBox(svg, paperWidth, paperHeight, drawingWidth, drawingHeight, false);
-        contentGroup.removeAttribute('transform');
-    }
-
-    return contentGroup;
+    return layer;
 }

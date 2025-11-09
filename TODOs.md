@@ -2,18 +2,16 @@
 
 ## Known Issues
 
-- Portrait mode orientation is currently broken and needs fixing
-- Margin handling needs improvement for consistent scaling across drawing types
-- Some drawings may not scale correctly within margins
+- Add visual regression to ensure preview/export parity stays intact
 
 ## High Priority
 
-1. Fix paper and medium handling in client
-   - Centralize paper configuration management
+1. Fix paper and medium handling in client ✅
+   - Centralize paper configuration management ✅
    - Add paper size validation
-   - Improve margin handling consistency
+   - Improve margin handling consistency ✅
    - Add paper size preview in UI
-   - Standardize paper size changes across drawing types
+   - Standardize paper size changes across drawing types ✅
 
 2. Enhance hatching algorithms for Simple Perfect Rectangle
    - Add parallel line hatching
@@ -32,7 +30,7 @@
    - Add compile-time checks
 
 4. Improve testing
-   - Add unit tests for drawing algorithms
+   - Add unit tests for drawing algorithms ✅
    - Add integration tests
    - Add visual regression tests
 

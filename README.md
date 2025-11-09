@@ -130,6 +130,7 @@ The project is optimized for two specific pen types:
 - macOS (currently only tested on Mac)
 - Python 3.x
 - Modern web browser (Chrome, Firefox, Safari)
+- Node.js 18+ (for unit tests)
 - Git
 
 ### Installation
@@ -142,7 +143,8 @@ The project is optimized for two specific pen types:
 
 2. Install dependencies:
    ```bash
-   make install
+   make install        # Python/server bits
+   npm install         # Front-end tooling & tests
    ```
 
 3. Start the server:
@@ -153,6 +155,11 @@ The project is optimized for two specific pen types:
 4. Visit in your browser:
    ```
    http://localhost:8000
+   ```
+
+5. Run the automated tests:
+   ```bash
+   npm test
    ```
 
 ## Plotter Configuration

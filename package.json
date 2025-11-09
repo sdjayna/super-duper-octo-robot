@@ -1,0 +1,30 @@
+{
+  "name": "super-duper-octo-robot",
+  "version": "1.0.0",
+  "description": "A web-based tool for generating algorithmic art optimized for AxiDraw pen plotters. This project creates SVG files with separated layers for multi-pen plotting, featuring perfect square subdivisions (Bouwkamp codes), Delaunay triangulations, and Hilbert curves.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "vitest",
+    "test:watch": "vitest watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sdjayna/super-duper-octo-robot.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/sdjayna/super-duper-octo-robot/issues"
+  },
+  "homepage": "https://github.com/sdjayna/super-duper-octo-robot#readme",
+  "devDependencies": {
+    "jsdom": "^27.0.1",
+    "vitest": "^3.2.4"
+  }
+}

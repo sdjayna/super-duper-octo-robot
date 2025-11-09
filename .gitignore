@@ -21,3 +21,4 @@ bin/
 lib/
 output/
 pyvenv.cfg
+node_modules/

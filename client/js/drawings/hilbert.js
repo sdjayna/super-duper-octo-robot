@@ -64,32 +64,16 @@ function addWavyEffect(points, amplitude = 1, frequency = 0.1) {
     });
 }
 
-export function drawHilbertCurve(drawingConfig, isPortrait = false) {
+export function drawHilbertCurve(drawingConfig, renderContext) {
     const hilbert = drawingConfig.drawingData;
-    const svg = createSVG(drawingConfig, hilbert.width, hilbert.height, isPortrait);
+    const svg = createSVG(renderContext);
     
     const colorGroups = createColorGroups(svg, drawingConfig.colorPalette);
     const colorManager = new ColorManager(drawingConfig.colorPalette);
 
-    // Calculate scaling to fit within paper size while maintaining aspect ratio
-    const scaleX = (drawingConfig.paper.width - 2 * drawingConfig.paper.margin) / hilbert.width;
-    const scaleY = (drawingConfig.paper.height - 2 * drawingConfig.paper.margin) / hilbert.height;
-    const scale = Math.min(scaleX, scaleY); // Use 100% of available space
-    
-    // Calculate the center of the paper
-    const paperCenterX = drawingConfig.paper.width / 2;
-    const paperCenterY = drawingConfig.paper.height / 2;
-    
-    // Calculate the center of the hilbert points
-    const hilbertCenterX = hilbert.width / 2;
-    const hilbertCenterY = hilbert.height / 2;
-    
     // Generate and scale points
     const rawPoints = generateHilbertPoints(hilbert.level, hilbert.width, hilbert.height);
-    const points = rawPoints.map(p => ({
-        x: paperCenterX + (p.x - hilbertCenterX) * scale,
-        y: paperCenterY + (p.y - hilbertCenterY) * scale
-    }));
+    const points = renderContext.projectPoints(rawPoints);
 
     // Process points in chunks of 3 for coloring
     for (let i = 0; i < points.length - 1; i += 3) {

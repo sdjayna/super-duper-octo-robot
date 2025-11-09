@@ -5,9 +5,17 @@
  * @returns {Array<{x: number, y: number}>} Array of points defining the pattern
  */
 export function generateSingleSerpentineLine(rect, lineSpacing, lineWidth) {
-    const spacing = lineSpacing || 2.5;
+    const spacing = Math.max(lineSpacing || 2.5, 0.1);
     const adjustedRect = adjustRectForLineWidth(rect, lineWidth);
+    
+    if (adjustedRect.width <= 0 || adjustedRect.height <= 0) {
+        return generateMinimalRectanglePath(rect);
+    }
+
     const points = generateSerpentinePoints(adjustedRect, spacing);
+    if (!points.length) {
+        return generateMinimalRectanglePath(adjustedRect);
+    }
     return [...points, ...generateClosingPath(points[points.length - 1], adjustedRect)];
 }
 
@@ -52,5 +60,20 @@ function generateClosingPath(lastPoint, rect) {
         ...corners.slice(closestCornerIndex),
         ...corners.slice(0, closestCornerIndex),
         corners[closestCornerIndex]
+    ];
+}
+
+function generateMinimalRectanglePath(rect) {
+    const width = Math.max(rect.width, 0.05);
+    const height = Math.max(rect.height, 0.05);
+    const x2 = rect.x + width;
+    const y2 = rect.y + height;
+    
+    return [
+        { x: rect.x, y: rect.y },
+        { x: x2, y: rect.y },
+        { x: x2, y: y2 },
+        { x: rect.x, y: y2 },
+        { x: rect.x, y: rect.y }
     ];
 }

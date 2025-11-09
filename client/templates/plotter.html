@@ -306,6 +306,16 @@
                 const svgData = new XMLSerializer().serializeToString(svg);
 
                 // Send to server with full config
+                const paperForExport = lastRenderedPaper || currentPaper || currentConfig.paper;
+                const exportConfig = {
+                    name: currentConfig.name,
+                    type: currentConfig.type,
+                    line: currentConfig.line,
+                    colorPalette: currentConfig.colorPalette,
+                    drawingData: currentConfig.drawingData,
+                    paper: paperForExport ? { ...paperForExport, orientation: currentOrientation } : null
+                };
+
                 const response = await fetch('http://localhost:8000/save-svg', {
                     method: 'POST',
                     headers: {
@@ -314,7 +324,7 @@
                     body: JSON.stringify({
                         name: select.value,
                         svg: svgData,
-                        config: currentConfig
+                        config: exportConfig
                     })
                 });
                 
@@ -389,6 +399,11 @@
 
         // Store ruler visibility state
         let rulersVisible = false;
+        let paperConfig = null;
+        let currentPaperId = null;
+        let currentPaper = null;
+        let currentOrientation = 'landscape';
+        let lastRenderedPaper = null;
 
         async function draw() {
             try {
@@ -410,21 +425,18 @@
                 logDebug(`Generating drawing: ${selectedDrawing.name}`);
                 const currentLayer = document.getElementById('layerSelect').value;
                 const orientationButton = document.getElementById('toggleOrientation');
-                const isLandscape = orientationButton.textContent === 'Landscape';
-                orientationButton.textContent = isLandscape ? 'Landscape' : 'Portrait';
-                container.innerHTML = '';
-                const svg = generateSVG(selectedDrawing);
-                svg.setAttribute('preserveAspectRatio', 'none');
-                
-                // Get the actual content dimensions from the drawing data
-                const contentWidth = selectedDrawing.drawingData.width;
-                const contentHeight = selectedDrawing.drawingData.height;
-                
-                // Restore orientation if needed
-                if (isLandscape) {
-                    const { setOrientation } = await import('./js/svgUtils.js?v=' + Date.now());
-                    setOrientation(svg, true, contentWidth, contentHeight);
+                orientationButton.textContent = currentOrientation === 'portrait' ? 'Portrait' : 'Landscape';
+                const paperForRender = currentPaper || selectedDrawing.paper;
+                if (!paperForRender) {
+                    throw new Error('Paper configuration is missing for the selected drawing');
                 }
+                lastRenderedPaper = paperForRender;
+                container.innerHTML = '';
+                const svg = generateSVG(selectedDrawing, {
+                    paper: paperForRender,
+                    orientation: currentOrientation
+                });
+                svg.setAttribute('preserveAspectRatio', 'none');
                 container.appendChild(svg);
                 populateLayerSelect();
                 document.getElementById('layerSelect').value = currentLayer;
@@ -474,50 +486,20 @@
         }
 
         async function toggleOrientation() {
-            const svg = container.querySelector('svg');
-            if (!svg) return;
-            
-            const { setOrientation } = await import('./js/svgUtils.js?v=' + Date.now());
-            
-            // Toggle between portrait and landscape
-            const isRotated = svg.querySelector('g.content-group')?.getAttribute('transform')?.includes('rotate');
-            
-            // Get the current drawing configuration
-            const { drawings } = await import('./js/drawings.js?v=' + Date.now());
-            const currentConfig = drawings[select.value];
-            const contentWidth = currentConfig.drawingData.width;
-            const contentHeight = currentConfig.drawingData.height;
-            
-            setOrientation(svg, !isRotated, contentWidth, contentHeight);
-            
-            // Update button text
+            currentOrientation = currentOrientation === 'landscape' ? 'portrait' : 'landscape';
             const button = document.getElementById('toggleOrientation');
-            button.textContent = isRotated ? 'Portrait' : 'Landscape';
-            logDebug(`Switched to ${button.textContent} orientation`);
-
-            // Force redraw if refresh is paused
-            if (!refreshInterval) {
-                // Store current layer selection and SVG attributes
-                const currentLayer = document.getElementById('layerSelect').value;
-                const { drawings } = await import('./js/drawings.js?v=' + Date.now());
-                const currentConfig = drawings[select.value];
-                
-                // Generate fresh SVG to ensure correct dimensions
-                const { generateSVG } = await import('./js/app.js?v=' + Date.now());
-                const newSvg = generateSVG(currentConfig);
-                
-                // Apply current orientation
-                setOrientation(newSvg, !isRotated, contentWidth, contentHeight);
-                
-                // Update container
-                container.innerHTML = '';
-                container.appendChild(newSvg);
-                
-                // Restore layer visibility
-                populateLayerSelect();
-                document.getElementById('layerSelect').value = currentLayer;
-                updateLayerVisibility();
+            button.textContent = currentOrientation === 'portrait' ? 'Portrait' : 'Landscape';
+            logDebug(`Switched to ${currentOrientation} orientation`);
+            const previousLayer = document.getElementById('layerSelect').value;
+            await draw();
+            populateLayerSelect();
+            const layerSelect = document.getElementById('layerSelect');
+            if (Array.from(layerSelect.options).some(option => option.value === previousLayer)) {
+                layerSelect.value = previousLayer;
+            } else {
+                layerSelect.value = 'all';
             }
+            updateLayerVisibility();
         }
 
         // Toggle debug panel visibility
@@ -532,11 +514,11 @@
         async function initialize() {
             try {
                 const { loadPaperConfig } = await import('./js/paperConfig.js?v=' + Date.now());
-                const config = await loadPaperConfig();
+                paperConfig = await loadPaperConfig();
                 const paperSelect = document.getElementById('paperSelect');
                 
                 // Sort papers by name
-                const papers = Object.entries(config.papers)
+                const papers = Object.entries(paperConfig.papers)
                     .sort(([,a], [,b]) => a.name.localeCompare(b.name));
                 
                 // Populate dropdown
@@ -546,10 +528,19 @@
                     option.textContent = `${paper.name} (${paper.width}×${paper.height}mm)`;
                     paperSelect.appendChild(option);
                 });
-                
-                // Always set to A3 by default
-                paperSelect.value = 'a3';
-                
+
+                currentPaperId = paperConfig.default || papers[0]?.[0] || null;
+                if (!currentPaperId && papers.length) {
+                    currentPaperId = papers[0][0];
+                }
+                if (currentPaperId && paperSelect.querySelector(`option[value="${currentPaperId}"]`)) {
+                    paperSelect.value = currentPaperId;
+                } else if (papers.length) {
+                    paperSelect.selectedIndex = 0;
+                    currentPaperId = paperSelect.value;
+                }
+                currentPaper = currentPaperId ? paperConfig.papers[currentPaperId] : null;
+
                 // Draw once but don't start refresh
                 await draw();
                 logDebug('Initial draw complete. Auto-refresh is off.');
@@ -874,28 +865,18 @@
 
         // Paper size selection handler
         document.getElementById('paperSelect').addEventListener('change', async (e) => {
-            const paperSize = e.target.value;
-            logDebug(`Changing paper size to ${paperSize}`);
-            
-            // Load paper config and update current drawing
-            const { loadPaperConfig } = await import('./js/paperConfig.js?v=' + Date.now());
-            const { drawings } = await import('./js/drawings.js?v=' + Date.now());
-            const config = await loadPaperConfig();
-            
-            // Update the current drawing's paper properties
-            const currentDrawing = drawings[select.value];
-            const newPaper = config.papers[paperSize];
-            currentDrawing.paper = newPaper;
-            
-            // Update drawing data dimensions
-            if (currentDrawing.drawingData) {
-                currentDrawing.drawingData.width = newPaper.width;
-                currentDrawing.drawingData.height = newPaper.height;
+            if (!paperConfig) {
+                logDebug('Paper configuration not loaded yet', 'error');
+                return;
             }
-            
-            // Redraw with new paper properties
+            currentPaperId = e.target.value;
+            currentPaper = paperConfig.papers[currentPaperId];
+            if (!currentPaper) {
+                logDebug(`Paper ${currentPaperId} not found in configuration`, 'error');
+                return;
+            }
+            logDebug(`Changing paper size to ${currentPaper.name} (${currentPaper.width}×${currentPaper.height}mm)`);
             await draw();
-            logDebug(`Updated drawing with ${paperSize} paper properties (${newPaper.width}×${newPaper.height}mm)`);
         });
 
         // Medium selection handler

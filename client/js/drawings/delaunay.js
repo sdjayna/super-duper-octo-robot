@@ -19,31 +19,14 @@ export class DelaunayConfig {
     }
 }
 
-export function drawDelaunayTriangulation(drawingConfig, isPortrait = false) {
+export function drawDelaunayTriangulation(drawingConfig, renderContext) {
     const delaunay = drawingConfig.drawingData;
-    const svg = createSVG(drawingConfig, delaunay.width, delaunay.height, isPortrait);
+    const svg = createSVG(renderContext);
     
     const colorGroups = createColorGroups(svg, drawingConfig.colorPalette);
     const colorManager = new ColorManager(drawingConfig.colorPalette);
-    
-    // Calculate scaling to fit within paper size while maintaining aspect ratio
-    const scaleX = (drawingConfig.paper.width - 2 * drawingConfig.paper.margin) / delaunay.width;
-    const scaleY = (drawingConfig.paper.height - 2 * drawingConfig.paper.margin) / delaunay.height;
-    const scale = Math.min(scaleX, scaleY) * 0.98; // Use 98% of available space
-    
-    // Calculate the center of the paper
-    const paperCenterX = drawingConfig.paper.width / 2;
-    const paperCenterY = drawingConfig.paper.height / 2;
-    
-    // Calculate the center of the delaunay points
-    const delaunayCenterX = (delaunay.width / 2);
-    const delaunayCenterY = (delaunay.height / 2);
-    
-    // Scale and center points relative to paper center
-    const scaledPoints = delaunay.points.map(p => ({
-        x: paperCenterX + (p.x - delaunayCenterX) * scale,
-        y: paperCenterY + (p.y - delaunayCenterY) * scale
-    }));
+
+    const scaledPoints = renderContext.projectPoints(delaunay.points);
     
     const triangles = [];
     const numPoints = scaledPoints.length;

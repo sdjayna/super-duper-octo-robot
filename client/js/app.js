@@ -1,6 +1,7 @@
 import { drawingTypes } from './drawings.js';
+import { createRenderContext } from './renderContext.js';
 
-export function generateSVG(drawingConfig) {
+export function generateSVG(drawingConfig, options = {}) {
     try {
         if (!drawingConfig) {
             throw new Error('Drawing configuration is required');
@@ -18,7 +19,14 @@ export function generateSVG(drawingConfig) {
             typeConfig.validator(drawingConfig);
         }
 
-        const svg = typeConfig.drawFunction(drawingConfig);
+        const renderContext = options.renderContext || createRenderContext({
+            paper: options.paper || drawingConfig.paper,
+            drawingWidth: drawingConfig.drawingData.width,
+            drawingHeight: drawingConfig.drawingData.height,
+            orientation: options.orientation
+        });
+
+        const svg = typeConfig.drawFunction(drawingConfig, renderContext);
         
         if (!svg) {
             throw new Error('Failed to generate SVG');
