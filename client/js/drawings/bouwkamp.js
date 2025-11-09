@@ -1,30 +1,22 @@
 import { createSVG } from '../utils/svgUtils.js';
 import { validateBouwkampCode } from '../utils/validationUtils.js';
 import { generateSingleSerpentineLine } from '../utils/patternUtils.js';
-import { appendColoredPath } from '../utils/drawingUtils.js';
-import { createDrawingContext } from '../utils/drawingContext.js';
+import { createDrawingBuilder } from '../utils/drawingBuilder.js';
+import { SizedDrawingConfig } from '../utils/drawingConfigBase.js';
 import { registerDrawing, addDrawingPreset } from '../drawingRegistry.js';
 import { colorPalettes } from '../utils/colorUtils.js';
-export class BouwkampConfig {
-    constructor(params) {
-        // Extract code array from params
+
+export class BouwkampConfig extends SizedDrawingConfig {
+    constructor(params = {}) {
         const code = params.code;
         if (!Array.isArray(code)) {
             throw new Error('Bouwkamp code must be an array');
         }
         validateBouwkampCode(code);
+        const resolvedParams = { ...params, width: code[1], height: code[2] };
+        super(resolvedParams);
         this.order = code[0];
-        this.width = code[1];
-        this.height = code[2];
         this.squares = code.slice(3);
-        this.bounds = {
-            minX: 0,
-            minY: 0,
-            width: this.width,
-            height: this.height
-        };
-        this.width = this.bounds.width;
-        this.height = this.bounds.height;
     }
 
     toArray() {
@@ -35,7 +27,7 @@ export class BouwkampConfig {
 export function drawBouwkampCode(drawingConfig, renderContext) {
     const bouwkamp = drawingConfig.drawingData;
     const svg = createSVG(renderContext);
-    const drawingContext = createDrawingContext(svg, drawingConfig.colorPalette);
+    const builder = createDrawingBuilder({ svg, drawingConfig, renderContext });
 
     const helper = new Array(900).fill(0);
 
@@ -57,17 +49,10 @@ export function drawBouwkampCode(drawingConfig, renderContext) {
             width: size - 2 * vertexGap,
             height: size - 2 * vertexGap
         };
-        const projectedRect = renderContext.projectRect(rectData);
+        const projectedRect = builder.projectRect(rectData);
         const points = generateSingleSerpentineLine(projectedRect, drawingConfig.line.spacing, drawingConfig.line.strokeWidth);
-        appendColoredPath({
-            points,
-            strokeWidth: drawingConfig.line.strokeWidth,
-            strokeLinecap: drawingConfig.line.lineCap || 'round',
-            strokeLinejoin: drawingConfig.line.lineJoin || 'round',
-            geometry: projectedRect,
-            colorGroups: drawingContext.colorGroups,
-            colorManager: drawingContext.colorManager
-        });
+        
+        builder.appendPath(points, { geometry: projectedRect });
 
         for (let j = 0; j < size; j++) {
             helper[i + j] += size;
@@ -87,11 +72,6 @@ registerDrawing({
 addDrawingPreset('simplePerfectRectangle', 'Simple Perfect Rectangle', {
     type: 'bouwkamp',
     code: [17, 403, 285, 148, 111, 144, 75, 36, 3, 141, 39, 58, 37, 53, 21, 16, 15, 99, 84, 79],
-    paper: {
-        width: 432,
-        height: 279,
-        margin: 10
-    },
     line: {
         spacing: 2,
         strokeWidth: 0.85,

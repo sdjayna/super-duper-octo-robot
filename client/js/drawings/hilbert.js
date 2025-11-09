@@ -1,19 +1,13 @@
 import { createSVG } from '../utils/svgUtils.js';
 import { appendColoredPath } from '../utils/drawingUtils.js';
 import { createDrawingContext } from '../utils/drawingContext.js';
+import { SizedDrawingConfig } from '../utils/drawingConfigBase.js';
 import { registerDrawing, addDrawingPreset } from '../drawingRegistry.js';
 import { colorPalettes } from '../utils/colorUtils.js';
-export class HilbertConfig {
+
+export class HilbertConfig extends SizedDrawingConfig {
     constructor(params = {}) {
-        const paper = params.paper;
-        this.width = Number(paper?.width ?? params.width ?? 100);
-        this.height = Number(paper?.height ?? params.height ?? this.width);
-        this.bounds = {
-            minX: 0,
-            minY: 0,
-            width: this.width,
-            height: this.height
-        };
+        super(params);
         this.level = params.level || 7;
     }
 
@@ -40,14 +34,12 @@ function generateHilbertPoints(n, width, height) {
     const points = [];
     const size = Math.max(width, height);
 
-    // Add safety check for n
-    if (n < 0 || n > 10) { // 10 is a reasonable max level to prevent stack overflow
+    if (n < 0 || n > 10) {
         console.warn(`Invalid Hilbert level: ${n}. Using level 3.`);
         n = 3;
     }
 
     function hilbert(x0, y0, xi, xj, yi, yj, n) {
-        // Add explicit check for negative n
         if (n < 0) return;
         
         if (n <= 0) {
@@ -62,7 +54,6 @@ function generateHilbertPoints(n, width, height) {
 
     hilbert(0, 0, size, 0, 0, size, n);
 
-    // Scale points to fit within drawing area
     const scaleX = width / size;
     const scaleY = height / size;
     return points.map(({ x, y }) => ({
@@ -88,11 +79,10 @@ export function drawHilbertCurve(drawingConfig, renderContext) {
     const svg = createSVG(renderContext);
     const drawingContext = createDrawingContext(svg, drawingConfig.colorPalette);
 
-    const bounds = hilbert.currentBounds || hilbert.bounds || { width: hilbert.width || 100, height: hilbert.height || 100 };
+    const bounds = hilbert.getBounds({ paper: drawingConfig.paper, orientation: renderContext.orientation });
     const rawPoints = generateHilbertPoints(hilbert.level, bounds.width, bounds.height);
     const points = renderContext.projectPoints(rawPoints);
 
-    // Process points in chunks of 3 for coloring
     for (let i = 0; i < points.length - 1; i += 3) {
         const start = i;
         const end = Math.min(i + 3, points.length);

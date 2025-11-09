@@ -1,21 +1,16 @@
 import { createSVG } from '../utils/svgUtils.js';
-import { appendColoredPath } from '../utils/drawingUtils.js';
-import { computeBoundsFromPoints } from '../utils/geometryUtils.js';
-import { createDrawingContext } from '../utils/drawingContext.js';
+import { createDrawingBuilder } from '../utils/drawingBuilder.js';
+import { PointCloudDrawingConfig } from '../utils/drawingConfigBase.js';
 import { registerDrawing, addDrawingPreset } from '../drawingRegistry.js';
 import { colorPalettes } from '../utils/colorUtils.js';
-export class DelaunayConfig {
-    constructor(params) {
+
+export class DelaunayConfig extends PointCloudDrawingConfig {
+    constructor(params = {}) {
         const triangulation = params.triangulation;
         if (!triangulation) {
             throw new Error('Triangulation data is required');
         }
-        
-        this.points = triangulation.points;
-        this.bounds = computeBoundsFromPoints(this.points);
-        this.width = this.bounds.width;
-        this.height = this.bounds.height;
-        
+        super({ points: triangulation.points });
         if (!Array.isArray(this.points)) {
             throw new Error('Points must be an array');
         }
@@ -25,14 +20,13 @@ export class DelaunayConfig {
 export function drawDelaunayTriangulation(drawingConfig, renderContext) {
     const delaunay = drawingConfig.drawingData;
     const svg = createSVG(renderContext);
-    const drawingContext = createDrawingContext(svg, drawingConfig.colorPalette);
+    const builder = createDrawingBuilder({ svg, drawingConfig, renderContext });
 
-    const scaledPoints = renderContext.projectPoints(delaunay.points);
+    const scaledPoints = builder.projectPoints(delaunay.points);
     
     const triangles = [];
     const numPoints = scaledPoints.length;
     
-    // Create triangles using different combinations of points
     for (let i = 0; i < numPoints; i++) {
         for (let j = 1; j < 4; j++) {
             const p1 = scaledPoints[i];
@@ -40,7 +34,6 @@ export function drawDelaunayTriangulation(drawingConfig, renderContext) {
             const p3 = scaledPoints[(i + j + 1) % numPoints];
             
             const triPoints = [p1, p2, p3];
-            
             const triangle = {
                 points: triPoints,
                 x: Math.min(...triPoints.map(p => p.x)),
@@ -52,18 +45,9 @@ export function drawDelaunayTriangulation(drawingConfig, renderContext) {
         }
     }
     
-    // Draw triangles
     triangles.forEach(triangle => {
         const pathPoints = [...triangle.points, triangle.points[0]];
-        appendColoredPath({
-            points: pathPoints,
-            strokeWidth: drawingConfig.line.strokeWidth,
-            strokeLinecap: drawingConfig.line.lineCap || 'round',
-            strokeLinejoin: drawingConfig.line.lineJoin || 'round',
-            geometry: triangle,
-            colorGroups: drawingContext.colorGroups,
-            colorManager: drawingContext.colorManager
-        });
+        builder.appendPath(pathPoints, { geometry: triangle });
     });
     
     return svg;
@@ -93,14 +77,7 @@ addDrawingPreset('delaunayExample', 'Delaunay Example', {
             { x: 80, y: 50 },
             { x: 50, y: 80 },
             { x: 20, y: 50 }
-        ],
-        width: 100,
-        height: 100
-    },
-    paper: {
-        width: 200,
-        height: 200,
-        margin: 20
+        ]
     },
     line: {
         spacing: 1.5,
