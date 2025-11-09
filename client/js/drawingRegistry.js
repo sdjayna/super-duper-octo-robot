@@ -28,7 +28,7 @@ export class DrawingConfig {
     constructor(name, params) {
         this.name = name;
         this.type = params.type;
-        this.paper = params.paper;
+        this.paper = params.paper || {};
         this.line = params.line || {};
         this.colorPalette = params.colorPalette;
         this.drawingData = this.createDrawingData(params);

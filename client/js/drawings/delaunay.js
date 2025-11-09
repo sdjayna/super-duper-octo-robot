@@ -23,7 +23,6 @@ export function drawDelaunayTriangulation(drawingConfig, renderContext) {
     const builder = createDrawingBuilder({ svg, drawingConfig, renderContext });
 
     const scaledPoints = builder.projectPoints(delaunay.points);
-    
     const triangles = [];
     const numPoints = scaledPoints.length;
     
@@ -32,7 +31,6 @@ export function drawDelaunayTriangulation(drawingConfig, renderContext) {
             const p1 = scaledPoints[i];
             const p2 = scaledPoints[(i + j) % numPoints];
             const p3 = scaledPoints[(i + j + 1) % numPoints];
-            
             const triPoints = [p1, p2, p3];
             const triangle = {
                 points: triPoints,
@@ -44,12 +42,12 @@ export function drawDelaunayTriangulation(drawingConfig, renderContext) {
             triangles.push(triangle);
         }
     }
-    
+
     triangles.forEach(triangle => {
         const pathPoints = [...triangle.points, triangle.points[0]];
         builder.appendPath(pathPoints, { geometry: triangle });
     });
-    
+
     return svg;
 }
 

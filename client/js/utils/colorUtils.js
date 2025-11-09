@@ -4,7 +4,6 @@
 
 import { areRectanglesAdjacent } from './geometryUtils.js';
 
-// Load medium config and create palettes
 let colorPalettes = {};
 let colorPalette = {};
 let mediumMetadata = {};
@@ -13,20 +12,15 @@ async function loadColorPalettes() {
     try {
         const response = await fetch('/shared/medium_config.json');
         const config = await response.json();
-        
-        // Create palettes for each medium
         Object.entries(config.mediums).forEach(([id, medium]) => {
             const paletteName = `${id}Palette`;
-            colorPalettes[paletteName] = convertMediumColors(medium, id);
+            colorPalettes[paletteName] = convertMediumColors(medium);
             mediumMetadata[id] = {
                 ...medium,
                 paletteName
             };
         });
-        
-        // Set default palette
         colorPalette = colorPalettes[`${config.default}Palette`];
-        
         return colorPalettes;
     } catch (error) {
         console.error('Error loading color palettes:', error);
@@ -34,7 +28,7 @@ async function loadColorPalettes() {
     }
 }
 
-function convertMediumColors(mediumConfig, mediumId) {
+function convertMediumColors(mediumConfig) {
     const colors = {};
     Object.entries(mediumConfig.colors).forEach(([key, color]) => {
         colors[key] = {
@@ -61,7 +55,7 @@ class ColorManager {
                 color: color.hex,
                 score: this.getColorScore(color.hex, newRect)
             }))
-            .filter(({score}) => score !== -Infinity)
+            .filter(({ score }) => score !== -Infinity)
             .sort((a, b) => a.score - b.score);
 
         const selectedColor = colorScores[0]?.color || this.getLeastUsedColor();
@@ -70,13 +64,13 @@ class ColorManager {
     }
 
     getColorScore(color, newRect) {
-        const isAdjacent = this.placedRectangles.some(placed => 
+        const isAdjacent = this.placedRectangles.some(placed =>
             areRectanglesAdjacent(newRect, placed.rect) && placed.color === color);
         if (isAdjacent) {
             return -Infinity;
         }
-        return this.colorUsage.get(color) * 2 + 
-               (this.recentColors.includes(color) ? 1 : 0);
+        return this.colorUsage.get(color) * 2 +
+            (this.recentColors.includes(color) ? 1 : 0);
     }
 
     getLeastUsedColor() {
@@ -94,8 +88,6 @@ class ColorManager {
     }
 }
 
-// Initialize palettes
 await loadColorPalettes();
 
 export { ColorManager, colorPalettes, colorPalette, mediumMetadata };
-export const colorPaletteArray = Object.values(colorPalette).map(color => color.hex);

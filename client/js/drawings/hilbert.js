@@ -1,6 +1,5 @@
 import { createSVG } from '../utils/svgUtils.js';
-import { appendColoredPath } from '../utils/drawingUtils.js';
-import { createDrawingContext } from '../utils/drawingContext.js';
+import { createDrawingBuilder } from '../utils/drawingBuilder.js';
 import { SizedDrawingConfig } from '../utils/drawingConfigBase.js';
 import { registerDrawing, addDrawingPreset } from '../drawingRegistry.js';
 import { colorPalettes } from '../utils/colorUtils.js';
@@ -77,7 +76,7 @@ function addWavyEffect(points, amplitude = 1, frequency = 0.1) {
 export function drawHilbertCurve(drawingConfig, renderContext) {
     const hilbert = drawingConfig.drawingData;
     const svg = createSVG(renderContext);
-    const drawingContext = createDrawingContext(svg, drawingConfig.colorPalette);
+    const builder = createDrawingBuilder({ svg, drawingConfig, renderContext });
 
     const bounds = hilbert.getBounds({
         paper: {
@@ -87,7 +86,7 @@ export function drawHilbertCurve(drawingConfig, renderContext) {
         orientation: renderContext.orientation
     });
     const rawPoints = generateHilbertPoints(hilbert.level, bounds.width, bounds.height);
-    const points = renderContext.projectPoints(rawPoints);
+    const points = builder.projectPoints(rawPoints);
 
     for (let i = 0; i < points.length - 1; i += 3) {
         const start = i;
@@ -96,19 +95,13 @@ export function drawHilbertCurve(drawingConfig, renderContext) {
         const segmentPoints = points.slice(start, end);
         const wavyPoints = addWavyEffect(segmentPoints, 1, 0.5);
         
-        appendColoredPath({
-            points: wavyPoints,
-            strokeWidth: drawingConfig.line.strokeWidth,
-            strokeLinecap: drawingConfig.line.lineCap || 'round',
-            strokeLinejoin: drawingConfig.line.lineJoin || 'round',
+        builder.appendPath(wavyPoints, {
             geometry: {
                 x: wavyPoints[0].x,
                 y: wavyPoints[0].y,
                 width: 1,
                 height: 1
-            },
-            colorGroups: drawingContext.colorGroups,
-            colorManager: drawingContext.colorManager
+            }
         });
     }
 
