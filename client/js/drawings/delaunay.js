@@ -13,6 +13,19 @@ export class DelaunayConfig {
         this.width = triangulation.width;
         this.height = triangulation.height;
         
+        const xs = this.points.map(p => p.x);
+        const ys = this.points.map(p => p.y);
+        const minX = Math.min(...xs);
+        const maxX = Math.max(...xs);
+        const minY = Math.min(...ys);
+        const maxY = Math.max(...ys);
+        this.bounds = {
+            minX,
+            minY,
+            width: Math.max(maxX - minX, 1),
+            height: Math.max(maxY - minY, 1)
+        };
+        
         if (!Array.isArray(this.points)) {
             throw new Error('Points must be an array');
         }

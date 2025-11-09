@@ -16,6 +16,12 @@ export class BouwkampConfig {
         this.width = code[1];
         this.height = code[2];
         this.squares = code.slice(3);
+        this.bounds = {
+            minX: 0,
+            minY: 0,
+            width: this.width,
+            height: this.height
+        };
     }
 
     toArray() {

@@ -23,6 +23,7 @@ export function generateSVG(drawingConfig, options = {}) {
             paper: options.paper || drawingConfig.paper,
             drawingWidth: drawingConfig.drawingData.width,
             drawingHeight: drawingConfig.drawingData.height,
+            bounds: options.bounds || drawingConfig.drawingData.bounds,
             orientation: options.orientation
         });
 

@@ -4,6 +4,12 @@ export class HilbertConfig {
     constructor(params) {
         this.width = params.paper?.width || 420;
         this.height = params.paper?.height || 297;
+        this.bounds = {
+            minX: 0,
+            minY: 0,
+            width: this.width,
+            height: this.height
+        };
         // Extract level from params, default to 7 if not provided
         this.level = params.level || 7;
         // Use paper dimensions if provided, otherwise default values

@@ -36,7 +36,7 @@
                     </div>
 
                     <div class="control-row">
-                        <div class="control-section half-width">
+                        <div class="control-section">
                             <h4>Paper</h4>
                             <div class="control-section-content">
                                 <select id="paperSelect" class="plotter-button">
@@ -44,6 +44,8 @@
                                 </select>
                             </div>
                         </div>
+                    </div>
+                    <div class="control-row">
                         <div class="control-section half-width">
                             <h4>Medium</h4>
                             <div class="control-section-content">
@@ -51,6 +53,14 @@
                                     <option value="sakura">Sakura Pigma Micron</option>
                                     <option value="molotow">Molotow ONE4ALL</option>
                                 </select>
+                            </div>
+                        </div>
+                        <div class="control-section half-width">
+                            <h4>Margin</h4>
+                            <div class="control-section-content margin-controls">
+                                <input type="range" id="marginSlider" min="0" max="100" step="1">
+                                <input type="number" id="marginInput" min="0" max="100" step="0.5" class="margin-input">
+                                <span id="marginValueLabel">0 mm</span>
                             </div>
                         </div>
                     </div>
@@ -404,6 +414,47 @@
         let currentPaper = null;
         let currentOrientation = 'landscape';
         let lastRenderedPaper = null;
+        let currentMargin = null;
+
+        function getMaxMargin(paper) {
+            if (!paper) return 0;
+            return Math.floor(Math.min(paper.width, paper.height) / 2);
+        }
+
+        function updateMarginControls(paper) {
+            const slider = document.getElementById('marginSlider');
+            const input = document.getElementById('marginInput');
+            const label = document.getElementById('marginValueLabel');
+            if (!paper || !slider || !input || !label) {
+                return;
+            }
+            const maxMargin = getMaxMargin(paper);
+            const defaultMargin = typeof currentMargin === 'number' ? currentMargin : (paper.margin || 0);
+            const normalized = Math.max(0, Math.min(defaultMargin, maxMargin));
+            currentMargin = normalized;
+            slider.max = maxMargin;
+            input.max = maxMargin;
+            slider.value = normalized;
+            input.value = normalized;
+            label.textContent = `${normalized} mm`;
+        }
+
+        function applyMarginValue(value) {
+            if (!currentPaper) {
+                return false;
+            }
+            const parsed = Number(value);
+            const maxMargin = getMaxMargin(currentPaper);
+            const normalized = Math.max(0, Math.min(Number.isFinite(parsed) ? parsed : 0, maxMargin));
+            currentMargin = normalized;
+            const slider = document.getElementById('marginSlider');
+            const input = document.getElementById('marginInput');
+            const label = document.getElementById('marginValueLabel');
+            if (slider) slider.value = normalized;
+            if (input) input.value = normalized;
+            if (label) label.textContent = `${normalized} mm`;
+            return true;
+        }
 
         async function draw() {
             try {
@@ -426,10 +477,14 @@
                 const currentLayer = document.getElementById('layerSelect').value;
                 const orientationButton = document.getElementById('toggleOrientation');
                 orientationButton.textContent = currentOrientation === 'portrait' ? 'Portrait' : 'Landscape';
-                const paperForRender = currentPaper || selectedDrawing.paper;
-                if (!paperForRender) {
+                const basePaper = currentPaper || selectedDrawing.paper;
+                if (!basePaper) {
                     throw new Error('Paper configuration is missing for the selected drawing');
                 }
+                const maxMargin = getMaxMargin(basePaper);
+                const marginValue = Math.max(0, Math.min(typeof currentMargin === 'number' ? currentMargin : (basePaper.margin || 0), maxMargin));
+                currentMargin = marginValue;
+                const paperForRender = { ...basePaper, margin: marginValue };
                 lastRenderedPaper = paperForRender;
                 container.innerHTML = '';
                 const svg = generateSVG(selectedDrawing, {
@@ -540,6 +595,7 @@
                     currentPaperId = paperSelect.value;
                 }
                 currentPaper = currentPaperId ? paperConfig.papers[currentPaperId] : null;
+                updateMarginControls(currentPaper);
 
                 // Draw once but don't start refresh
                 await draw();
@@ -589,6 +645,16 @@
         document.getElementById('toggleRefresh').addEventListener('click', toggleRefresh);
         document.getElementById('toggleDebug').addEventListener('click', toggleDebugPanel);
         document.getElementById('toggleOrientation').addEventListener('click', toggleOrientation);
+        document.getElementById('marginSlider').addEventListener('input', (e) => {
+            if (applyMarginValue(e.target.value)) {
+                draw();
+            }
+        });
+        document.getElementById('marginInput').addEventListener('change', (e) => {
+            if (applyMarginValue(e.target.value)) {
+                draw();
+            }
+        });
         
         // Ruler visibility toggle
         document.getElementById('toggleRulers').addEventListener('click', () => {
@@ -875,6 +941,7 @@
                 logDebug(`Paper ${currentPaperId} not found in configuration`, 'error');
                 return;
             }
+            updateMarginControls(currentPaper);
             logDebug(`Changing paper size to ${currentPaper.name} (${currentPaper.width}×${currentPaper.height}mm)`);
             await draw();
         });

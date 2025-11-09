@@ -45,6 +45,19 @@ describe('createRenderContext', () => {
         expect(rect.height).toBeCloseTo(40, 2);
     });
 
+    it('offsets projections when bounds include non-zero origin', () => {
+        const ctx = createRenderContext({
+            paper,
+            drawingWidth: 80,
+            drawingHeight: 60,
+            bounds: { minX: 50, minY: -20, width: 80, height: 60 }
+        });
+
+        const projected = ctx.projectPoint({ x: 90, y: -5 });
+        expect(projected.x).toBeCloseTo(ctx.offsetX + (40 * ctx.scale), 5);
+        expect(projected.y).toBeCloseTo(ctx.offsetY + (15 * ctx.scale), 5);
+    });
+
     it('rejects invalid configuration', () => {
         expect(() => createRenderContext({ paper, drawingWidth: 0, drawingHeight: 0 }))
             .toThrow(/Drawing dimensions/);
