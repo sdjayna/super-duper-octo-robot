@@ -6,14 +6,20 @@
 
 ## High Priority
 
-1. Fix paper and medium handling in client ✅
+1. Finalize paper/medium handling ✅
    - Centralize paper configuration management ✅
-   - Add paper size validation
+   - Add paper size validation (pending)
    - Improve margin handling consistency ✅
-   - Add paper size preview in UI
+   - Add paper size preview in UI (pending)
    - Standardize paper size changes across drawing types ✅
 
-2. Enhance hatching algorithms for Simple Perfect Rectangle
+2. Lower the barrier for new drawings
+   - Autoload drawing modules (no manual imports)
+   - Provide a CLI or scaffold script (`npm run scaffold:drawing`)
+   - Surface per-drawing settings in UI (spacing, vertex gap, etc.)
+   - Document registry/helpers in CONTRIBUTING
+
+3. Enhance hatching algorithms for Simple Perfect Rectangle
    - Add parallel line hatching
    - Add cross-hatching
    - Add contour hatching
@@ -24,19 +30,18 @@
 
 ## Medium Priority
 
-3. Add TypeScript support
+4. Finish testing story
+   - Add integration tests (UI ↔ server)
+   - Add visual regression tests
+
+5. TypeScript adoption (longer-term)
    - Convert core files to TypeScript
    - Add type definitions
    - Add compile-time checks
 
-4. Improve testing
-   - Add unit tests for drawing algorithms ✅
-   - Add integration tests
-   - Add visual regression tests
-
 ## Low Priority
 
-5. Documentation improvements
+6. Documentation improvements
    - Add API documentation
    - Improve code comments
-   - Add examples for custom drawings
+   - Add examples for custom drawings (with registry workflow)

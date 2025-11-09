@@ -14,6 +14,9 @@ let drawBouwkampCode;
 let drawDelaunayTriangulation;
 let drawHilbertCurve;
 let HilbertConfig;
+let registerDrawing;
+let addDrawingPreset;
+let drawingRegistry;
 
 beforeAll(async () => {
     const originalFetch = global.fetch;
@@ -29,6 +32,7 @@ beforeAll(async () => {
         })
     });
 
+    drawingRegistry = await import('../client/js/drawingRegistry.js');
     ({ drawBouwkampCode } = await import('../client/js/drawings/bouwkamp.js'));
     ({ drawDelaunayTriangulation } = await import('../client/js/drawings/delaunay.js'));
     ({ drawHilbertCurve, HilbertConfig } = await import('../client/js/drawings/hilbert.js'));
