@@ -1,6 +1,8 @@
 import { createSVG } from '../utils/svgUtils.js';
 import { appendColoredPath } from '../utils/drawingUtils.js';
 import { createDrawingContext } from '../utils/drawingContext.js';
+import { registerDrawing, addDrawingPreset } from '../drawingRegistry.js';
+import { colorPalettes } from '../utils/colorUtils.js';
 export class HilbertConfig {
     constructor(params = {}) {
         const paper = params.paper;
@@ -116,3 +118,26 @@ export function drawHilbertCurve(drawingConfig, renderContext) {
 
     return svg;
 }
+
+registerDrawing({
+    id: 'hilbert',
+    name: 'Hilbert Curve',
+    configClass: HilbertConfig,
+    drawFunction: drawHilbertCurve
+});
+
+addDrawingPreset('hilbertCurve', 'Hilbert Curve', {
+    type: 'hilbert',
+    level: 7,
+    paper: {
+        width: 432,
+        height: 279,
+        margin: 10
+    },
+    line: {
+        spacing: 1.5,
+        strokeWidth: 0.5,
+        vertexGap: 0
+    },
+    colorPalette: colorPalettes.sakuraPalette
+});

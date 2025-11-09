@@ -3,6 +3,8 @@ import { validateBouwkampCode } from '../utils/validationUtils.js';
 import { generateSingleSerpentineLine } from '../utils/patternUtils.js';
 import { appendColoredPath } from '../utils/drawingUtils.js';
 import { createDrawingContext } from '../utils/drawingContext.js';
+import { registerDrawing, addDrawingPreset } from '../drawingRegistry.js';
+import { colorPalettes } from '../utils/colorUtils.js';
 export class BouwkampConfig {
     constructor(params) {
         // Extract code array from params
@@ -73,3 +75,27 @@ export function drawBouwkampCode(drawingConfig, renderContext) {
     }
     return svg;
 }
+
+registerDrawing({
+    id: 'bouwkamp',
+    name: 'Bouwkamp Code',
+    configClass: BouwkampConfig,
+    drawFunction: drawBouwkampCode,
+    validator: () => true
+});
+
+addDrawingPreset('simplePerfectRectangle', 'Simple Perfect Rectangle', {
+    type: 'bouwkamp',
+    code: [17, 403, 285, 148, 111, 144, 75, 36, 3, 141, 39, 58, 37, 53, 21, 16, 15, 99, 84, 79],
+    paper: {
+        width: 432,
+        height: 279,
+        margin: 10
+    },
+    line: {
+        spacing: 2,
+        strokeWidth: 0.85,
+        vertexGap: 0.2
+    },
+    colorPalette: colorPalettes.sakuraPalette
+});

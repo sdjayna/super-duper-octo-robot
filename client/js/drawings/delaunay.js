@@ -2,6 +2,8 @@ import { createSVG } from '../utils/svgUtils.js';
 import { appendColoredPath } from '../utils/drawingUtils.js';
 import { computeBoundsFromPoints } from '../utils/geometryUtils.js';
 import { createDrawingContext } from '../utils/drawingContext.js';
+import { registerDrawing, addDrawingPreset } from '../drawingRegistry.js';
+import { colorPalettes } from '../utils/colorUtils.js';
 export class DelaunayConfig {
     constructor(params) {
         const triangulation = params.triangulation;
@@ -66,3 +68,44 @@ export function drawDelaunayTriangulation(drawingConfig, renderContext) {
     
     return svg;
 }
+
+registerDrawing({
+    id: 'delaunay',
+    name: 'Delaunay Triangulation',
+    configClass: DelaunayConfig,
+    drawFunction: drawDelaunayTriangulation
+});
+
+addDrawingPreset('delaunayExample', 'Delaunay Example', {
+    type: 'delaunay',
+    triangulation: {
+        points: [
+            { x: 10, y: 10 },
+            { x: 90, y: 10 },
+            { x: 90, y: 90 },
+            { x: 10, y: 90 },
+            { x: 50, y: 50 },
+            { x: 30, y: 30 },
+            { x: 70, y: 30 },
+            { x: 70, y: 70 },
+            { x: 30, y: 70 },
+            { x: 50, y: 20 },
+            { x: 80, y: 50 },
+            { x: 50, y: 80 },
+            { x: 20, y: 50 }
+        ],
+        width: 100,
+        height: 100
+    },
+    paper: {
+        width: 200,
+        height: 200,
+        margin: 20
+    },
+    line: {
+        spacing: 1.5,
+        strokeWidth: 0.3,
+        vertexGap: 0
+    },
+    colorPalette: colorPalettes.sakuraPalette
+});
