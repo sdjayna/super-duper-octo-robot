@@ -75,6 +75,8 @@ The project is optimized for two specific pen types:
   - Intelligent color selection system
   - Adjacent color avoidance
   - Inkscape-compatible layer naming
+  - Medium presets automatically set stroke widths and nib styles (e.g., Sakura 0.45 mm round tip, ONE4ALL 2 mm round nib)
+  - Live margin slider with numeric input keeps framing consistent across papers
 
 ## Project Structure
 

@@ -196,6 +196,22 @@ input[type="range"] {
     transition: all 0.2s;
 }
 
+.stroke-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.stroke-display {
+    text-align: center;
+    min-width: 4rem;
+}
+
+.stroke-unit {
+    font-size: 0.9rem;
+    opacity: 0.75;
+}
+
 .plotter-button:disabled {
     opacity: 0.5;
     cursor: not-allowed;

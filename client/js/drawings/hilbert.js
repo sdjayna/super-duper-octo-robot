@@ -101,6 +101,8 @@ export function drawHilbertCurve(drawingConfig, renderContext) {
         appendColoredPath({
             points: wavyPoints,
             strokeWidth: drawingConfig.line.strokeWidth,
+            strokeLinecap: drawingConfig.line.lineCap || 'round',
+            strokeLinejoin: drawingConfig.line.lineJoin || 'round',
             geometry: {
                 x: wavyPoints[0].x,
                 y: wavyPoints[0].y,

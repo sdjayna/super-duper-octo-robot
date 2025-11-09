@@ -56,6 +56,8 @@ export function drawDelaunayTriangulation(drawingConfig, renderContext) {
         appendColoredPath({
             points: pathPoints,
             strokeWidth: drawingConfig.line.strokeWidth,
+            strokeLinecap: drawingConfig.line.lineCap || 'round',
+            strokeLinejoin: drawingConfig.line.lineJoin || 'round',
             geometry: triangle,
             colorGroups: drawingContext.colorGroups,
             colorManager: drawingContext.colorManager

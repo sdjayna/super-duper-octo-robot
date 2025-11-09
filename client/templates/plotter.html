@@ -36,7 +36,7 @@
                     </div>
 
                     <div class="control-row">
-                        <div class="control-section">
+                        <div class="control-section half-width">
                             <h4>Paper</h4>
                             <div class="control-section-content">
                                 <select id="paperSelect" class="plotter-button">
@@ -44,11 +44,21 @@
                                 </select>
                             </div>
                         </div>
+                        <div class="control-section half-width">
+                            <h4>Margin</h4>
+                            <div class="control-section-content margin-controls">
+                                <input type="range" id="marginSlider" min="0" max="100" step="1">
+                                <span class="stroke-wrapper">
+                                    <input type="number" id="marginInput" min="0" max="100" step="0.5" class="plotter-button stroke-display" value="20">
+                                    <span class="stroke-unit">mm</span>
+                                </span>
+                            </div>
+                        </div>
                     </div>
                     <div class="control-row">
                         <div class="control-section half-width">
                             <h4>Medium</h4>
-                            <div class="control-section-content">
+                            <div class="control-section-content medium-controls">
                                 <select id="mediumSelect" class="plotter-button">
                                     <option value="sakura">Sakura Pigma Micron</option>
                                     <option value="molotow">Molotow ONE4ALL</option>
@@ -56,16 +66,17 @@
                             </div>
                         </div>
                         <div class="control-section half-width">
-                            <h4>Margin</h4>
-                            <div class="control-section-content margin-controls">
-                                <input type="range" id="marginSlider" min="0" max="100" step="1">
-                                <input type="number" id="marginInput" min="0" max="100" step="0.5" class="margin-input">
-                                <span id="marginValueLabel">0 mm</span>
+                            <h4>Stroke Width</h4>
+                            <div class="control-section-content">
+                                <span class="stroke-wrapper">
+                                    <input type="number" id="mediumStrokeInput" class="plotter-button stroke-display" readonly step="0.05">
+                                    <span class="stroke-unit">mm</span>
+                                </span>
                             </div>
                         </div>
                     </div>
 
-                    
+
                     <div class="control-section">
                         <h4>Preview</h4>
                         <div class="control-section-content">
@@ -309,10 +320,11 @@
                 return;
             }
 
-            try {
-                // Get the current drawing configuration
-                const { drawings } = await import('./js/drawings.js?v=' + Date.now());
-                const currentConfig = drawings[select.value];
+                try {
+                    // Get the current drawing configuration
+                    const { drawings } = await import('./js/drawings.js?v=' + Date.now());
+                    syncDrawingStyles(drawings);
+                    const currentConfig = drawings[select.value];
 
                 // Serialize SVG
                 const svgData = new XMLSerializer().serializeToString(svg);
@@ -325,7 +337,8 @@
                     line: currentConfig.line,
                     colorPalette: currentConfig.colorPalette,
                     drawingData: currentConfig.drawingData,
-                    paper: paperForExport ? { ...paperForExport, orientation: currentOrientation } : null
+                    paper: paperForExport ? { ...paperForExport, orientation: currentOrientation } : null,
+                    medium: currentMediumId
                 };
 
                 const response = await fetch('http://localhost:8000/save-svg', {
@@ -417,6 +430,12 @@
         let currentOrientation = 'landscape';
         let lastRenderedPaper = null;
         let currentMargin = DEFAULT_MARGIN;
+        const mediumStrokeInput = document.getElementById('mediumStrokeInput');
+        let currentMediumId = document.getElementById('mediumSelect').value || 'sakura';
+        let currentPalette = null;
+        let currentStrokeWidth = null;
+        let currentLineCap = 'round';
+        let currentLineJoin = 'round';
 
         function updateMarginControls(paper) {
             const slider = document.getElementById('marginSlider');
@@ -450,12 +469,31 @@
             return true;
         }
 
+        function syncDrawingStyles(drawings) {
+            if (currentPalette) {
+                Object.values(drawings).forEach(drawing => {
+                    drawing.colorPalette = currentPalette;
+                });
+            }
+            if (typeof currentStrokeWidth === 'number') {
+                Object.values(drawings).forEach(drawing => {
+                    drawing.line = {
+                        ...drawing.line,
+                        strokeWidth: currentStrokeWidth,
+                        lineCap: currentLineCap,
+                        lineJoin: currentLineJoin
+                    };
+                });
+            }
+        }
+
         async function draw() {
             try {
                 logDebug('Reloading modules...');
                 // Reload the modules fresh each time
                 const { generateSVG } = await import('./js/app.js?v=' + Date.now());
                 const { drawings } = await import('./js/drawings.js?v=' + Date.now());
+                syncDrawingStyles(drawings);
                 
                 // First time only: populate select options
                 if (!select.options.length) {
@@ -590,6 +628,8 @@
                 currentPaper = currentPaperId ? paperConfig.papers[currentPaperId] : null;
                 currentMargin = clampMargin(currentPaper, currentMargin);
                 updateMarginControls(currentPaper);
+
+                await applyMediumSettings(currentMediumId);
 
                 // Draw once but don't start refresh
                 await draw();
@@ -945,23 +985,38 @@
         document.getElementById('mediumSelect').addEventListener('change', async (e) => {
             const medium = e.target.value;
             logDebug(`Changing medium to ${medium}`);
-            
-            // Load color palettes
-            const { colorPalettes } = await import('./js/colorConfig.js?v=' + Date.now());
-            const { drawings } = await import('./js/drawings.js?v=' + Date.now());
-            
-            // Get the palette for this medium
-            const paletteName = medium === 'sakura' ? 'sakuraPalette' : 'molotowPalette';
-            
-            // Update the current drawing's color palette
-            const currentDrawing = drawings[select.value];
-            currentDrawing.colorPalette = colorPalettes[paletteName];
-            
-            // Redraw with new color palette
+            await applyMediumSettings(medium);
             await draw();
             populateLayerSelect();
-            logDebug(`Updated drawing with ${medium} color palette`);
+            logDebug(`Updated drawings with ${medium} settings`);
         });
+
+        async function applyMediumSettings(mediumId) {
+            const { colorPalettes, mediumMetadata } = await import('./js/utils/colorUtils.js?v=' + Date.now());
+            const paletteName = `${mediumId}Palette`;
+            const palette = colorPalettes[paletteName];
+            if (palette) {
+                currentPalette = palette;
+            }
+            const mediumInfo = mediumMetadata[mediumId];
+            if (mediumInfo?.strokeWidth) {
+                currentStrokeWidth = mediumInfo.strokeWidth;
+                currentLineCap = mediumInfo.strokeLinecap || 'round';
+                currentLineJoin = mediumInfo.strokeLinejoin || 'round';
+                logDebug(`Applied stroke width ${mediumInfo.strokeWidth}mm for ${mediumInfo.name}`);
+                if (mediumStrokeInput) {
+                    mediumStrokeInput.value = mediumInfo.strokeWidth;
+                }
+            } else {
+                currentStrokeWidth = null;
+                currentLineCap = 'round';
+                currentLineJoin = 'round';
+                if (mediumStrokeInput) {
+                    mediumStrokeInput.value = '';
+                }
+            }
+            currentMediumId = mediumId;
+        }
     </script>
 </body>
 </html>

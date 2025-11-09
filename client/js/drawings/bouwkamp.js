@@ -60,6 +60,8 @@ export function drawBouwkampCode(drawingConfig, renderContext) {
         appendColoredPath({
             points,
             strokeWidth: drawingConfig.line.strokeWidth,
+            strokeLinecap: drawingConfig.line.lineCap || 'round',
+            strokeLinejoin: drawingConfig.line.lineJoin || 'round',
             geometry: projectedRect,
             colorGroups: drawingContext.colorGroups,
             colorManager: drawingContext.colorManager

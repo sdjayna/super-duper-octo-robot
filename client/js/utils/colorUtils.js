@@ -7,6 +7,7 @@ import { areRectanglesAdjacent } from './geometryUtils.js';
 // Load medium config and create palettes
 let colorPalettes = {};
 let colorPalette = {};
+let mediumMetadata = {};
 
 async function loadColorPalettes() {
     try {
@@ -17,6 +18,10 @@ async function loadColorPalettes() {
         Object.entries(config.mediums).forEach(([id, medium]) => {
             const paletteName = `${id}Palette`;
             colorPalettes[paletteName] = convertMediumColors(medium, id);
+            mediumMetadata[id] = {
+                ...medium,
+                paletteName
+            };
         });
         
         // Set default palette
@@ -92,5 +97,5 @@ class ColorManager {
 // Initialize palettes
 await loadColorPalettes();
 
-export { ColorManager, colorPalettes, colorPalette };
+export { ColorManager, colorPalettes, colorPalette, mediumMetadata };
 export const colorPaletteArray = Object.values(colorPalette).map(color => color.hex);

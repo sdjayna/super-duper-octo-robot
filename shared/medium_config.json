@@ -4,6 +4,9 @@
             "name": "Sakura Pigma Micron",
             "description": "Fineliner pens (0.2mm - 0.8mm)",
             "id": "sakura",
+            "strokeWidth": 0.45,
+            "strokeLinecap": "round",
+            "strokeLinejoin": "round",
             "colors": {
                 "black": { "hex": "#000000", "name": "Black" },
                 "red": { "hex": "#FF0000", "name": "Red" },
@@ -28,6 +31,9 @@
             "name": "Molotow ONE4ALL",
             "description": "Acrylic Markers (1mm and 2mm tips)",
             "id": "molotow",
+            "strokeWidth": 2.0,
+            "strokeLinecap": "round",
+            "strokeLinejoin": "round",
             "colors": {
                 "amazonasLight": { "hex": "#7a9b7a", "name": "Amazonas Light" },
                 "blueGreyDark": { "hex": "#6e7172", "name": "Blue Grey Dark" },
