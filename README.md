@@ -50,11 +50,11 @@ The project is optimized for two specific pen types:
   - Content-aware SVG scaling
 - Millimeter-precise ruler visualization
 - Adjustable margin slider with live preview
-  - Completion sound notifications with mute option
-  - Debug message filtering with "All" and "Just Plots" tabs
-  - Automatic temporary file cleanup
-  - Error message highlighting in red
-  - Bold highlighting for most recent debug message
+- Completion sound notifications with mute option
+- Debug message filtering with "All" and "Just Plots" tabs
+- Automatic temporary file cleanup
+- Error message highlighting in red
+- Bold highlighting for most recent debug message
 
 - **Real-time Development**
   - Live preview with auto-refresh
@@ -163,6 +163,11 @@ The project is optimized for two specific pen types:
 5. Run the automated tests:
    ```bash
    npm test
+   ```
+
+6. Launch in development mode (installs both stacks):
+   ```bash
+   make dev
    ```
 
 ## Plotter Configuration
