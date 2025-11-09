@@ -1,8 +1,8 @@
-import { createSVG, createColorGroups } from '../utils/svgUtils.js';
+import { createSVG } from '../utils/svgUtils.js';
 import { validateBouwkampCode } from '../utils/validationUtils.js';
 import { generateSingleSerpentineLine } from '../utils/patternUtils.js';
-import { ColorManager } from '../utils/colorUtils.js';
 import { appendColoredPath } from '../utils/drawingUtils.js';
+import { createDrawingContext } from '../utils/drawingContext.js';
 export class BouwkampConfig {
     constructor(params) {
         // Extract code array from params
@@ -33,9 +33,7 @@ export class BouwkampConfig {
 export function drawBouwkampCode(drawingConfig, renderContext) {
     const bouwkamp = drawingConfig.drawingData;
     const svg = createSVG(renderContext);
-    
-    const colorGroups = createColorGroups(svg, drawingConfig.colorPalette);
-    const colorManager = new ColorManager(drawingConfig.colorPalette);
+    const drawingContext = createDrawingContext(svg, drawingConfig.colorPalette);
 
     const helper = new Array(900).fill(0);
 
@@ -63,8 +61,8 @@ export function drawBouwkampCode(drawingConfig, renderContext) {
             points,
             strokeWidth: drawingConfig.line.strokeWidth,
             geometry: projectedRect,
-            colorGroups,
-            colorManager
+            colorGroups: drawingContext.colorGroups,
+            colorManager: drawingContext.colorManager
         });
 
         for (let j = 0; j < size; j++) {

@@ -1,6 +1,6 @@
-import { createSVG, createColorGroups } from '../utils/svgUtils.js';
-import { ColorManager } from '../utils/colorUtils.js';
+import { createSVG } from '../utils/svgUtils.js';
 import { appendColoredPath } from '../utils/drawingUtils.js';
+import { createDrawingContext } from '../utils/drawingContext.js';
 export class HilbertConfig {
     constructor(params = {}) {
         const paper = params.paper;
@@ -84,9 +84,7 @@ function addWavyEffect(points, amplitude = 1, frequency = 0.1) {
 export function drawHilbertCurve(drawingConfig, renderContext) {
     const hilbert = drawingConfig.drawingData;
     const svg = createSVG(renderContext);
-    
-    const colorGroups = createColorGroups(svg, drawingConfig.colorPalette);
-    const colorManager = new ColorManager(drawingConfig.colorPalette);
+    const drawingContext = createDrawingContext(svg, drawingConfig.colorPalette);
 
     const bounds = hilbert.currentBounds || hilbert.bounds || { width: hilbert.width || 100, height: hilbert.height || 100 };
     const rawPoints = generateHilbertPoints(hilbert.level, bounds.width, bounds.height);
@@ -109,8 +107,8 @@ export function drawHilbertCurve(drawingConfig, renderContext) {
                 width: 1,
                 height: 1
             },
-            colorGroups,
-            colorManager
+            colorGroups: drawingContext.colorGroups,
+            colorManager: drawingContext.colorManager
         });
     }
 

@@ -1,7 +1,7 @@
-import { createSVG, createColorGroups } from '../utils/svgUtils.js';
-import { ColorManager } from '../utils/colorUtils.js';
+import { createSVG } from '../utils/svgUtils.js';
 import { appendColoredPath } from '../utils/drawingUtils.js';
 import { computeBoundsFromPoints } from '../utils/geometryUtils.js';
+import { createDrawingContext } from '../utils/drawingContext.js';
 export class DelaunayConfig {
     constructor(params) {
         const triangulation = params.triangulation;
@@ -23,9 +23,7 @@ export class DelaunayConfig {
 export function drawDelaunayTriangulation(drawingConfig, renderContext) {
     const delaunay = drawingConfig.drawingData;
     const svg = createSVG(renderContext);
-    
-    const colorGroups = createColorGroups(svg, drawingConfig.colorPalette);
-    const colorManager = new ColorManager(drawingConfig.colorPalette);
+    const drawingContext = createDrawingContext(svg, drawingConfig.colorPalette);
 
     const scaledPoints = renderContext.projectPoints(delaunay.points);
     
@@ -59,8 +57,8 @@ export function drawDelaunayTriangulation(drawingConfig, renderContext) {
             points: pathPoints,
             strokeWidth: drawingConfig.line.strokeWidth,
             geometry: triangle,
-            colorGroups,
-            colorManager
+            colorGroups: drawingContext.colorGroups,
+            colorManager: drawingContext.colorManager
         });
     });
     
