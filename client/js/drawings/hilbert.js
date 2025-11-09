@@ -79,7 +79,13 @@ export function drawHilbertCurve(drawingConfig, renderContext) {
     const svg = createSVG(renderContext);
     const drawingContext = createDrawingContext(svg, drawingConfig.colorPalette);
 
-    const bounds = hilbert.getBounds({ paper: drawingConfig.paper, orientation: renderContext.orientation });
+    const bounds = hilbert.getBounds({
+        paper: {
+            width: renderContext.paperWidth,
+            height: renderContext.paperHeight
+        },
+        orientation: renderContext.orientation
+    });
     const rawPoints = generateHilbertPoints(hilbert.level, bounds.width, bounds.height);
     const points = renderContext.projectPoints(rawPoints);
 
@@ -119,11 +125,6 @@ registerDrawing({
 addDrawingPreset('hilbertCurve', 'Hilbert Curve', {
     type: 'hilbert',
     level: 7,
-    paper: {
-        width: 432,
-        height: 279,
-        margin: 10
-    },
     line: {
         spacing: 1.5,
         strokeWidth: 0.5,
