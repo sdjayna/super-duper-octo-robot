@@ -13,6 +13,7 @@ const palette = {
 let drawBouwkampCode;
 let drawDelaunayTriangulation;
 let drawHilbertCurve;
+let HilbertConfig;
 
 beforeAll(async () => {
     const originalFetch = global.fetch;
@@ -30,7 +31,7 @@ beforeAll(async () => {
 
     ({ drawBouwkampCode } = await import('../client/js/drawings/bouwkamp.js'));
     ({ drawDelaunayTriangulation } = await import('../client/js/drawings/delaunay.js'));
-    ({ drawHilbertCurve } = await import('../client/js/drawings/hilbert.js'));
+    ({ drawHilbertCurve, HilbertConfig } = await import('../client/js/drawings/hilbert.js'));
 
     global.fetch = originalFetch;
 });
@@ -94,23 +95,33 @@ describe('drawing functions', () => {
     });
 
     it('renders a Hilbert curve centered on the paper', () => {
+        const paper = { width: 100, height: 80, margin: 5 };
+        const hilbertData = new HilbertConfig({ level: 2, paper });
         const drawingConfig = {
-            drawingData: {
-                level: 2,
-                width: 40,
-                height: 40
-            },
+            drawingData: hilbertData,
+            paper,
             line: { strokeWidth: 0.2 },
             colorPalette: palette
         };
 
         const renderContext = createRenderContext({
-            paper: { width: 100, height: 80, margin: 5 },
-            drawingWidth: 40,
-            drawingHeight: 40
+            paper,
+            drawingWidth: hilbertData.bounds.width,
+            drawingHeight: hilbertData.bounds.height
         });
 
         const svg = drawHilbertCurve(drawingConfig, renderContext);
         expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
+    });
+
+    it('computes Hilbert bounds per orientation', () => {
+        const config = new HilbertConfig({ width: 50, height: 30 });
+        const landscape = config.getBounds({ paper: { width: 140, height: 100 }, orientation: 'landscape' });
+        const portrait = config.getBounds({ paper: { width: 140, height: 100 }, orientation: 'portrait' });
+
+        expect(landscape.width).toBe(140);
+        expect(landscape.height).toBe(100);
+        expect(portrait.width).toBe(100);
+        expect(portrait.height).toBe(140);
     });
 });

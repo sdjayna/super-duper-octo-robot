@@ -19,11 +19,23 @@ export function generateSVG(drawingConfig, options = {}) {
             typeConfig.validator(drawingConfig);
         }
 
+        const paperForContext = options.paper || drawingConfig.paper;
+        const dynamicBounds = options.bounds
+            || (typeof drawingConfig.drawingData?.getBounds === 'function'
+                ? drawingConfig.drawingData.getBounds({
+                    paper: paperForContext,
+                    orientation: options.orientation
+                })
+                : drawingConfig.drawingData.bounds);
+        if (dynamicBounds) {
+            drawingConfig.drawingData.currentBounds = dynamicBounds;
+        }
+
         const renderContext = options.renderContext || createRenderContext({
-            paper: options.paper || drawingConfig.paper,
-            drawingWidth: drawingConfig.drawingData.width,
-            drawingHeight: drawingConfig.drawingData.height,
-            bounds: options.bounds || drawingConfig.drawingData.bounds,
+            paper: paperForContext,
+            drawingWidth: dynamicBounds?.width || drawingConfig.drawingData.width,
+            drawingHeight: dynamicBounds?.height || drawingConfig.drawingData.height,
+            bounds: dynamicBounds,
             orientation: options.orientation
         });
 

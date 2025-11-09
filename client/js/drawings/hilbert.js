@@ -1,24 +1,35 @@
-import { createSVG, createColorGroups, createPath } from '../utils/svgUtils.js';
+import { createSVG, createColorGroups } from '../utils/svgUtils.js';
 import { ColorManager } from '../utils/colorUtils.js';
+import { appendColoredPath } from '../utils/drawingUtils.js';
 export class HilbertConfig {
-    constructor(params) {
-        this.width = params.paper?.width || 420;
-        this.height = params.paper?.height || 297;
+    constructor(params = {}) {
+        const paper = params.paper;
+        this.width = Number(paper?.width ?? params.width ?? 100);
+        this.height = Number(paper?.height ?? params.height ?? this.width);
         this.bounds = {
             minX: 0,
             minY: 0,
             width: this.width,
             height: this.height
         };
-        // Extract level from params, default to 7 if not provided
         this.level = params.level || 7;
-        // Use paper dimensions if provided, otherwise default values
-        this.width = params.paper?.width || 420;
-        this.height = params.paper?.height || 297;
+    }
+
+    getBounds({ paper, orientation } = {}) {
+        const width = Number(paper?.width ?? this.bounds.width);
+        const height = Number(paper?.height ?? this.bounds.height);
+        const longer = Math.max(width, height);
+        const shorter = Math.min(width, height);
+        const isPortrait = orientation === 'portrait';
+        return {
+            minX: 0,
+            minY: 0,
+            width: isPortrait ? shorter : longer,
+            height: isPortrait ? longer : shorter
+        };
     }
 
     toArray() {
-        // For Hilbert curve, we just need the level
         return [this.level];
     }
 }
@@ -77,8 +88,8 @@ export function drawHilbertCurve(drawingConfig, renderContext) {
     const colorGroups = createColorGroups(svg, drawingConfig.colorPalette);
     const colorManager = new ColorManager(drawingConfig.colorPalette);
 
-    // Generate and scale points
-    const rawPoints = generateHilbertPoints(hilbert.level, hilbert.width, hilbert.height);
+    const bounds = hilbert.currentBounds || hilbert.bounds || { width: hilbert.width || 100, height: hilbert.height || 100 };
+    const rawPoints = generateHilbertPoints(hilbert.level, bounds.width, bounds.height);
     const points = renderContext.projectPoints(rawPoints);
 
     // Process points in chunks of 3 for coloring
@@ -89,22 +100,17 @@ export function drawHilbertCurve(drawingConfig, renderContext) {
         const segmentPoints = points.slice(start, end);
         const wavyPoints = addWavyEffect(segmentPoints, 1, 0.5);
         
-        const color = colorManager.getValidColor({ 
-            x: wavyPoints[0].x, 
-            y: wavyPoints[0].y,
-            width: 1,
-            height: 1
-        });
-        
-        const path = createPath(wavyPoints);
-        path.setAttribute('stroke-width', drawingConfig.line.strokeWidth);
-        
-        colorGroups[color].appendChild(path);
-        colorManager.updateTracking(color, { 
-            x: wavyPoints[0].x, 
-            y: wavyPoints[0].y,
-            width: 1,
-            height: 1
+        appendColoredPath({
+            points: wavyPoints,
+            strokeWidth: drawingConfig.line.strokeWidth,
+            geometry: {
+                x: wavyPoints[0].x,
+                y: wavyPoints[0].y,
+                width: 1,
+                height: 1
+            },
+            colorGroups,
+            colorManager
         });
     }
 

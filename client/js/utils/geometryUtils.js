@@ -19,3 +19,35 @@ export function areRectanglesAdjacent(rect1, rect2) {
              expanded.y + expanded.height <= rect2.y ||
              expanded.y >= rect2.y + rect2.height);
 }
+
+export function computeBoundsFromPoints(points = []) {
+    if (!points.length) {
+        return { minX: 0, minY: 0, width: 1, height: 1 };
+    }
+    const xs = points.map(point => Number(point?.x ?? 0));
+    const ys = points.map(point => Number(point?.y ?? 0));
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
+    return {
+        minX,
+        minY,
+        width: Math.max(maxX - minX, 1),
+        height: Math.max(maxY - minY, 1)
+    };
+}
+
+export function computeBoundsFromRects(rects = []) {
+    if (!rects.length) {
+        return { minX: 0, minY: 0, width: 1, height: 1 };
+    }
+    const points = rects.flatMap(rect => ([
+        { x: Number(rect?.x ?? 0), y: Number(rect?.y ?? 0) },
+        {
+            x: Number(rect?.x ?? 0) + Number(rect?.width ?? 0),
+            y: Number(rect?.y ?? 0) + Number(rect?.height ?? 0)
+        }
+    ]));
+    return computeBoundsFromPoints(points);
+}

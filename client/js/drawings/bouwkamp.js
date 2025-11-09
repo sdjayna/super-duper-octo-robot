@@ -1,11 +1,10 @@
-import { createSVG, createColorGroups, createPath } from '../utils/svgUtils.js';
+import { createSVG, createColorGroups } from '../utils/svgUtils.js';
 import { validateBouwkampCode } from '../utils/validationUtils.js';
 import { generateSingleSerpentineLine } from '../utils/patternUtils.js';
 import { ColorManager } from '../utils/colorUtils.js';
+import { appendColoredPath } from '../utils/drawingUtils.js';
 export class BouwkampConfig {
     constructor(params) {
-        this.width = params.paper?.width || 420;
-        this.height = params.paper?.height || 297;
         // Extract code array from params
         const code = params.code;
         if (!Array.isArray(code)) {
@@ -22,6 +21,8 @@ export class BouwkampConfig {
             width: this.width,
             height: this.height
         };
+        this.width = this.bounds.width;
+        this.height = this.bounds.height;
     }
 
     toArray() {
@@ -58,12 +59,13 @@ export function drawBouwkampCode(drawingConfig, renderContext) {
         };
         const projectedRect = renderContext.projectRect(rectData);
         const points = generateSingleSerpentineLine(projectedRect, drawingConfig.line.spacing, drawingConfig.line.strokeWidth);
-        
-        const pathElement = createPath(points);
-        pathElement.setAttribute('stroke-width', drawingConfig.line.strokeWidth.toString());
-        
-        const color = colorManager.getValidColor(projectedRect);
-        colorGroups[color].appendChild(pathElement);
+        appendColoredPath({
+            points,
+            strokeWidth: drawingConfig.line.strokeWidth,
+            geometry: projectedRect,
+            colorGroups,
+            colorManager
+        });
 
         for (let j = 0; j < size; j++) {
             helper[i + j] += size;

@@ -289,6 +289,8 @@
                 });
             });
         });
+        const { getMaxMargin, clampMargin, resolveMargin, DEFAULT_MARGIN } = await import('./js/utils/marginUtils.js?v=' + Date.now());
+
         const select = document.getElementById('drawingSelect');
         const container = document.getElementById('svgContainer');
         const exportButton = document.getElementById('exportSvg');
@@ -414,12 +416,7 @@
         let currentPaper = null;
         let currentOrientation = 'landscape';
         let lastRenderedPaper = null;
-        let currentMargin = null;
-
-        function getMaxMargin(paper) {
-            if (!paper) return 0;
-            return Math.floor(Math.min(paper.width, paper.height) / 2);
-        }
+        let currentMargin = DEFAULT_MARGIN;
 
         function updateMarginControls(paper) {
             const slider = document.getElementById('marginSlider');
@@ -429,8 +426,7 @@
                 return;
             }
             const maxMargin = getMaxMargin(paper);
-            const defaultMargin = typeof currentMargin === 'number' ? currentMargin : (paper.margin || 0);
-            const normalized = Math.max(0, Math.min(defaultMargin, maxMargin));
+            const normalized = resolveMargin(paper, currentMargin);
             currentMargin = normalized;
             slider.max = maxMargin;
             input.max = maxMargin;
@@ -443,9 +439,7 @@
             if (!currentPaper) {
                 return false;
             }
-            const parsed = Number(value);
-            const maxMargin = getMaxMargin(currentPaper);
-            const normalized = Math.max(0, Math.min(Number.isFinite(parsed) ? parsed : 0, maxMargin));
+            const normalized = clampMargin(currentPaper, value);
             currentMargin = normalized;
             const slider = document.getElementById('marginSlider');
             const input = document.getElementById('marginInput');
@@ -481,8 +475,7 @@
                 if (!basePaper) {
                     throw new Error('Paper configuration is missing for the selected drawing');
                 }
-                const maxMargin = getMaxMargin(basePaper);
-                const marginValue = Math.max(0, Math.min(typeof currentMargin === 'number' ? currentMargin : (basePaper.margin || 0), maxMargin));
+                const marginValue = resolveMargin(basePaper, currentMargin);
                 currentMargin = marginValue;
                 const paperForRender = { ...basePaper, margin: marginValue };
                 lastRenderedPaper = paperForRender;
@@ -595,6 +588,7 @@
                     currentPaperId = paperSelect.value;
                 }
                 currentPaper = currentPaperId ? paperConfig.papers[currentPaperId] : null;
+                currentMargin = clampMargin(currentPaper, currentMargin);
                 updateMarginControls(currentPaper);
 
                 // Draw once but don't start refresh
@@ -645,14 +639,14 @@
         document.getElementById('toggleRefresh').addEventListener('click', toggleRefresh);
         document.getElementById('toggleDebug').addEventListener('click', toggleDebugPanel);
         document.getElementById('toggleOrientation').addEventListener('click', toggleOrientation);
-        document.getElementById('marginSlider').addEventListener('input', (e) => {
+        document.getElementById('marginSlider').addEventListener('input', async (e) => {
             if (applyMarginValue(e.target.value)) {
-                draw();
+                await draw();
             }
         });
-        document.getElementById('marginInput').addEventListener('change', (e) => {
+        document.getElementById('marginInput').addEventListener('change', async (e) => {
             if (applyMarginValue(e.target.value)) {
-                draw();
+                await draw();
             }
         });
         
@@ -941,6 +935,7 @@
                 logDebug(`Paper ${currentPaperId} not found in configuration`, 'error');
                 return;
             }
+            currentMargin = clampMargin(currentPaper, currentMargin);
             updateMarginControls(currentPaper);
             logDebug(`Changing paper size to ${currentPaper.name} (${currentPaper.width}×${currentPaper.height}mm)`);
             await draw();

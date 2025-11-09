@@ -48,7 +48,8 @@ The project is optimized for two specific pen types:
   - Hilbert curves with configurable complexity
   - Portrait/Landscape orientation support
   - Content-aware SVG scaling
-  - Millimeter-precise ruler visualization
+- Millimeter-precise ruler visualization
+- Adjustable margin slider with live preview
   - Completion sound notifications with mute option
   - Debug message filtering with "All" and "Just Plots" tabs
   - Automatic temporary file cleanup

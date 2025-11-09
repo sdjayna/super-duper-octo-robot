@@ -1,30 +1,18 @@
-import { createSVG, createColorGroups, createPath } from '../utils/svgUtils.js';
+import { createSVG, createColorGroups } from '../utils/svgUtils.js';
 import { ColorManager } from '../utils/colorUtils.js';
+import { appendColoredPath } from '../utils/drawingUtils.js';
+import { computeBoundsFromPoints } from '../utils/geometryUtils.js';
 export class DelaunayConfig {
     constructor(params) {
-        this.width = params.paper?.width || 420;
-        this.height = params.paper?.height || 297;
         const triangulation = params.triangulation;
         if (!triangulation) {
             throw new Error('Triangulation data is required');
         }
         
         this.points = triangulation.points;
-        this.width = triangulation.width;
-        this.height = triangulation.height;
-        
-        const xs = this.points.map(p => p.x);
-        const ys = this.points.map(p => p.y);
-        const minX = Math.min(...xs);
-        const maxX = Math.max(...xs);
-        const minY = Math.min(...ys);
-        const maxY = Math.max(...ys);
-        this.bounds = {
-            minX,
-            minY,
-            width: Math.max(maxX - minX, 1),
-            height: Math.max(maxY - minY, 1)
-        };
+        this.bounds = computeBoundsFromPoints(this.points);
+        this.width = this.bounds.width;
+        this.height = this.bounds.height;
         
         if (!Array.isArray(this.points)) {
             throw new Error('Points must be an array');
@@ -67,11 +55,13 @@ export function drawDelaunayTriangulation(drawingConfig, renderContext) {
     // Draw triangles
     triangles.forEach(triangle => {
         const pathPoints = [...triangle.points, triangle.points[0]];
-        const pathElement = createPath(pathPoints);
-        pathElement.setAttribute('stroke-width', drawingConfig.line.strokeWidth.toString());
-        
-        const color = colorManager.getValidColor(triangle);
-        colorGroups[color].appendChild(pathElement);
+        appendColoredPath({
+            points: pathPoints,
+            strokeWidth: drawingConfig.line.strokeWidth,
+            geometry: triangle,
+            colorGroups,
+            colorManager
+        });
     });
     
     return svg;
