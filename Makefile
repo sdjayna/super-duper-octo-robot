@@ -1,39 +1,41 @@
-.PHONY: install run clean test help
+.PHONY: install run clean test dev help
 
-# Default Python interpreter
-PYTHON=python3
+VENV?=.venv
+PYTHON=$(VENV)/bin/python3
+PIP=$(VENV)/bin/pip
 
-# Install dependencies
-install:
-	$(PYTHON) -m venv . --without-scm-ignore-files
-	. ./bin/activate && pip install --upgrade pip
-	. ./bin/activate && pip install -r requirements.txt
-	. ./bin/activate && pip install "https://cdn.evilmadscientist.com/dl/ad/public/AxiDraw_API.zip"
+install: $(VENV)/bin/python3 node_modules
 
-# Run the server
+$(VENV)/bin/python3:
+	python3 -m venv $(VENV)
+	$(PIP) install --upgrade pip
+	$(PIP) install -r requirements.txt
+	$(PIP) install "https://cdn.evilmadscientist.com/dl/ad/public/AxiDraw_API.zip"
+
+node_modules: package.json
+	npm install
+	@touch node_modules
+
 run:
-	. ./bin/activate && PYTHONPATH=. $(PYTHON) server/server_runner.py
+	PYTHONPATH=. $(PYTHON) server/server_runner.py
 
-# Clean temporary files and virtual environment
 clean:
 	find . -type f -name "temp_*.svg" -delete
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	find . -type f -name "*.pyc" -delete
-	rm -rf bin/ include/ lib/ pyvenv.cfg
+	rm -rf $(VENV) node_modules
+	rm -rf bin include lib pyvenv.cfg 2>/dev/null || true
 
-# Run tests (placeholder for future test implementation)
 test:
-	. ./bin/activate && $(PYTHON) -m pytest
+	npm test
 
-# Start development mode with auto-reload
 dev: install run
 
-# Show help
 help:
 	@echo "Available commands:"
-	@echo "  make install  - Create virtualenv and install dependencies"
+	@echo "  make install  - Create the Python venv and install npm deps"
 	@echo "  make run      - Start the development server"
-	@echo "  make clean    - Remove temporary files and virtualenv"
-	@echo "  make test     - Run tests"
-	@echo "  make dev      - Install dependencies and start server"
+	@echo "  make clean    - Remove build artifacts (venv, node_modules, temp files)"
+	@echo "  make test     - Run the Vitest suite"
+	@echo "  make dev      - Install dependencies and start the server"
 	@echo "  make help     - Show this help message"
