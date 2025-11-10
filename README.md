@@ -384,7 +384,13 @@ See the full [LICENSE](LICENSE) file for details.
 
 ## Known Issues & TODO
 
-See [TODOs.md](TODOs.md) for a complete list of planned improvements and known issues.
+- The `/plot-progress` Server-Sent Events endpoint currently runs inside a single-threaded `HTTPServer`, so its infinite heartbeat loop blocks every other request (no `/plotter` commands can start once a client begins listening). The server needs either `ThreadingHTTPServer` or a separate worker to stream progress.
+- Plot streaming reads `axicli` stderr synchronously; when stderr is quiet the blocking `readline()` prevents stdout progress from flowing and the subprocess never terminates cleanly. Switch to non-blocking IO or dedicated reader threads.
+- Static asset requests (`/css/*`, `/js/*`) and SVG exports trust user-provided paths/names, enabling `../` traversal to read or write arbitrary files. Canonicalize and validate paths before accessing the filesystem.
+- Auto-refresh in `client/templates/plotter.html` fires overlapping async `draw()` calls every second, re-importing modules and mutating DOM in parallel; guard refreshes with an in-flight flag or queue to keep the UI stable.
+- There are no automated tests for the Python server endpoints (`/plotter`, `/plot-progress`, `/save-svg`), so regressions in subprocess handling and filesystem safety go undetected.
+
+See [TODOs.md](TODOs.md) for the complete backlog and progress tracking.
 
 ## Server Commands
 

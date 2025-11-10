@@ -3,6 +3,10 @@
 ## Known Issues
 
 - Add visual regression to ensure preview/export parity stays intact
+- `/plot-progress` SSE responses run inside the single-threaded `HTTPServer`, so the long-lived heartbeat loop blocks every other request (no `/plotter` POSTs can run once a client starts listening). Switch to `ThreadingHTTPServer` or push SSE streaming into its own worker thread.
+- The plot thread streams both stdout and stderr with blocking `readline()` calls, which deadlock when stderr is quiet. Use non-blocking reads (e.g., `select`, `asyncio`, or dedicated reader threads) so progress events continue and the subprocess can exit.
+- Static asset serving and SVG export trust user-supplied paths/names; `../` segments allow reading arbitrary files or writing outside `output/`. Normalize and validate paths before disk access.
+- Auto-refresh in `plotter.html` spawns overlapping `draw()` calls (async re-imports + DOM updates) every second, frequently clobbering UI state. Gate refreshes with an "in-flight" flag so only one render runs at a time.
 
 ## High Priority
 
@@ -32,6 +36,7 @@
 
 4. Finish testing story
    - Add integration tests (UI ↔ server)
+   - Add server-side tests for `/plotter`, `/plot-progress`, and `/save-svg`
    - Add visual regression tests
 
 5. TypeScript adoption (longer-term)
