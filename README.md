@@ -1,427 +1,151 @@
 # Jupiter Jayna's Plotter Art Control Centre
+*A plotter-first generative art workstation that goes from browser math to multi-pen AxiDraw output without leaving the keyboard.*
 
-A web-based tool for generating algorithmic art optimized for AxiDraw pen plotters. This project creates SVG files with separated layers for multi-pen plotting, featuring perfect square subdivisions (Bouwkamp codes), Delaunay triangulations, and Hilbert curves.
+If you have an AxiDraw (or any plotter that can digest SVG layers) and love algorithmic art, this repo gives you a complete local studio: mm-accurate previews, color-aware layering, a Python server that proxies the axicli, and a set of battle-tested drawing algorithms (Bouwkamp perfect squares, Delaunay triangulations, Hilbert curves). Everything ships as source, so you can bend it to your own plotting rituals or hack on it live during a stream.
 
 ![Plotter Art UI](ui-screenshot.png)
 
-> **Note:** While this tool works with any AxiDraw plotter, it has been specifically developed and tested with the AxiDraw SE/A3 Special Edition model.
+> Optimized for the AxiDraw SE/A3 (penlift 3, SE servo), but nothing prevents you from wiring in another model by editing `server/plotter_config.py`.
 
-For examples of artwork created using similar techniques, visit [plotter.art](https://plotter.art), which showcases algorithmic plotter art with an emphasis on acrylic paint application and geometric patterns.
+## Why Hacker News Might Care
 
-The project is optimized for two specific pen types:
-- Molotow ONE4ALL™ Acrylic Markers (1mm and 2mm tips)
-- Sakura Pigma Micron® Fineliners (0.2mm - 0.8mm)
+- **Bridges UI + hardware** – front-end sliders talk to a Python server that shells out to `axicli`, streaming progress back over SSE, so you can iterate fast without babysitting the machine.
+- **Obsessive paper + pen modeling** – paper margins, nib widths, and medium presets are first-class citizens, so the SVG matches the sheet on your desk.
+- **Algorithm playground** – the drawing registry is tiny, modern JavaScript; adding a new tiling or curve takes one module and hot reload.
+- **Transparency-first** – no cloud, no hidden binaries; everything from the Makefile to the SSE heartbeat loop is readable and hackable.
 
-## Contents
+## What Ships in This Repo
 
-- [Features](#features)
-  - [Drawing Algorithms](#drawing-algorithms)
-  - [Real-time Development](#real-time-development)
-  - [SVG Generation](#svg-generation)
-  - [Multi-pen Support](#multi-pen-support)
-- [Project Structure](#project-structure)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-- [Usage](#usage)
-  - [Basic Operation](#basic-operation)
-  - [File Output](#file-output)
-  - [Creating Custom Drawings](#creating-custom-drawings)
-- [Development](#development)
-  - [Adding New Drawing Types](#adding-new-drawing-types)
-  - [Error Handling and Recovery](#error-handling-and-recovery)
-  - [Code Style](#code-style)
-- [Color System](#color-system)
-- [Plotter Configuration](#plotter-configuration)
-- [Contributing](#contributing)
-- [AI Development Assistance](#ai-development-assistance)
-- [License](#license)
-- [Support](#support)
-- [Changelog](#changelog)
-- [Acknowledgments](#acknowledgments)
-
-## Features
-
-- **Multiple Drawing Algorithms**
-  - Bouwkamp codes (perfect square subdivisions)
-  - Delaunay triangulations
-  - Hilbert curves with configurable complexity
-  - Portrait/Landscape orientation support
-  - Content-aware SVG scaling
-- Millimeter-precise ruler visualization
-- Adjustable margin slider with live preview
-- Completion sound notifications with mute option
-- Debug message filtering with "All" and "Just Plots" tabs
-- Automatic temporary file cleanup
-- Error message highlighting in red
-- Bold highlighting for most recent debug message
-
-- **Real-time Development**
-  - Live preview with auto-refresh
-  - Debug panel with real-time logging
-    - Color-coded error messages
-    - Automatic error recovery
-  - Hot module reloading
-  - Layer visibility controls
-
-- **SVG Generation**
-  - Automatic file saving with timestamps
-  - Pretty-printed SVG output
-  - Configuration preserved in comments
-  - Dynamic viewBox calculation
-
-- **Multi-pen Support**
-  - Smart color separation into layers
-  - Intelligent color selection system
-  - Adjacent color avoidance
-  - Inkscape-compatible layer naming
-  - Medium presets automatically set stroke widths and nib styles (e.g., Sakura 0.45 mm round tip, ONE4ALL 2 mm round nib)
-  - Live margin slider with numeric input keeps framing consistent across papers
-
-## Project Structure
+- **Client** – vanilla JS + CSS app (`client/js`, `client/templates`) with live preview, layer toggles, debug console, and mm ruler overlay.
+- **Server** – Python `http.server` wrapper (`server/server.py`) that serves the UI, streams `/plot-progress`, and runs `bin/axicli` commands for each layer.
+- **Shared data** – `shared/paper_config.json` and `shared/medium_config.json` describing margins, stroke widths, nib metadata, and color palettes.
+- **Output pipeline** – timestamped SVGs in `output/` with configuration comments plus Inkscape-compatible layers ready for plotting or archival.
+- **Docs + tooling** – Makefile, Vitest setup, TODO/CHANGELOG/CONTRIBUTING, and a reference screenshot so people know what they’re installing.
 
 ```
 ├── client/
-│   ├── js/
-│   │   ├── app.js                # Main application logic
-│   │   ├── colorPalette.js       # Color definitions and palettes
-│   │   ├── configs/
-│   │   │   └── BaseConfig.js     # Base configuration class
-│   │   ├── drawings.js           # Drawing configurations
-│   │   ├── drawings/
-│   │   │   ├── bouwkamp.js      # Perfect square implementation
-│   │   │   ├── delaunay.js      # Triangulation implementation
-│   │   │   ├── hilbert.js       # Hilbert curve implementation
-│   │   │   └── types.js         # Drawing type definitions
-│   │   ├── paperConfig.js        # Paper size configurations
-│   │   └── utils/
-│   │       ├── colorUtils.js     # Color management utilities
-│   │       ├── geometryUtils.js  # Geometric calculations
-│   │       ├── patternUtils.js   # Pattern generation
-│   │       ├── svgUtils.js       # SVG creation and manipulation
-│   │       └── validationUtils.js # Input validation
-│   ├── static/
-│   │   ├── css/
-│   │   │   └── styles.css       # Application styles
-│   │   └── favicon.ico          # Site favicon
-│   └── templates/
-│       └── plotter.html         # Main application interface
+│   ├── js/…                 # Drawing registry, color utils, configs
+│   ├── static/css/styles.css
+│   └── templates/plotter.html
 ├── server/
-│   ├── __init__.py             # Server package initialization
-│   ├── paper_config.py         # Paper configuration
-│   ├── plotter_config.py       # Plotter settings
-│   ├── server.py               # Main server implementation
-│   └── server_runner.py        # Development server with hot reload
+│   ├── server.py            # HTTP + axicli bridge + SSE
+│   ├── plotter_config.py    # Pen heights, penlift, model ids
+│   └── server_runner.py     # Dev server with autoreload
 ├── shared/
-│   ├── medium_config.json      # Pen and medium configurations
-│   └── paper_config.json       # Paper size definitions
-├── docs/
-│   └── server_commands.md      # Server API documentation
-├── .eslintrc.json             # JavaScript linting rules
-├── CHANGELOG.md               # Version history
-├── CONTRIBUTING.md            # Contribution guidelines
-├── LICENSE                    # MIT license
-├── Makefile                  # Build and run commands
-├── README.md                 # Project documentation
-└── requirements.txt          # Python dependencies
+│   ├── paper_config.json    # ISO + Bristol presets w/ margins
+│   └── medium_config.json   # Pen brands, nib widths, stroke styles
+└── Makefile / tests / docs  # Tooling, Vitest config, server docs
 ```
 
-## Getting Started
+## Quick Start (macOS, local-first)
 
 ### Prerequisites
 
-- macOS (currently only tested on Mac)
+- macOS (project currently tested on Apple Silicon)
 - Python 3.x
-- Modern web browser (Chrome, Firefox, Safari)
-- Node.js 18+ (for unit tests)
-- Git
+- Node.js 18+
+- Git, Make, and a modern browser
+- An AxiDraw SE/A3 (recommended) or any plotter that consumes layered SVGs
 
-### Installation
+### Bootstrap the dev environment
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/sdjayna/super-duper-octo-robot.git
-   cd super-duper-octo-robot
-   ```
-
-2. Install dependencies (Python virtualenv + npm packages):
-   ```bash
-   make install
-   ```
-
-3. Start the development server:
-   ```bash
-   make run
-   ```
-
-4. Visit in your browser:
-   ```
-   http://localhost:8000
-   ```
-
-5. Run the automated tests:
-   ```bash
-   make test
-   ```
-
-6. For a full dev setup (install + run):
-   ```bash
-   make dev
-   ```
-
-### Available Make targets
-
-| Command       | Description                                      |
-|---------------|--------------------------------------------------|
-| make install  | Create the Python virtualenv and install npm deps |
-| make run      | Start the development server                      |
-| make clean    | Remove temp files, virtualenv, and node_modules   |
-| make test     | Run the Vitest suite (frontend + helper tests)    |
-| make dev      | Convenience target: install then run              |
-
-## Plotter Configuration
-
-The project includes specific support for the AxiDraw SE/A3 plotter through `plotter_config.py` and paper configuration through `paper_config.json`.
-
-### Paper Configuration
-```json
-{
-    "papers": {
-        "a3": {
-            "width": 297,
-            "height": 420,
-            "margin": 59.4,
-            "name": "A3",
-            "description": "ISO A3 Paper"
-        },
-        "A4": {
-            "width": 210,
-            "height": 297,
-            "margin": 42,
-            "name": "A4",
-            "description": "ISO A4 Paper"
-        },
-        "bristol": {
-            "width": 432,
-            "height": 279,
-            "margin": 86.4,
-            "name": "Bristol",
-            "description": "Bristol Paper 432×279mm"
-        }
-    }
-}
+```bash
+make install   # virtualenv + pip deps + npm install
+make run       # serves http://localhost:8000 with live reload
 ```
 
-### Plotter Settings
-```python
-PLOTTER_CONFIGS = {
-    'AxiDraw SE/A3': {
-        'model': 2,   # Model number for AxiDraw SE/A3
-        'pen_pos_up': 90,    # Pen up position (0-100)
-        'pen_pos_down': 10,  # Pen down position (0-100)
-        'penlift': 3    # Narrow-band brushless servo (3rd position up)
-    }
-}
+Then open <http://localhost:8000>, pick a drawing preset, tweak the sliders, and hit “Save SVG” or “Plot layer”.
+
+### Tests & linting
+
+```bash
+make test      # runs the Vitest suite (client + helpers)
 ```
 
-### Configuration Parameters
+### Useful Make targets
 
-- `model`: Specifies the plotter model (2 for AxiDraw SE/A3)
-- `pen_pos_up`: Height of the pen when raised (0-100)
-- `pen_pos_down`: Height of the pen when drawing (0-100)
-- `pen_rate_lower`: Speed of pen lowering movement (1-100)
-- `penlift`: Servo type configuration (3 for narrow-band brushless servo)
+| Command      | What it does                                                        |
+|--------------|---------------------------------------------------------------------|
+| `make install` | Sets up the Python venv and installs npm deps                       |
+| `make run`     | Launches the Python dev server with live reload                     |
+| `make dev`     | Shortcut for `install` + `run`                                      |
+| `make test`    | Executes Vitest (JS unit tests)                                     |
+| `make clean`   | Removes temp files, venv, and `node_modules`                        |
 
-These settings are automatically applied to all plotter commands, ensuring consistent behavior across plotting sessions.
+## Plotting Pipeline
 
-## Usage
+1. **Pick a drawing** – Bouwkamp codes, Delaunay triangulations, or Hilbert curves ship as presets; each exposes paper, margin, and color controls.
+2. **Preview in mm** – the UI shows paper outlines, rulers, and margin sliders so the SVG framing matches your tape on the physical board.
+3. **Generate layered SVG** – the client writes an Inkscape-ready SVG where each color sits in its own layer with stroke widths pulled from the selected medium preset (e.g., Sakura 0.45 mm round tip, Molotow ONE4ALL 2 mm).
+4. **Stream to hardware** – pressing “Plot layer” posts the SVG + layer id to `/plotter`; the Python server writes a temp file, shells out to `bin/axicli`, and forwards stdout/stderr lines as SSE events.
+5. **Monitor progress** – the log panel shows real-time output, estimated times, and completion/error markers; SSE keeps the UI hot even if the process is long-running.
+6. **Archive outputs** – every successful save lands in `output/<drawing>/<timestamp>.svg` with configuration comments so you can reproduce the run later.
 
-### Basic Operation
+## Drawing Algorithms & Customization
 
-1. Select a drawing type from the dropdown
-2. Use the controls to:
-   - Toggle orientation (Portrait/Landscape)
-   - Show/hide the debug panel
-   - Pause/resume auto-refresh
-   - Save the current SVG
-3. Use the layer selector to view specific pen colors
-
-### File Output
-
-SVG files are saved to the `output` directory:
-```
-output/
-    simplePerfectRectangle/
-        20250203-153022.svg
-    delaunayExample/
-        20250203-153024.svg
-```
-
-Each SVG includes:
-- Configuration details in comments
-- Inkscape-compatible layers
-- Timestamp-based filename
-- Pretty-printed SVG code
-
-### Creating Custom Drawings
-
-Add new drawings in `js/drawings.js`:
+The registry in `client/js/drawings.js` makes new experiments painless. Create a config, register it, and the UI auto-populates with your controls:
 
 ```javascript
-export const drawings = {
-    myNewDrawing: new DrawingConfig(
-        'My Drawing Name',
-        {
-            type: 'bouwkamp',  // or 'delaunay'
-            code: [...],       // for bouwkamp
-            // or
-            triangulation: {   // for delaunay
-                points: [{x: 0, y: 0}, ...],
-                width: 100,
-                height: 100
-            },
-            paper: {
-                width: 420,    // A3 width in mm
-                height: 297,   // A3 height in mm
-                margin: 12.5   // margin in mm
-            },
-            line: {
-                spacing: 2.5,    // space between lines
-                strokeWidth: 0.45,// SVG stroke width
-                vertexGap: 0.5   // gap at vertices
-            },
-            colorPalette
-        }
-    )
-};
+registerDrawing({
+  id: 'moireGrid',
+  name: 'Moire Grid',
+  configClass: class extends BaseConfig {
+    build() {
+      return {
+        paper: paperConfig.a3,
+        medium: mediumConfig.sakuraMicron045,
+        hilbert: { order: 5, jitter: 0.12 },
+        delaunay: { seedPoints: 420, relaxIterations: 2 }
+      };
+    }
+  },
+  drawFunction: drawMoireGrid
+});
 ```
 
-## Development
+- **Hot reload** – `server/server_runner.py` watches files so your new drawing appears after a save.
+- **Constraint-aware helpers** – `colorUtils`, `geometryUtils`, and `patternUtils` keep spacing/margins consistent; `svgUtils` handles layer naming and viewBox math.
+- **Paper + medium presets** – drop in a new pen brand or sheet size via JSON and it immediately appears in the UI selectors.
 
-### Adding New Drawing Types
+## Color & Multi-Pen Layering
 
-Every drawing registers itself, so you only edit the file you’re working on:
+- Smart palette selection prevents adjacent fills from sharing a color, reducing smears on real paper.
+- Layers map directly to pen labels (e.g., `Black-0.5mm`, `Copper-2mm`), so you can queue them in AxiDraw’s layer mode.
+- Medium presets store nib geometry, stroke widths, and suggested pressure settings, matching actual pen behavior.
+- Margin slider locks framing numerically + visually, so orientation swaps keep the artwork centered on both portrait and landscape sheets.
 
-1. **Create the config and renderer** – generate geometry in your preferred coordinate system, project it to the paper, and append paths using the shared utilities.
-2. **Register inside the same module** – call `registerDrawing({ id, name, configClass, drawFunction })` and then `addDrawingPreset(...)` for any default examples.
-3. **Add tests and run `npm test`** – ensure your drawing produces output and respects paper/margin settings.
+## Server & Plotter Controls
 
-### Error Handling and Recovery
+- `server/server.py` extends `SimpleHTTPRequestHandler`, serving the UI and exposing JSON commands at `/plotter`.
+- Supported commands include `plot`, `stop_plot`, `raise_pen`, `toggle`, `align`, `cycle`, `home`, and `disable_motors` (see `docs/server_commands.md` for payloads).
+- `/plot-progress` streams Server-Sent Events with heartbeats plus `PLOT_COMPLETE` / `PLOT_ERROR` markers so the UI can recover automatically.
+- `plotter_config.py` defines model numbers, servo behavior, and pen heights for each supported device; switch models by editing `CURRENT_PLOTTER`.
 
-The system provides comprehensive error handling:
-- Automatic cleanup of temporary files on server startup
-- Robust thread management for plot operations
-- Visual error highlighting in debug panel
-- Automatic control re-enabling on errors
-- Resource cleanup on plot failures
-- SSE connection management
+## Roadmap & Known Issues
 
-### Code Style
+This is live code, and we keep the paper cuts documented:
 
-The project uses ESLint with specific rules for:
-- Consistent indentation (4 spaces)
-- Single quotes for strings
-- Semicolon usage
-- JSDoc documentation
-- Max line length (100 chars)
+- `/plot-progress` currently uses a single-threaded `HTTPServer`; long-lived SSE requests block other endpoints until we move to `ThreadingHTTPServer` or a worker thread.
+- Plot streaming reads `axicli` stderr synchronously; if stderr blocks, stdout stalls and the subprocess can hang. Needs non-blocking IO.
+- Static asset and SVG export endpoints trust path parameters, allowing `../` traversal. We need canonicalization + validation.
+- Auto-refresh in `client/templates/plotter.html` can fire overlapping async `draw()` calls. Guard refreshes with an “in-flight” flag.
+- Python server endpoints (`/plotter`, `/plot-progress`, `/save-svg`) lack automated tests; coverage is on the TODO list.
 
-See `.eslintrc.json` for complete configuration.
+Additional backlog items live in `TODOs.md`.
 
-## Color System
+## Community, Support & Contributions
 
-The project includes a comprehensive color palette based on common plotter pen colors:
+- Check or open issues on GitHub: <https://github.com/sdjayna/super-duper-octo-robot/issues>
+- Contribution guidelines cover workflow, docs, and code style: [CONTRIBUTING.md](CONTRIBUTING.md)
+- For support, please include browser version, error logs, reproduction steps, and (if relevant) the SVG configuration snippet with your issue.
 
-- Smart color selection to avoid adjacent shapes having the same color
-- Automatic layer creation for each color
-- Support for metallic, fluorescent, and pastel colors
-- Easy addition of new colors to the palette
+## License & Credits
 
-See `colorPalette.js` for the complete list of available colors.
+- MIT License – see [LICENSE](LICENSE)
+- Uses Evil Mad Scientist’s AxiDraw CLI (`bin/axicli`) under their terms.
+- Huge thanks to C.J. Bouwkamp for the perfect square research, the Clipper library for polygon ops, and the broader algorithmic art community for years of shared techniques.
+- Developed by Jupiter Jayna with heavy inspiration from acrylic plotter workflows; sample work: <https://plotter.art>
 
-## Contributing
+## Built with AI Pair Programming
 
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on:
-- Development workflow
-- Code style
-- Documentation requirements
-- Pull request process
-- Code of conduct
-
-Before contributing, please review our contribution guidelines to ensure a smooth collaboration process.
-
-## AI Development Assistance
-
-This project has been developed with the assistance of several AI tools:
-
-- [aider.chat](https://aider.chat) - AI coding assistant for pair programming and iterative development
-  - Using the top-performing combination from the [aider leaderboards](https://aider.chat/docs/leaderboards/): DeepSeek R1 + Claude-3-Sonnet (64.0% success rate on polyglot benchmark)
-- [DeepSeek R1](https://www.deepseek.com/) - Large language model optimized for reasoning and code generation
-- [Claude-3-Sonnet](https://www.anthropic.com/claude) - AI assistant from Anthropic, used for code review and documentation
-
-These AI tools helped streamline development while maintaining code quality and consistency. The project serves as an example of how AI assistance can enhance the software development process while keeping human creativity and oversight at the forefront.
-
-## License
-
-This project is licensed under the MIT License:
-
-```text
-MIT License
-
-Copyright (c) 2025 Jupiter Jayna
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-```
-
-See the full [LICENSE](LICENSE) file for details.
-
-## Known Issues & TODO
-
-- The `/plot-progress` Server-Sent Events endpoint currently runs inside a single-threaded `HTTPServer`, so its infinite heartbeat loop blocks every other request (no `/plotter` commands can start once a client begins listening). The server needs either `ThreadingHTTPServer` or a separate worker to stream progress.
-- Plot streaming reads `axicli` stderr synchronously; when stderr is quiet the blocking `readline()` prevents stdout progress from flowing and the subprocess never terminates cleanly. Switch to non-blocking IO or dedicated reader threads.
-- Static asset requests (`/css/*`, `/js/*`) and SVG exports trust user-provided paths/names, enabling `../` traversal to read or write arbitrary files. Canonicalize and validate paths before accessing the filesystem.
-- Auto-refresh in `client/templates/plotter.html` fires overlapping async `draw()` calls every second, re-importing modules and mutating DOM in parallel; guard refreshes with an in-flight flag or queue to keep the UI stable.
-- There are no automated tests for the Python server endpoints (`/plotter`, `/plot-progress`, `/save-svg`), so regressions in subprocess handling and filesystem safety go undetected.
-
-See [TODOs.md](TODOs.md) for the complete backlog and progress tracking.
-
-## Server Commands
-
-For detailed documentation of all available plotter server commands, see [Server Commands Documentation](docs/server_commands.md).
-
-## Support
-
-For support:
-1. Check existing [Issues](https://github.com/sdjayna/super-duper-octo-robot/issues)
-2. Open a new issue with:
-   - Browser version
-   - Complete error message
-   - Steps to reproduce
-   - Example configuration (if applicable)
-
-## Changelog
-
-See [CHANGELOG.md](CHANGELOG.md) for version history and updates.
-
-## Acknowledgments
-
-- Inspired by Jupiter Jayna's work with algorithmic plotter art and acrylic paint application
-- Built using the AxiDraw SE/A3 plotter from Evil Mad Scientist Laboratories
-- Color palette specifically optimized for:
-  - Molotow ONE4ALL™ Acrylic Markers (1mm and 2mm tips)
-  - Sakura Pigma Micron® Fineliners (0.2mm - 0.8mm)
-- Polygon filling techniques inspired by both traditional hatching and polygon offsetting methods
-- Special thanks to:
-  - Evil Mad Scientist for their excellent AxiDraw API and CLI tools
-  - C.J. Bouwkamp's work on perfect square subdivisions
-  - The Clipper library for polygon operations
-  - The algorithmic art community for sharing techniques and inspiration
-
-For more information about Jupiter Jayna's work with algorithmic plotter art, visit [plotter.art](https://plotter.art).
+Development leaned on AI copilots (aider.chat, DeepSeek R1, Claude 3 Sonnet) for fast iteration while keeping humans in the loop for aesthetics, safety, and hardware testing.
