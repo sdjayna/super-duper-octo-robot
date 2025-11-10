@@ -26,6 +26,7 @@ clean:
 	find . -type f -name "temp_*.svg" -delete
 	find . -type d -name "__pycache__" -exec rm -rf {} +
 	find . -type f -name "*.pyc" -delete
+	rm -rf .pytest_cache
 	rm -rf $(VENV) node_modules
 	rm -rf bin include lib pyvenv.cfg 2>/dev/null || true
 
