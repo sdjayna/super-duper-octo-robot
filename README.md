@@ -7,20 +7,20 @@ If you have an AxiDraw (or any plotter that can digest SVG layers) and love algo
 
 > Optimized for the AxiDraw SE/A3 (penlift 3, SE servo), but nothing prevents you from wiring in another model by editing `server/plotter_config.py`.
 
-## Why Hacker News Might Care
+## Why This Tool Exists
 
-- **Bridges UI + hardware** – front-end sliders talk to a Python server that shells out to `axicli`, streaming progress back over SSE, so you can iterate fast without babysitting the machine.
-- **Obsessive paper + pen modeling** – paper margins, nib widths, and medium presets are first-class citizens, so the SVG matches the sheet on your desk.
-- **Algorithm playground** – the drawing registry is tiny, modern JavaScript; adding a new tiling or curve takes one module and hot reload.
-- **Transparency-first** – no cloud, no hidden binaries; everything from the Makefile to the SSE heartbeat loop is readable and hackable.
+- **Bridges UI + hardware** - front-end sliders talk to a Python server that shells out to `axicli`, streaming progress back over SSE, so you can iterate fast without babysitting the machine.
+- **Obsessive paper + pen modeling** - paper margins, nib widths, and medium presets are first-class citizens, so the SVG matches the sheet on your desk.
+- **Algorithm playground** - the drawing registry is tiny, modern JavaScript; adding a new tiling or curve takes one module and hot reload.
+- **Transparency-first** - no cloud, no hidden binaries; everything from the Makefile to the SSE heartbeat loop is readable and hackable.
 
 ## What Ships in This Repo
 
-- **Client** – vanilla JS + CSS app (`client/js`, `client/templates`) with live preview, layer toggles, debug console, and mm ruler overlay.
-- **Server** – Python `http.server` wrapper (`server/server.py`) that serves the UI, streams `/plot-progress`, and runs `bin/axicli` commands for each layer.
-- **Shared data** – `shared/paper_config.json` and `shared/medium_config.json` describing margins, stroke widths, nib metadata, and color palettes.
-- **Output pipeline** – timestamped SVGs in `output/` with configuration comments plus Inkscape-compatible layers ready for plotting or archival.
-- **Docs + tooling** – Makefile, Vitest setup, TODO/CHANGELOG/CONTRIBUTING, and a reference screenshot so people know what they’re installing.
+- **Client** - vanilla JS + CSS app (`client/js`, `client/templates`) with live preview, layer toggles, debug console, and mm ruler overlay.
+- **Server** - Python `http.server` wrapper (`server/server.py`) that serves the UI, streams `/plot-progress`, and runs `bin/axicli` commands for each layer.
+- **Shared data** - `shared/paper_config.json` and `shared/medium_config.json` describing margins, stroke widths, nib metadata, and color palettes.
+- **Output pipeline** - timestamped SVGs in `output/` with configuration comments plus Inkscape-compatible layers ready for plotting or archival.
+- **Docs + tooling** - Makefile, Vitest setup, TODO/CHANGELOG/CONTRIBUTING, and a reference screenshot so people know what they’re installing.
 
 ```
 ├── client/
@@ -74,12 +74,12 @@ make test      # runs the Vitest suite (client + helpers)
 
 ## Plotting Pipeline
 
-1. **Pick a drawing** – Bouwkamp codes, Delaunay triangulations, or Hilbert curves ship as presets; each exposes paper, margin, and color controls.
-2. **Preview in mm** – the UI shows paper outlines, rulers, and margin sliders so the SVG framing matches your tape on the physical board.
-3. **Generate layered SVG** – the client writes an Inkscape-ready SVG where each color sits in its own layer with stroke widths pulled from the selected medium preset (e.g., Sakura 0.45 mm round tip, Molotow ONE4ALL 2 mm).
-4. **Stream to hardware** – pressing “Plot layer” posts the SVG + layer id to `/plotter`; the Python server writes a temp file, shells out to `bin/axicli`, and forwards stdout/stderr lines as SSE events.
-5. **Monitor progress** – the log panel shows real-time output, estimated times, and completion/error markers; SSE keeps the UI hot even if the process is long-running.
-6. **Archive outputs** – every successful save lands in `output/<drawing>/<timestamp>.svg` with configuration comments so you can reproduce the run later.
+1. **Pick a drawing** - Bouwkamp codes, Delaunay triangulations, or Hilbert curves ship as presets; each exposes paper, margin, and color controls.
+2. **Preview in mm** - the UI shows paper outlines, rulers, and margin sliders so the SVG framing matches your tape on the physical board.
+3. **Generate layered SVG** - the client writes an Inkscape-ready SVG where each color sits in its own layer with stroke widths pulled from the selected medium preset (e.g., Sakura 0.45 mm round tip, Molotow ONE4ALL 2 mm).
+4. **Stream to hardware** - pressing “Plot layer” posts the SVG + layer id to `/plotter`; the Python server writes a temp file, shells out to `bin/axicli`, and forwards stdout/stderr lines as SSE events.
+5. **Monitor progress** - the log panel shows real-time output, estimated times, and completion/error markers; SSE keeps the UI hot even if the process is long-running.
+6. **Archive outputs** - every successful save lands in `output/<drawing>/<timestamp>.svg` with configuration comments so you can reproduce the run later.
 
 ## Drawing Algorithms & Customization
 
@@ -103,9 +103,9 @@ registerDrawing({
 });
 ```
 
-- **Hot reload** – `server/server_runner.py` watches files so your new drawing appears after a save.
-- **Constraint-aware helpers** – `colorUtils`, `geometryUtils`, and `patternUtils` keep spacing/margins consistent; `svgUtils` handles layer naming and viewBox math.
-- **Paper + medium presets** – drop in a new pen brand or sheet size via JSON and it immediately appears in the UI selectors.
+- **Hot reload** - `server/server_runner.py` watches files so your new drawing appears after a save.
+- **Constraint-aware helpers** - `colorUtils`, `geometryUtils`, and `patternUtils` keep spacing/margins consistent; `svgUtils` handles layer naming and viewBox math.
+- **Paper + medium presets** - drop in a new pen brand or sheet size via JSON and it immediately appears in the UI selectors.
 
 ## Color & Multi-Pen Layering
 
@@ -141,7 +141,7 @@ Additional backlog items live in `TODOs.md`.
 
 ## License & Credits
 
-- MIT License – see [LICENSE](LICENSE)
+- MIT License - see [LICENSE](LICENSE)
 - Uses Evil Mad Scientist’s AxiDraw CLI (`bin/axicli`) under their terms.
 - Huge thanks to C.J. Bouwkamp for the perfect square research, the Clipper library for polygon ops, and the broader algorithmic art community for years of shared techniques.
 - Developed by Jupiter Jayna with heavy inspiration from acrylic plotter workflows; sample work: <https://plotter.art>
