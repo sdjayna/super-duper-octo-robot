@@ -3,8 +3,8 @@
  */
 
 import { describe, it, expect, beforeAll } from 'vitest';
-import { createRenderContext } from '../client/js/renderContext.js';
-import { createTestPalette, createTestRenderContext, createTestDrawingConfig } from './utils/drawingTestUtils.js';
+import { createRenderContext } from '../../client/js/renderContext.js';
+import { createTestPalette, createTestRenderContext, createTestDrawingConfig } from '../../client/js/__tests__/helpers/drawingTestUtils.js';
 
 const palette = createTestPalette();
 
@@ -30,10 +30,10 @@ beforeAll(async () => {
         })
     });
 
-    drawingRegistry = await import('../client/js/drawingRegistry.js');
-    ({ drawBouwkampCode } = await import('../drawings/core/bouwkamp.js'));
-    ({ drawDelaunayTriangulation } = await import('../drawings/core/delaunay.js'));
-    ({ drawHilbertCurve, HilbertConfig } = await import('../drawings/community/hilbert.js'));
+    drawingRegistry = await import('../../client/js/drawingRegistry.js');
+    ({ drawBouwkampCode } = await import('../core/bouwkamp.js'));
+    ({ drawDelaunayTriangulation } = await import('../core/delaunay.js'));
+    ({ drawHilbertCurve, HilbertConfig } = await import('../community/hilbert.js'));
 
     global.fetch = originalFetch;
 });

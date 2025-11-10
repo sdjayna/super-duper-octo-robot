@@ -6,7 +6,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const appendSpy = vi.fn();
 
-vi.mock('../client/js/utils/colorUtils.js', () => ({
+vi.mock('../colorUtils.js', () => ({
     ColorManager: class {
         getValidColor() { return '#000000'; }
         updateTracking() {}
@@ -15,13 +15,13 @@ vi.mock('../client/js/utils/colorUtils.js', () => ({
     colorPalette: {}
 }));
 
-vi.mock('../client/js/utils/drawingContext.js', () => ({
+vi.mock('../drawingContext.js', () => ({
     createDrawingContext: () => ({
         appendPath: appendSpy
     })
 }));
 
-import { createDrawingBuilder } from '../client/js/utils/drawingBuilder.js';
+import { createDrawingBuilder } from '../drawingBuilder.js';
 
 const baseRenderContext = {
     paperWidth: 100,

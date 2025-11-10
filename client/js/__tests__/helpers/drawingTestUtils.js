@@ -1,4 +1,4 @@
-import { createRenderContext } from '../../client/js/renderContext.js';
+import { createRenderContext } from '../../renderContext.js';
 
 export function createTestPalette(overrides = {}) {
     return {

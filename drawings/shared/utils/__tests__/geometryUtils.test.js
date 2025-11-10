@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeBoundsFromPoints, computeBoundsFromRects } from '../drawings/shared/utils/geometryUtils.js';
+import { computeBoundsFromPoints, computeBoundsFromRects } from '../geometryUtils.js';
 
 describe('geometry utils', () => {
     it('computes bounds from points', () => {

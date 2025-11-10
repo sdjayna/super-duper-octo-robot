@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generateSingleSerpentineLine } from '../drawings/shared/utils/patternUtils.js';
+import { generateSingleSerpentineLine } from '../patternUtils.js';
 
 describe('generateSingleSerpentineLine', () => {
     it('creates a serpentine path inside the rectangle', () => {

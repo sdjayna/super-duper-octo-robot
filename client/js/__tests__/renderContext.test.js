@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createRenderContext } from '../client/js/renderContext.js';
+import { createRenderContext } from '../renderContext.js';
 
 describe('createRenderContext', () => {
     const paper = { width: 210, height: 297, margin: 5 };

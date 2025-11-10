@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { DEFAULT_MARGIN, getMaxMargin, clampMargin, resolveMargin } from '../client/js/utils/marginUtils.js';
+import { DEFAULT_MARGIN, getMaxMargin, clampMargin, resolveMargin } from '../marginUtils.js';
 
 describe('margin utils', () => {
     const paper = { width: 200, height: 150 };

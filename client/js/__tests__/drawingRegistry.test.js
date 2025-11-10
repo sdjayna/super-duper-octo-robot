@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { drawingTypes, registerDrawing, addDrawingPreset, DrawingConfig, drawings } from '../client/js/drawingRegistry.js';
+import { drawingTypes, registerDrawing, addDrawingPreset, DrawingConfig, drawings } from '../drawingRegistry.js';
 
 class StubConfig {
     constructor(params) {
@@ -12,7 +12,7 @@ function resetRegistry() {
     Object.keys(drawings).forEach(key => delete drawings[key]);
 }
 
-vi.mock('../client/js/paperConfig.js', () => ({
+vi.mock('../paperConfig.js', () => ({
     loadPaperConfig: () => Promise.resolve({ default: { width: 210, height: 297, margin: 10 } })
 }));
 

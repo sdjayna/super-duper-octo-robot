@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { appendColoredPath } from '../client/js/utils/drawingUtils.js';
+import { appendColoredPath } from '../drawingUtils.js';
 
 describe('drawing utils', () => {
     it('appends colored paths using fallback geometry', () => {

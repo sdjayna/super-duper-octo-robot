@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { createSVG, createColorGroups, getDrawingLayer } from '../client/js/utils/svgUtils.js';
+import { createSVG, createColorGroups, getDrawingLayer } from '../svgUtils.js';
 
 const renderContext = {
     paperWidth: 200,
