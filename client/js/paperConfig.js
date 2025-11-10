@@ -1,6 +1,6 @@
 export async function loadPaperConfig() {
     try {
-        const response = await fetch('/shared/paper_config.json');
+        const response = await fetch('/config/papers.json');
         const config = await response.json();
         return {
             papers: config.papers,

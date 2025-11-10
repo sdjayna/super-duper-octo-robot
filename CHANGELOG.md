@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Completely rewrote the README with a tangible pitch, architecture map, and hands-on onboarding plus an expanded customization example.
-- Introduced a top-level `drawings/` workspace split into `core/`, `community/`, and `shared/`, along with a reusable drawing kit (runtime wrapper, geometry/pattern/validation helpers, shared adapters).
+- Introduced a top-level `drawings/` workspace split into `core/`, `community/`, and `config/`, along with a reusable drawing kit (runtime wrapper, geometry/pattern/validation helpers, shared adapters).
 - Added a manifest build pipeline (`scripts/build-drawings-manifest.mjs`, `drawings/manifest.json`) and a background watcher (`npm run watch:drawings`) that rebuilds the manifest automatically.
 - Added `client/js/drawingsLoader.js` so the UI dynamically imports drawings from the manifest, plus a dedicated `client/js/main.js` module in place of the inline `<script>`.
 - Documented and wired a new `make manifest` target; `make dev` now installs deps, runs the manifest watcher, and starts the server in a single command.

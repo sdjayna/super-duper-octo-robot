@@ -10,7 +10,7 @@ let mediumMetadata = {};
 
 async function loadColorPalettes() {
     try {
-        const response = await fetch('/shared/medium_config.json');
+        const response = await fetch('/config/mediums.json');
         const config = await response.json();
         Object.entries(config.mediums).forEach(([id, medium]) => {
             const paletteName = `${id}Palette`;

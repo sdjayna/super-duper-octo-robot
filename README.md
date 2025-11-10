@@ -18,7 +18,7 @@ If you have an AxiDraw (or any plotter that can digest SVG layers) and love algo
 
 - **Client** - vanilla JS + CSS app (`client/js`, `client/templates`) with live preview, layer toggles, debug console, and mm ruler overlay.
 - **Server** - Python `http.server` wrapper (`server/server.py`) that serves the UI, streams `/plot-progress`, and runs `bin/axicli` commands for each layer.
-- **Shared data** - `shared/paper_config.json` and `shared/medium_config.json` describing margins, stroke widths, nib metadata, and color palettes.
+- **Config data** - `config/papers.json` and `config/mediums.json` describing margins, stroke widths, nib metadata, and color palettes.
 - **Output pipeline** - timestamped SVGs in `output/` with configuration comments plus Inkscape-compatible layers ready for plotting or archival.
 - **Docs + tooling** - Makefile, Vitest setup, TODO/CHANGELOG/CONTRIBUTING, and a reference screenshot so people know what they’re installing.
 - **Drawings** - a top-level `drawings/` directory split into `core/` (maintained algorithms), `community/` (user-contributed experiments), and `shared/` helpers so contributions don’t need to dig through the client bundle.
@@ -37,9 +37,9 @@ If you have an AxiDraw (or any plotter that can digest SVG layers) and love algo
 │   ├── server.py            # HTTP + axicli bridge + SSE
 │   ├── plotter_config.py    # Pen heights, penlift, model ids
 │   └── server_runner.py     # Dev server with autoreload
-├── shared/
-│   ├── paper_config.json    # ISO + Bristol presets w/ margins
-│   └── medium_config.json   # Pen brands, nib widths, stroke styles
+├── config/
+│   ├── papers.json          # ISO + Bristol presets w/ margins
+│   └── mediums.json         # Pen brands, nib widths, stroke styles
 └── Makefile / tests / docs  # Tooling, Vitest config, server docs
 ```
 
