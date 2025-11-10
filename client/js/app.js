@@ -1,8 +1,9 @@
-import { drawingTypes } from './drawings.js';
+import { drawingTypes, drawingsReady } from './drawings.js';
 import { createRenderContext } from './renderContext.js';
 
-export function generateSVG(drawingConfig, options = {}) {
+export async function generateSVG(drawingConfig, options = {}) {
     try {
+        await drawingsReady;
         if (!drawingConfig) {
             throw new Error('Drawing configuration is required');
         }

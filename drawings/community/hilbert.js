@@ -1,5 +1,9 @@
-import { createSVG, createDrawingBuilder, colorPalettes } from '../shared/clientAdapters.js';
-import { SizedDrawingConfig, defineDrawing } from '../shared/index.js';
+import {
+    defineDrawing,
+    SizedDrawingConfig,
+    createDrawingRuntime,
+    colorPalettes
+} from '../shared/kit.js';
 
 export class HilbertConfig extends SizedDrawingConfig {
     constructor(params = {}) {
@@ -72,8 +76,7 @@ function addWavyEffect(points, amplitude = 1, frequency = 0.1) {
 
 export function drawHilbertCurve(drawingConfig, renderContext) {
     const hilbert = drawingConfig.drawingData;
-    const svg = createSVG(renderContext);
-    const builder = createDrawingBuilder({ svg, drawingConfig, renderContext });
+    const { svg, builder } = createDrawingRuntime({ drawingConfig, renderContext });
 
     const bounds = hilbert.getBounds({
         paper: {
@@ -127,3 +130,5 @@ export const hilbertDrawing = defineDrawing({
         }
     ]
 });
+
+export default hilbertDrawing;

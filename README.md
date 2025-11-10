@@ -91,8 +91,7 @@ make test      # runs the Vitest suite (client + helpers)
 Drop new experiments in `drawings/core/` (first-party) or `drawings/community/` (user-contributed) and they auto-register with the UI on the next reload. Each module exports a definition built with `defineDrawing`, so there’s very little wiring:
 
 ```javascript
-import { defineDrawing, SizedDrawingConfig } from '../shared/index.js';
-import { createSVG, createDrawingBuilder, colorPalettes } from '../shared/clientAdapters.js';
+import { defineDrawing, SizedDrawingConfig, createDrawingRuntime, colorPalettes } from '../shared/kit.js';
 
 class MoireConfig extends SizedDrawingConfig {
   constructor(params = {}) {
@@ -102,8 +101,7 @@ class MoireConfig extends SizedDrawingConfig {
 }
 
 function drawMoireGrid(drawingConfig, renderContext) {
-  const svg = createSVG(renderContext);
-  const builder = createDrawingBuilder({ svg, drawingConfig, renderContext });
+  const { svg, builder } = createDrawingRuntime({ drawingConfig, renderContext });
   // build geometry, append paths, etc.
   return svg;
 }

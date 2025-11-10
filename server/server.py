@@ -22,6 +22,17 @@ class PlotterHandler(SimpleHTTPRequestHandler):
         # Redirect root to plotter.html
         if self.path == '/':
             self.path = '/client/templates/plotter.html'
+        request_path = self.path.split('?', 1)[0]
+        if request_path == '/drawings-manifest.json':
+            manifest = self.build_drawings_manifest()
+            body = json.dumps(manifest).encode('utf-8')
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Cache-Control', 'no-cache')
+            self.send_header('Content-Length', str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
         if self.path == '/plot-progress':
             self.send_response(200)
             self.send_header('Content-Type', 'text/event-stream')
@@ -88,6 +99,40 @@ class PlotterHandler(SimpleHTTPRequestHandler):
         
         # Handle all other GET requests as normal
         return SimpleHTTPRequestHandler.do_GET(self)
+
+    @classmethod
+    def build_drawings_manifest(cls):
+        base_dir = os.path.join(os.getcwd(), 'drawings')
+        groups = ['core', 'community']
+        entries = []
+
+        for group in groups:
+            group_dir = os.path.join(base_dir, group)
+            if not os.path.isdir(group_dir):
+                continue
+            for filename in sorted(os.listdir(group_dir)):
+                if not filename.endswith('.js') or filename == 'index.js':
+                    continue
+                file_path = os.path.join(group_dir, filename)
+                try:
+                    mtime = os.path.getmtime(file_path)
+                except OSError:
+                    mtime = time.time()
+                entries.append({
+                    'group': group,
+                    'path': f'/drawings/{group}/{filename}',
+                    'mtime': mtime
+                })
+
+        version = str(int(max((entry['mtime'] for entry in entries), default=time.time())))
+        for entry in entries:
+            entry.pop('mtime', None)
+
+        return {
+            'version': version,
+            'generatedAt': datetime.utcnow().isoformat() + 'Z',
+            'drawings': entries
+        }
 
     def handle_command(self, command_data):
         """Handle plotter commands by executing AxiDraw CLI commands"""

@@ -4,11 +4,9 @@
 
 import { describe, it, expect, beforeAll } from 'vitest';
 import { createRenderContext } from '../client/js/renderContext.js';
+import { createTestPalette, createTestRenderContext, createTestDrawingConfig } from './utils/drawingTestUtils.js';
 
-const palette = {
-    primary: { hex: '#000000', name: 'Primary' },
-    secondary: { hex: '#ff0000', name: 'Accent' }
-};
+const palette = createTestPalette();
 
 let drawBouwkampCode;
 let drawDelaunayTriangulation;
@@ -42,7 +40,7 @@ beforeAll(async () => {
 
 describe('drawing functions', () => {
     it('renders Bouwkamp drawing into color layers under the drawing group', () => {
-        const drawingConfig = {
+        const drawingConfig = createTestDrawingConfig({
             drawingData: {
                 order: 1,
                 width: 50,
@@ -55,10 +53,9 @@ describe('drawing functions', () => {
                 vertexGap: 0.5
             },
             colorPalette: palette
-        };
+        });
 
-        const renderContext = createRenderContext({
-            paper: { width: 120, height: 90, margin: 5 },
+        const renderContext = createTestRenderContext({
             drawingWidth: 50,
             drawingHeight: 50
         });
@@ -73,7 +70,7 @@ describe('drawing functions', () => {
     });
 
     it('renders Delaunay drawing using projected points', () => {
-        const drawingConfig = {
+        const drawingConfig = createTestDrawingConfig({
             drawingData: {
                 points: [
                     { x: 0, y: 0 },
@@ -86,9 +83,9 @@ describe('drawing functions', () => {
             },
             line: { strokeWidth: 0.3 },
             colorPalette: palette
-        };
+        });
 
-        const renderContext = createRenderContext({
+        const renderContext = createTestRenderContext({
             paper: { width: 150, height: 150, margin: 5 },
             drawingWidth: 100,
             drawingHeight: 100

@@ -1,5 +1,11 @@
-import { createSVG, validateBouwkampCode, generateSingleSerpentineLine, createDrawingBuilder, colorPalettes } from '../shared/clientAdapters.js';
-import { SizedDrawingConfig, defineDrawing } from '../shared/index.js';
+import {
+    defineDrawing,
+    SizedDrawingConfig,
+    createDrawingRuntime,
+    validateBouwkampCode,
+    generateSingleSerpentineLine,
+    colorPalettes
+} from '../shared/kit.js';
 
 export class BouwkampConfig extends SizedDrawingConfig {
     constructor(params = {}) {
@@ -21,8 +27,7 @@ export class BouwkampConfig extends SizedDrawingConfig {
 
 export function drawBouwkampCode(drawingConfig, renderContext) {
     const bouwkamp = drawingConfig.drawingData;
-    const svg = createSVG(renderContext);
-    const builder = createDrawingBuilder({ svg, drawingConfig, renderContext });
+    const { svg, builder } = createDrawingRuntime({ drawingConfig, renderContext });
 
     const helper = new Array(900).fill(0);
 
@@ -79,3 +84,5 @@ export const bouwkampDrawing = defineDrawing({
         }
     ]
 });
+
+export default bouwkampDrawing;

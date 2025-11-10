@@ -56,9 +56,9 @@ We use GitHub issues to track public bugs. Report a bug by [opening a new issue]
 
 1. Decide whether the drawing belongs in `drawings/core/` (maintained presets) or `drawings/community/` (user experiments).
 2. Create a module that exports:
-   - A config class extending `SizedDrawingConfig` / `PointCloudDrawingConfig` from `drawings/shared`.
-   - A `draw` function that receives `(drawingConfig, renderContext)` and returns an SVG using helpers from `drawings/shared/clientAdapters.js`.
-   - A definition created via `defineDrawing({ id, name, configClass, drawFunction, presets })`.
+   - A config class extending `SizedDrawingConfig` / `PointCloudDrawingConfig` from `drawings/shared/kit.js`.
+   - A `draw` function that receives `(drawingConfig, renderContext)` and returns an SVG using `createDrawingRuntime` (also from the kit).
+   - A definition created via `defineDrawing({ id, name, configClass, drawFunction, presets })` and exported as the default export.
 3. Export the definition from the corresponding `drawings/<group>/index.js` so the client auto-registers it.
 4. Add at least one preset so the UI shows a selectable example.
 5. Add or update tests in `tests/drawings.test.js` (or a dedicated spec) to cover the new logic.

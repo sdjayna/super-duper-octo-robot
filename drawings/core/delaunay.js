@@ -1,5 +1,9 @@
-import { createSVG, createDrawingBuilder, colorPalettes } from '../shared/clientAdapters.js';
-import { PointCloudDrawingConfig, defineDrawing } from '../shared/index.js';
+import {
+    defineDrawing,
+    PointCloudDrawingConfig,
+    createDrawingRuntime,
+    colorPalettes
+} from '../shared/kit.js';
 
 export class DelaunayConfig extends PointCloudDrawingConfig {
     constructor(params = {}) {
@@ -16,8 +20,7 @@ export class DelaunayConfig extends PointCloudDrawingConfig {
 
 export function drawDelaunayTriangulation(drawingConfig, renderContext) {
     const delaunay = drawingConfig.drawingData;
-    const svg = createSVG(renderContext);
-    const builder = createDrawingBuilder({ svg, drawingConfig, renderContext });
+    const { svg, builder } = createDrawingRuntime({ drawingConfig, renderContext });
 
     const scaledPoints = builder.projectPoints(delaunay.points);
     const triangles = [];
@@ -86,3 +89,5 @@ export const delaunayDrawing = defineDrawing({
         }
     ]
 });
+
+export default delaunayDrawing;

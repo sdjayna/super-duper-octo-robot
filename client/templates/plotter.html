@@ -322,7 +322,8 @@
 
                 try {
                     // Get the current drawing configuration
-                    const { drawings } = await import('./js/drawings.js?v=' + Date.now());
+                    const { drawings, drawingsReady } = await import('./js/drawings.js?v=' + Date.now());
+                    await drawingsReady;
                     syncDrawingStyles(drawings);
                     const currentConfig = drawings[select.value];
 
@@ -492,7 +493,8 @@
                 logDebug('Reloading modules...');
                 // Reload the modules fresh each time
                 const { generateSVG } = await import('./js/app.js?v=' + Date.now());
-                const { drawings } = await import('./js/drawings.js?v=' + Date.now());
+                const { drawings, drawingsReady } = await import('./js/drawings.js?v=' + Date.now());
+                await drawingsReady;
                 syncDrawingStyles(drawings);
                 
                 // First time only: populate select options
@@ -518,7 +520,7 @@
                 const paperForRender = { ...basePaper, margin: marginValue };
                 lastRenderedPaper = paperForRender;
                 container.innerHTML = '';
-                const svg = generateSVG(selectedDrawing, {
+                const svg = await generateSVG(selectedDrawing, {
                     paper: paperForRender,
                     orientation: currentOrientation
                 });
