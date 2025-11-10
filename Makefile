@@ -7,17 +7,19 @@ PIP=$(VENV)/bin/pip
 install: $(VENV)/bin/python3 node_modules
 
 $(VENV)/bin/python3:
-	python3 -m venv $(VENV)
+	python3 -m venv $(VENV) --without-scm-ignore-files
 	$(PIP) install --upgrade pip
 	$(PIP) install -r requirements.txt
 	$(PIP) install "https://cdn.evilmadscientist.com/dl/ad/public/AxiDraw_API.zip"
+	mkdir -p bin
+	ln -sf ../$(VENV)/bin/axicli bin/axicli
 
 node_modules: package.json
 	npm install
 	@touch node_modules
 
 run:
-	PYTHONPATH=. $(PYTHON) server/server_runner.py
+	PATH=$(VENV)/bin:$$PATH PYTHONPATH=. $(PYTHON) server/server_runner.py
 
 clean:
 	find . -type f -name "temp_*.svg" -delete
