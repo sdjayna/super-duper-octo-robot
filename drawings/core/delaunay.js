@@ -1,8 +1,5 @@
-import { createSVG } from '../utils/svgUtils.js';
-import { createDrawingBuilder } from '../utils/drawingBuilder.js';
-import { PointCloudDrawingConfig } from '../utils/drawingConfigBase.js';
-import { registerDrawing, addDrawingPreset } from '../drawingRegistry.js';
-import { colorPalettes } from '../utils/colorUtils.js';
+import { createSVG, createDrawingBuilder, colorPalettes } from '../shared/clientAdapters.js';
+import { PointCloudDrawingConfig, defineDrawing } from '../shared/index.js';
 
 export class DelaunayConfig extends PointCloudDrawingConfig {
     constructor(params = {}) {
@@ -51,36 +48,41 @@ export function drawDelaunayTriangulation(drawingConfig, renderContext) {
     return svg;
 }
 
-registerDrawing({
+export const delaunayDrawing = defineDrawing({
     id: 'delaunay',
     name: 'Delaunay Triangulation',
     configClass: DelaunayConfig,
-    drawFunction: drawDelaunayTriangulation
-});
-
-addDrawingPreset('delaunayExample', 'Delaunay Example', {
-    type: 'delaunay',
-    triangulation: {
-        points: [
-            { x: 10, y: 10 },
-            { x: 90, y: 10 },
-            { x: 90, y: 90 },
-            { x: 10, y: 90 },
-            { x: 50, y: 50 },
-            { x: 30, y: 30 },
-            { x: 70, y: 30 },
-            { x: 70, y: 70 },
-            { x: 30, y: 70 },
-            { x: 50, y: 20 },
-            { x: 80, y: 50 },
-            { x: 50, y: 80 },
-            { x: 20, y: 50 }
-        ]
-    },
-    line: {
-        spacing: 1.5,
-        strokeWidth: 0.3,
-        vertexGap: 0
-    },
-    colorPalette: colorPalettes.sakuraPalette
+    drawFunction: drawDelaunayTriangulation,
+    presets: [
+        {
+            key: 'delaunayExample',
+            name: 'Delaunay Example',
+            params: {
+                type: 'delaunay',
+                triangulation: {
+                    points: [
+                        { x: 10, y: 10 },
+                        { x: 90, y: 10 },
+                        { x: 90, y: 90 },
+                        { x: 10, y: 90 },
+                        { x: 50, y: 50 },
+                        { x: 30, y: 30 },
+                        { x: 70, y: 30 },
+                        { x: 70, y: 70 },
+                        { x: 30, y: 70 },
+                        { x: 50, y: 20 },
+                        { x: 80, y: 50 },
+                        { x: 50, y: 80 },
+                        { x: 20, y: 50 }
+                    ]
+                },
+                line: {
+                    spacing: 1.5,
+                    strokeWidth: 0.3,
+                    vertexGap: 0
+                },
+                colorPalette: colorPalettes.sakuraPalette
+            }
+        }
+    ]
 });

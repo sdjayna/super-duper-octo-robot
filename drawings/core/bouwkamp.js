@@ -1,10 +1,5 @@
-import { createSVG } from '../utils/svgUtils.js';
-import { validateBouwkampCode } from '../utils/validationUtils.js';
-import { generateSingleSerpentineLine } from '../utils/patternUtils.js';
-import { createDrawingBuilder } from '../utils/drawingBuilder.js';
-import { SizedDrawingConfig } from '../utils/drawingConfigBase.js';
-import { registerDrawing, addDrawingPreset } from '../drawingRegistry.js';
-import { colorPalettes } from '../utils/colorUtils.js';
+import { createSVG, validateBouwkampCode, generateSingleSerpentineLine, createDrawingBuilder, colorPalettes } from '../shared/clientAdapters.js';
+import { SizedDrawingConfig, defineDrawing } from '../shared/index.js';
 
 export class BouwkampConfig extends SizedDrawingConfig {
     constructor(params = {}) {
@@ -61,21 +56,26 @@ export function drawBouwkampCode(drawingConfig, renderContext) {
     return svg;
 }
 
-registerDrawing({
+export const bouwkampDrawing = defineDrawing({
     id: 'bouwkamp',
     name: 'Bouwkamp Code',
     configClass: BouwkampConfig,
     drawFunction: drawBouwkampCode,
-    validator: () => true
-});
-
-addDrawingPreset('simplePerfectRectangle', 'Simple Perfect Rectangle', {
-    type: 'bouwkamp',
-    code: [17, 403, 285, 148, 111, 144, 75, 36, 3, 141, 39, 58, 37, 53, 21, 16, 15, 99, 84, 79],
-    line: {
-        spacing: 2,
-        strokeWidth: 0.85,
-        vertexGap: 0.2
-    },
-    colorPalette: colorPalettes.sakuraPalette
+    validator: () => true,
+    presets: [
+        {
+            key: 'simplePerfectRectangle',
+            name: 'Simple Perfect Rectangle',
+            params: {
+                type: 'bouwkamp',
+                code: [17, 403, 285, 148, 111, 144, 75, 36, 3, 141, 39, 58, 37, 53, 21, 16, 15, 99, 84, 79],
+                line: {
+                    spacing: 2,
+                    strokeWidth: 0.85,
+                    vertexGap: 0.2
+                },
+                colorPalette: colorPalettes.sakuraPalette
+            }
+        }
+    ]
 });

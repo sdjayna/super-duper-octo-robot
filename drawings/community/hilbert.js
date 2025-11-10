@@ -1,8 +1,5 @@
-import { createSVG } from '../utils/svgUtils.js';
-import { createDrawingBuilder } from '../utils/drawingBuilder.js';
-import { SizedDrawingConfig } from '../utils/drawingConfigBase.js';
-import { registerDrawing, addDrawingPreset } from '../drawingRegistry.js';
-import { colorPalettes } from '../utils/colorUtils.js';
+import { createSVG, createDrawingBuilder, colorPalettes } from '../shared/clientAdapters.js';
+import { SizedDrawingConfig, defineDrawing } from '../shared/index.js';
 
 export class HilbertConfig extends SizedDrawingConfig {
     constructor(params = {}) {
@@ -108,20 +105,25 @@ export function drawHilbertCurve(drawingConfig, renderContext) {
     return svg;
 }
 
-registerDrawing({
+export const hilbertDrawing = defineDrawing({
     id: 'hilbert',
     name: 'Hilbert Curve',
     configClass: HilbertConfig,
-    drawFunction: drawHilbertCurve
-});
-
-addDrawingPreset('hilbertCurve', 'Hilbert Curve', {
-    type: 'hilbert',
-    level: 7,
-    line: {
-        spacing: 1.5,
-        strokeWidth: 0.5,
-        vertexGap: 0
-    },
-    colorPalette: colorPalettes.sakuraPalette
+    drawFunction: drawHilbertCurve,
+    presets: [
+        {
+            key: 'hilbertCurve',
+            name: 'Hilbert Curve',
+            params: {
+                type: 'hilbert',
+                level: 7,
+                line: {
+                    spacing: 1.5,
+                    strokeWidth: 0.5,
+                    vertexGap: 0
+                },
+                colorPalette: colorPalettes.sakuraPalette
+            }
+        }
+    ]
 });

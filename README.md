@@ -21,12 +21,17 @@ If you have an AxiDraw (or any plotter that can digest SVG layers) and love algo
 - **Shared data** - `shared/paper_config.json` and `shared/medium_config.json` describing margins, stroke widths, nib metadata, and color palettes.
 - **Output pipeline** - timestamped SVGs in `output/` with configuration comments plus Inkscape-compatible layers ready for plotting or archival.
 - **Docs + tooling** - Makefile, Vitest setup, TODO/CHANGELOG/CONTRIBUTING, and a reference screenshot so people know what they’re installing.
+- **Drawings** - a top-level `drawings/` directory split into `core/` (maintained algorithms), `community/` (user-contributed experiments), and `shared/` helpers so contributions don’t need to dig through the client bundle.
 
 ```
 ├── client/
 │   ├── js/…                 # Drawing registry, color utils, configs
 │   ├── static/css/styles.css
 │   └── templates/plotter.html
+├── drawings/
+│   ├── core/                # First-party drawing definitions
+│   ├── community/           # User contributed drawings
+│   └── shared/              # Config bases + helpers + adapters
 ├── server/
 │   ├── server.py            # HTTP + axicli bridge + SSE
 │   ├── plotter_config.py    # Pen heights, penlift, model ids
@@ -83,28 +88,48 @@ make test      # runs the Vitest suite (client + helpers)
 
 ## Drawing Algorithms & Customization
 
-The registry in `client/js/drawings.js` makes new experiments painless. Create a config, register it, and the UI auto-populates with your controls:
+Drop new experiments in `drawings/core/` (first-party) or `drawings/community/` (user-contributed) and they auto-register with the UI on the next reload. Each module exports a definition built with `defineDrawing`, so there’s very little wiring:
 
 ```javascript
-registerDrawing({
+import { defineDrawing, SizedDrawingConfig } from '../shared/index.js';
+import { createSVG, createDrawingBuilder, colorPalettes } from '../shared/clientAdapters.js';
+
+class MoireConfig extends SizedDrawingConfig {
+  constructor(params = {}) {
+    super({ width: 420, height: 297, ...params });
+    this.seed = params.seed ?? 42;
+  }
+}
+
+function drawMoireGrid(drawingConfig, renderContext) {
+  const svg = createSVG(renderContext);
+  const builder = createDrawingBuilder({ svg, drawingConfig, renderContext });
+  // build geometry, append paths, etc.
+  return svg;
+}
+
+export const moireDrawing = defineDrawing({
   id: 'moireGrid',
   name: 'Moire Grid',
-  configClass: class extends BaseConfig {
-    build() {
-      return {
-        paper: paperConfig.a3,
-        medium: mediumConfig.sakuraMicron045,
-        hilbert: { order: 5, jitter: 0.12 },
-        delaunay: { seedPoints: 420, relaxIterations: 2 }
-      };
+  configClass: MoireConfig,
+  drawFunction: drawMoireGrid,
+  presets: [
+    {
+      key: 'moireDefault',
+      name: 'Moire Default',
+      params: {
+        type: 'moireGrid',
+        seed: 42,
+        line: { strokeWidth: 0.45 },
+        colorPalette: colorPalettes.sakuraPalette
+      }
     }
-  },
-  drawFunction: drawMoireGrid
+  ]
 });
 ```
 
 - **Hot reload** - `server/server_runner.py` watches files so your new drawing appears after a save.
-- **Constraint-aware helpers** - `colorUtils`, `geometryUtils`, and `patternUtils` keep spacing/margins consistent; `svgUtils` handles layer naming and viewBox math.
+- **Constraint-aware helpers** - shared adapters expose color, geometry, and SVG utilities so modules don’t need deep client imports.
 - **Paper + medium presets** - drop in a new pen brand or sheet size via JSON and it immediately appears in the UI selectors.
 
 ## Color & Multi-Pen Layering

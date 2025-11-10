@@ -52,6 +52,18 @@ We use GitHub issues to track public bugs. Report a bug by [opening a new issue]
 * 100 character line length
 * Run ESLint to ensure style compliance
 
+## Adding a Drawing
+
+1. Decide whether the drawing belongs in `drawings/core/` (maintained presets) or `drawings/community/` (user experiments).
+2. Create a module that exports:
+   - A config class extending `SizedDrawingConfig` / `PointCloudDrawingConfig` from `drawings/shared`.
+   - A `draw` function that receives `(drawingConfig, renderContext)` and returns an SVG using helpers from `drawings/shared/clientAdapters.js`.
+   - A definition created via `defineDrawing({ id, name, configClass, drawFunction, presets })`.
+3. Export the definition from the corresponding `drawings/<group>/index.js` so the client auto-registers it.
+4. Add at least one preset so the UI shows a selectable example.
+5. Add or update tests in `tests/drawings.test.js` (or a dedicated spec) to cover the new logic.
+6. Run `make test` before opening the pull request.
+
 ## License
 
 By contributing, you agree that your contributions will be licensed under its MIT License.

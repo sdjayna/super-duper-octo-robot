@@ -1,4 +1,4 @@
-import { computeBoundsFromPoints } from './geometryUtils.js';
+import { computeBoundsFromPoints } from '../../client/js/utils/geometryUtils.js';
 
 export class DrawingConfigBase {
     constructor(params = {}) {
