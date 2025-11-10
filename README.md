@@ -31,7 +31,8 @@ If you have an AxiDraw (or any plotter that can digest SVG layers) and love algo
 ├── drawings/
 │   ├── core/                # First-party drawing definitions
 │   ├── community/           # User contributed drawings
-│   └── shared/              # Config bases + helpers + adapters
+│   ├── shared/              # Config bases + helpers + adapters
+│   └── manifest.json        # Prebuilt manifest consumed by the loader
 ├── server/
 │   ├── server.py            # HTTP + axicli bridge + SSE
 │   ├── plotter_config.py    # Pen heights, penlift, model ids
@@ -73,9 +74,10 @@ make test      # runs the Vitest suite (client + helpers)
 |--------------|---------------------------------------------------------------------|
 | `make install` | Sets up the Python venv and installs npm deps                       |
 | `make run`     | Launches the Python dev server with live reload                     |
-| `make dev`     | Shortcut for `install` + `run`                                      |
+| `make dev`     | Installs deps, runs the manifest watcher, and starts the dev server |
 | `make test`    | Executes Vitest (JS unit tests)                                     |
 | `make clean`   | Removes temp files, venv, and `node_modules`                        |
+| `make manifest`| Rebuilds `drawings/manifest.json` after adding drawings             |
 
 ## Plotting Pipeline
 
@@ -125,6 +127,8 @@ export const moireDrawing = defineDrawing({
   ]
 });
 ```
+
+After dropping a new file in `drawings/core/` or `drawings/community/`, run `make manifest` (or `npm run build:drawings`) so the manifest/loader refreshes without restarting the server. When you use `make dev`, this rebuild happens automatically in the background.
 
 - **Hot reload** - `server/server_runner.py` watches files so your new drawing appears after a save.
 - **Constraint-aware helpers** - shared adapters expose color, geometry, and SVG utilities so modules don’t need deep client imports.

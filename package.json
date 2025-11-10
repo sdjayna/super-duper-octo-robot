@@ -9,7 +9,9 @@
   },
   "scripts": {
     "test": "vitest",
-    "test:watch": "vitest watch"
+    "test:watch": "vitest watch",
+    "build:drawings": "node scripts/build-drawings-manifest.mjs",
+    "watch:drawings": "node scripts/watch-drawings-manifest.mjs"
   },
   "repository": {
     "type": "git",

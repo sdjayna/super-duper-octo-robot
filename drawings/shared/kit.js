@@ -10,7 +10,19 @@ export {
 export {
     createSVG,
     createDrawingBuilder,
-    validateBouwkampCode,
-    generateSingleSerpentineLine,
     colorPalettes
 } from './clientAdapters.js';
+
+export {
+    validateBouwkampCode
+} from './utils/validationUtils.js';
+
+export {
+    generateSingleSerpentineLine
+} from './utils/patternUtils.js';
+
+export {
+    areRectanglesAdjacent,
+    computeBoundsFromPoints,
+    computeBoundsFromRects
+} from './utils/geometryUtils.js';

@@ -5,6 +5,7 @@ PYTHON=$(VENV)/bin/python3
 PIP=$(VENV)/bin/pip
 
 install: $(VENV)/bin/python3 node_modules
+	npm run build:drawings
 
 $(VENV)/bin/python3:
 	python3 -m venv $(VENV) --without-scm-ignore-files
@@ -18,7 +19,7 @@ node_modules: package.json
 	npm install
 	@touch node_modules
 
-run:
+run: manifest
 	PATH=$(VENV)/bin:$$PATH PYTHONPATH=. $(PYTHON) server/server_runner.py
 
 clean:
@@ -31,7 +32,14 @@ clean:
 test:
 	npm test
 
-dev: install run
+manifest:
+	npm run build:drawings
+
+dev: install
+	@bash -c 'PATH=$(VENV)/bin:$$PATH; npm run watch:drawings & \
+	WATCH_PID=$$!; \
+	trap "kill $$WATCH_PID 2>/dev/null || true" EXIT; \
+	PATH=$(VENV)/bin:$$PATH PYTHONPATH=. $(PYTHON) server/server_runner.py'
 
 help:
 	@echo "Available commands:"

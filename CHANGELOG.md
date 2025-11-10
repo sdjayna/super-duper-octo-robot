@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Completely rewrote the README with a tangible pitch, architecture map, and hands-on onboarding plus an expanded customization example.
+- Introduced a top-level `drawings/` workspace split into `core/`, `community/`, and `shared/`, along with a reusable drawing kit (runtime wrapper, geometry/pattern/validation helpers, shared adapters).
+- Added a manifest build pipeline (`scripts/build-drawings-manifest.mjs`, `drawings/manifest.json`) and a background watcher (`npm run watch:drawings`) that rebuilds the manifest automatically.
+- Added `client/js/drawingsLoader.js` so the UI dynamically imports drawings from the manifest, plus a dedicated `client/js/main.js` module in place of the inline `<script>`.
+- Documented and wired a new `make manifest` target; `make dev` now installs deps, runs the manifest watcher, and starts the server in a single command.
+
+### Changed
+- Drawings now export declarative definitions (config class + draw fn + presets) instead of self-registering, which removes duplicate registration errors during hot reloads.
+- Browser-agnostic utilities were moved into `drawings/shared/`, so drawing modules import from one kit instead of deep `client/` paths, and the Python server simply serves a precomputed manifest.
+- CONTRIBUTING.md now walks through adding drawings, presets, tests, and regenerating the manifest; README sections highlight the new structure and workflow.
+- `make run` now depends on an up-to-date manifest, and the server caches manifest contents by mtime to avoid rebuilding per request.
+
+### Fixed
+- Eliminated manifest endpoint crashes by ensuring `load_drawings_manifest` is a properly declared class method and by stripping query strings in the HTTP handler.
+- Avoided OS watch descriptor limits by switching the manifest watcher to polling/digest mode instead of `fs.watch`.
+
 ## [1.4.8] - 2025-02-16
 
 ### Added

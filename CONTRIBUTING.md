@@ -59,8 +59,8 @@ We use GitHub issues to track public bugs. Report a bug by [opening a new issue]
    - A config class extending `SizedDrawingConfig` / `PointCloudDrawingConfig` from `drawings/shared/kit.js`.
    - A `draw` function that receives `(drawingConfig, renderContext)` and returns an SVG using `createDrawingRuntime` (also from the kit).
    - A definition created via `defineDrawing({ id, name, configClass, drawFunction, presets })` and exported as the default export.
-3. Export the definition from the corresponding `drawings/<group>/index.js` so the client auto-registers it.
-4. Add at least one preset so the UI shows a selectable example.
+3. Add at least one preset so the UI shows a selectable example.
+4. Run `make manifest` (or `npm run build:drawings`) to refresh `drawings/manifest.json` so the loader picks up your new file.
 5. Add or update tests in `tests/drawings.test.js` (or a dedicated spec) to cover the new logic.
 6. Run `make test` before opening the pull request.
 

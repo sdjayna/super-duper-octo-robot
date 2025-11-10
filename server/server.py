@@ -17,6 +17,10 @@ class PlotterHandler(SimpleHTTPRequestHandler):
     current_plot_process = None  # Track the current plotting process
     sse_connections = set()  # Track active SSE connections
     keep_sse_alive = True  # Control SSE connection lifecycle
+    manifest_cache = {
+        'mtime': None,
+        'data': None
+    }
 
     def do_GET(self):
         # Redirect root to plotter.html
@@ -24,7 +28,7 @@ class PlotterHandler(SimpleHTTPRequestHandler):
             self.path = '/client/templates/plotter.html'
         request_path = self.path.split('?', 1)[0]
         if request_path == '/drawings-manifest.json':
-            manifest = self.build_drawings_manifest()
+            manifest = self.load_drawings_manifest()
             body = json.dumps(manifest).encode('utf-8')
             self.send_response(200)
             self.send_header('Content-Type', 'application/json')
@@ -101,38 +105,27 @@ class PlotterHandler(SimpleHTTPRequestHandler):
         return SimpleHTTPRequestHandler.do_GET(self)
 
     @classmethod
-    def build_drawings_manifest(cls):
-        base_dir = os.path.join(os.getcwd(), 'drawings')
-        groups = ['core', 'community']
-        entries = []
+    def load_drawings_manifest(cls):
+        manifest_path = os.path.join(os.getcwd(), 'drawings', 'manifest.json')
+        try:
+            mtime = os.path.getmtime(manifest_path)
+        except OSError:
+            return {
+                'version': 'missing',
+                'generatedAt': datetime.utcnow().isoformat() + 'Z',
+                'drawings': []
+            }
 
-        for group in groups:
-            group_dir = os.path.join(base_dir, group)
-            if not os.path.isdir(group_dir):
-                continue
-            for filename in sorted(os.listdir(group_dir)):
-                if not filename.endswith('.js') or filename == 'index.js':
-                    continue
-                file_path = os.path.join(group_dir, filename)
-                try:
-                    mtime = os.path.getmtime(file_path)
-                except OSError:
-                    mtime = time.time()
-                entries.append({
-                    'group': group,
-                    'path': f'/drawings/{group}/{filename}',
-                    'mtime': mtime
-                })
+        if cls.manifest_cache['mtime'] == mtime and cls.manifest_cache['data'] is not None:
+            return cls.manifest_cache['data']
 
-        version = str(int(max((entry['mtime'] for entry in entries), default=time.time())))
-        for entry in entries:
-            entry.pop('mtime', None)
-
-        return {
-            'version': version,
-            'generatedAt': datetime.utcnow().isoformat() + 'Z',
-            'drawings': entries
-        }
+        with open(manifest_path, 'r', encoding='utf-8') as manifest_file:
+            data = json.load(manifest_file)
+            cls.manifest_cache = {
+                'mtime': mtime,
+                'data': data
+            }
+            return data
 
     def handle_command(self, command_data):
         """Handle plotter commands by executing AxiDraw CLI commands"""

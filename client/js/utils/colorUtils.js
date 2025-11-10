@@ -2,7 +2,7 @@
  * Color utilities for managing palettes and color assignments
  */
 
-import { areRectanglesAdjacent } from './geometryUtils.js';
+import { areRectanglesAdjacent } from '../../../drawings/shared/utils/geometryUtils.js';
 
 let colorPalettes = {};
 let colorPalette = {};
