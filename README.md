@@ -3,7 +3,8 @@
 
 If you have an AxiDraw (or any plotter that can digest SVG layers) and love algorithmic art, this repo gives you a complete local studio: mm-accurate previews, color-aware layering, a Python server that proxies the axicli, and a set of battle-tested drawing algorithms (Bouwkamp perfect squares, Delaunay triangulations, Hilbert curves). Everything ships as source, so you can bend it to your own plotting rituals or hack on it live during a stream.
 
-![Plotter Art UI](ui-screenshot.png)
+![Drawing Control view – 2114×1259](readme-ui-drawing-control.png)
+![Plotter Control view – 2113×1253](readme-ui-plotter-control.png)
 
 > Optimized for the AxiDraw SE/A3 (penlift 3, SE servo), but nothing prevents you from wiring in another model by editing `server/plotter_config.py`.
 
