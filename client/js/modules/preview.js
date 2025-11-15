@@ -1,5 +1,7 @@
 import { applyPreviewEffects } from '../utils/previewEffects.js';
 
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
 export function createPreviewController({
     container,
     select,
@@ -39,17 +41,20 @@ export function createPreviewController({
             state.lastRenderedPaper = paperForRender;
             container.innerHTML = '';
 
-            const svg = await generateSVG(selectedDrawing, {
+            const { svg, renderContext } = await generateSVG(selectedDrawing, {
                 paper: paperForRender,
-                orientation: state.currentOrientation
+                orientation: state.currentOrientation,
+                plotterArea: state.plotterSpecs?.paper
             });
             svg.setAttribute('preserveAspectRatio', 'none');
             svg.style.backgroundColor = previewColor;
             applyPreviewEffects(svg, state.previewProfile);
+            updatePlotterLimitOverlay(svg, state, renderContext);
             container.appendChild(svg);
             populateLayerSelect(container);
             document.getElementById('layerSelect').value = currentLayer;
             updateLayerVisibility(container, state.rulersVisible);
+            state.warnIfPaperExceedsPlotter?.();
         } catch (error) {
             console.error('Error:', error);
             logDebug('Error generating SVG: ' + error.message, 'error');
@@ -106,11 +111,11 @@ export function createPreviewController({
         label.textContent = `${normalized} mm`;
     }
 
-    function applyMarginValue(value) {
-        if (!state.currentPaper) {
-            return false;
-        }
-        const normalized = clampMargin(state.currentPaper, value);
+function applyMarginValue(value) {
+    if (!state.currentPaper) {
+        return false;
+    }
+    const normalized = clampMargin(state.currentPaper, value);
         state.currentMargin = normalized;
         const slider = document.getElementById('marginSlider');
         const label = document.getElementById('marginValueLabel');
@@ -130,6 +135,66 @@ export function createPreviewController({
         updateMarginControls,
         applyMarginValue
     };
+}
+
+function updatePlotterLimitOverlay(svg, state, renderContext) {
+    const plotterSpecs = state.plotterSpecs;
+    let limitRect = svg.querySelector('#plotterLimitOverlay');
+
+    if (!plotterSpecs?.paper || !renderContext) {
+        if (limitRect) {
+            limitRect.remove();
+        }
+        return;
+    }
+
+    const paperWidth = renderContext.paperWidth;
+    const paperHeight = renderContext.paperHeight;
+    if (!Number.isFinite(paperWidth) || !Number.isFinite(paperHeight)) {
+        if (limitRect) {
+            limitRect.remove();
+        }
+        return;
+    }
+
+    const orientedPlotter = orientDimensions(plotterSpecs.paper, state.currentOrientation);
+    const limitWidth = Math.min(paperWidth, orientedPlotter.width);
+    const limitHeight = Math.min(paperHeight, orientedPlotter.height);
+
+    if (limitWidth <= 0 || limitHeight <= 0) {
+        if (limitRect) {
+            limitRect.remove();
+        }
+        return;
+    }
+
+    const x = (paperWidth - limitWidth) / 2;
+    const y = (paperHeight - limitHeight) / 2;
+
+    if (!limitRect) {
+        limitRect = document.createElementNS(SVG_NS, 'rect');
+        limitRect.setAttribute('id', 'plotterLimitOverlay');
+        limitRect.setAttribute('class', 'preview-only plotter-limit');
+        svg.appendChild(limitRect);
+    }
+
+    limitRect.setAttribute('x', x);
+    limitRect.setAttribute('y', y);
+    limitRect.setAttribute('width', limitWidth);
+    limitRect.setAttribute('height', limitHeight);
+}
+
+function orientDimensions(dimensions, orientation) {
+    const width = Number(dimensions.width);
+    const height = Number(dimensions.height);
+    if (!Number.isFinite(width) || !Number.isFinite(height)) {
+        return { width: 0, height: 0 };
+    }
+    const longer = Math.max(width, height);
+    const shorter = Math.min(width, height);
+    return orientation === 'portrait'
+        ? { width: shorter, height: longer }
+        : { width: longer, height: shorter };
 }
 
 function syncDrawingStyles(drawings, state) {
@@ -210,12 +275,10 @@ function updateLayerVisibility(container, rulersVisible) {
         layer.style.display = (selectedLayer === 'all' || layerIndex === selectedLayer) ? '' : 'none';
     });
 
-    const rulerGroup = svg.querySelector('g.preview-only');
-    const marginRect = svg.querySelector('rect.preview-only');
-    if (rulerGroup && marginRect) {
-        rulerGroup.style.display = rulersVisible ? '' : 'none';
-        marginRect.style.display = rulersVisible ? '' : 'none';
-    }
+    const previewElements = svg.querySelectorAll('.preview-only');
+    previewElements.forEach(element => {
+        element.style.display = rulersVisible ? '' : 'none';
+    });
 }
 
 function updateOrientationButton(orientation) {

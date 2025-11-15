@@ -42,8 +42,6 @@ const exportButton = document.getElementById('exportSvg');
 const mediumStrokeInput = document.getElementById('mediumStrokeInput');
 const mediumSelect = document.getElementById('mediumSelect');
 const drawingControlsContainer = document.getElementById('drawingControlsContainer');
-const paperColorInput = document.getElementById('paperColorInput');
-const resetPaperColorButton = document.getElementById('resetPaperColor');
 const controlTabs = document.querySelectorAll('.control-tab');
 const controlPanels = document.querySelectorAll('.control-panel');
 const paperDescription = document.getElementById('paperDescription');
@@ -63,8 +61,12 @@ const state = {
     currentLineJoin: 'round',
     rulersVisible: false,
     drawingControlValues: {},
-    previewProfile: null
+    previewProfile: null,
+    plotterSpecs: null,
+    warnIfPaperExceedsPlotter: null
 };
+
+state.warnIfPaperExceedsPlotter = () => warnIfPaperExceedsPlotter(state, state.currentPaper);
 
 const previewController = createPreviewController({
     container,
@@ -87,7 +89,9 @@ const {
 
 let colorUtilsModulePromise = null;
 let drawingsModulePromise = null;
+let plotterSpecsPromise = null;
 const HEX_COLOR_PATTERN = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+const PAPER_TEXTURE_CLASSES = ['texture-smooth', 'texture-grain', 'texture-vellum', 'texture-gesso'];
 
 function loadColorUtilsModule() {
     if (!colorUtilsModulePromise) {
@@ -101,6 +105,31 @@ function loadDrawingsModule() {
         drawingsModulePromise = import('./drawings.js?v=' + Date.now());
     }
     return drawingsModulePromise;
+}
+
+async function loadPlotterSpecs() {
+    if (state.plotterSpecs) {
+        return state.plotterSpecs;
+    }
+    if (!plotterSpecsPromise) {
+        plotterSpecsPromise = fetch(`/config/plotters.json?v=${Date.now()}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Failed to load plotter config (${response.status})`);
+                }
+                return response.json();
+            })
+            .then(config => {
+                const defaultId = config.default;
+                return config.plotters?.[defaultId] || null;
+            })
+            .catch(error => {
+                logDebug('Unable to load plotter configuration: ' + error.message, 'error');
+                return null;
+            });
+    }
+    state.plotterSpecs = await plotterSpecsPromise;
+    return state.plotterSpecs;
 }
 
 function populateMediumSelectOptions(mediumMetadata = {}) {
@@ -147,9 +176,6 @@ function getPaperColor(paper) {
 function applyPaperColor(color) {
     const normalized = normalizePaperColor(color);
     state.currentPaperColor = normalized;
-    if (paperColorInput && paperColorInput.value !== normalized) {
-        paperColorInput.value = normalized;
-    }
     const svg = container.querySelector('svg');
     if (svg) {
         svg.style.backgroundColor = normalized;
@@ -158,6 +184,59 @@ function applyPaperColor(color) {
         state.lastRenderedPaper.color = normalized;
     }
     return normalized;
+}
+
+function applyPaperTexture(paper) {
+    if (!container) {
+        return;
+    }
+    PAPER_TEXTURE_CLASSES.forEach(cls => container.classList.remove(cls));
+    const textureKey = paper?.texture || 'smooth';
+    container.classList.add(`texture-${textureKey}`);
+}
+
+function getOrientedDimensions(dimensions, orientation) {
+    const width = Number(dimensions?.width);
+    const height = Number(dimensions?.height);
+    if (!Number.isFinite(width) || !Number.isFinite(height)) {
+        return { width: 0, height: 0 };
+    }
+    const longer = Math.max(width, height);
+    const shorter = Math.min(width, height);
+    return orientation === 'portrait'
+        ? { width: shorter, height: longer }
+        : { width: longer, height: shorter };
+}
+
+function warnIfPaperExceedsPlotter(state, paper) {
+    if (!paper || !state.plotterSpecs?.paper) {
+        return;
+    }
+    const orientation = state.currentOrientation;
+    const margin = Number(state.currentMargin) || 0;
+    const paperDims = getOrientedDimensions(paper, orientation);
+    const plotterDims = getOrientedDimensions(state.plotterSpecs.paper, orientation);
+    const effectiveWidth = Math.max(paperDims.width - margin * 2, 0);
+    const effectiveHeight = Math.max(paperDims.height - margin * 2, 0);
+    const widthOverflow = Math.max(0, paperDims.width - plotterDims.width);
+    const heightOverflow = Math.max(0, paperDims.height - plotterDims.height);
+
+    if (widthOverflow <= 0 && heightOverflow <= 0) {
+        return;
+    }
+
+    const plotterName = state.plotterSpecs.name || 'Plotter';
+    if (effectiveWidth <= plotterDims.width && effectiveHeight <= plotterDims.height) {
+        logDebug(
+            `${plotterName} travel ${plotterDims.width.toFixed(1)}×${plotterDims.height.toFixed(1)}mm < paper ${paperDims.width.toFixed(1)}×${paperDims.height.toFixed(1)}mm, but current margin keeps drawing to ${effectiveWidth.toFixed(1)}×${effectiveHeight.toFixed(1)}mm.`,
+            'warning'
+        );
+    } else {
+        logDebug(
+            `${plotterName} travel ${plotterDims.width.toFixed(1)}×${plotterDims.height.toFixed(1)}mm is smaller than ${paper.name} (${paperDims.width.toFixed(1)}×${paperDims.height.toFixed(1)}mm). Reduce margins or paper size.`,
+            'error'
+        );
+    }
 }
 
 function getNestedValue(obj, path) {
@@ -605,6 +684,7 @@ async function initialize() {
     try {
         const { loadPaperConfig } = await import('./paperConfig.js?v=' + Date.now());
         state.paperConfig = await loadPaperConfig();
+        await loadPlotterSpecs();
         const paperSelect = document.getElementById('paperSelect');
         
         // Sort papers by name
@@ -630,13 +710,16 @@ async function initialize() {
             state.currentPaperId = paperSelect.value;
         }
         state.currentPaper = state.currentPaperId ? state.paperConfig.papers[state.currentPaperId] : null;
+        applyPaperTexture(state.currentPaper);
         state.currentMargin = marginUtils.clampMargin(state.currentPaper, state.currentMargin);
         updateMarginControls(state.currentPaper);
         const initialPaperColor = getPaperColor(state.currentPaper);
         applyPaperColor(initialPaperColor);
+        applyPaperTexture(state.currentPaper);
         logPaperSelection(state.currentPaper);
         updatePaperDescription(state.currentPaper);
         updatePreviewProfile();
+        state.warnIfPaperExceedsPlotter();
 
         const colorUtilsModule = await loadColorUtilsModule();
         const mediumOptions = populateMediumSelectOptions(colorUtilsModule.mediumMetadata);
@@ -702,6 +785,7 @@ document.getElementById('toggleDebug').addEventListener('click', toggleDebugPane
 document.getElementById('toggleOrientation').addEventListener('click', toggleOrientation);
 document.getElementById('marginSlider').addEventListener('input', async (e) => {
     if (applyMarginValue(e.target.value)) {
+        state.warnIfPaperExceedsPlotter();
         await draw();
     }
 });
@@ -726,22 +810,14 @@ controlTabs.forEach(tab => {
 document.getElementById('toggleRulers').addEventListener('click', () => {
     const button = document.getElementById('toggleRulers');
     const svg = container.querySelector('svg');
-    const rulerGroup = svg.querySelector('g.preview-only');
-    const marginRect = svg.querySelector('rect.preview-only');
-    
-    if (rulerGroup && marginRect) {
-        const currentlyVisible = rulerGroup.style.display !== 'none';
-        if (!currentlyVisible) {
-            rulerGroup.style.display = '';
-            marginRect.style.display = '';
-            button.textContent = 'Hide Ruler';
-            logDebug('Showing ruler and margin');
-        } else {
-            rulerGroup.style.display = 'none';
-            marginRect.style.display = 'none';
-            button.textContent = 'Show Ruler';
-            logDebug('Hidden ruler and margin');
-        }
+    const previewElements = svg?.querySelectorAll('.preview-only');
+    if (previewElements?.length) {
+        const currentlyVisible = previewElements[0].style.display !== 'none';
+        previewElements.forEach(element => {
+            element.style.display = currentlyVisible ? 'none' : '';
+        });
+        button.textContent = currentlyVisible ? 'Show Ruler' : 'Hide Ruler';
+        logDebug(currentlyVisible ? 'Hidden ruler, margin, and plotter limit overlay' : 'Showing ruler, margin, and plotter limit overlay');
         state.rulersVisible = !currentlyVisible;
     }
 });
@@ -880,6 +956,7 @@ document.getElementById('paperSelect').addEventListener('change', async (e) => {
         logDebug(`Paper ${state.currentPaperId} not found in configuration`, 'error');
         return;
     }
+    applyPaperTexture(state.currentPaper);
     state.currentMargin = marginUtils.clampMargin(state.currentPaper, state.currentMargin);
     updateMarginControls(state.currentPaper);
     const defaultColor = getPaperColor(state.currentPaper);
@@ -890,23 +967,9 @@ document.getElementById('paperSelect').addEventListener('change', async (e) => {
     updatePaperDescription(state.currentPaper);
     updatePreviewProfile();
     updatePlotterDefaults();
+    state.warnIfPaperExceedsPlotter();
     await draw();
 });
-
-if (paperColorInput) {
-    paperColorInput.addEventListener('input', (e) => {
-        const normalized = applyPaperColor(e.target.value);
-        logDebug(`Preview paper colour set to ${normalized}`);
-    });
-}
-
-if (resetPaperColorButton) {
-    resetPaperColorButton.addEventListener('click', () => {
-        const defaultColor = getPaperColor(state.currentPaper);
-        const normalized = applyPaperColor(defaultColor);
-        logDebug(`Paper colour reset to ${normalized}`);
-    });
-}
 
 // Medium selection handler
 if (mediumSelect) {

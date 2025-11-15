@@ -1,4 +1,4 @@
-export function createRenderContext({ paper, drawingWidth, drawingHeight, bounds, orientation = 'landscape' }) {
+export function createRenderContext({ paper, drawingWidth, drawingHeight, bounds, orientation = 'landscape', plotterArea }) {
     if (!paper) {
         throw new Error('Paper configuration is required to create a render context');
     }
@@ -25,6 +25,19 @@ export function createRenderContext({ paper, drawingWidth, drawingHeight, bounds
     const paperWidth = isPortrait ? shorterSide : longerSide;
     const paperHeight = isPortrait ? longerSide : shorterSide;
 
+    let plotterWidth = paperWidth;
+    let plotterHeight = paperHeight;
+    if (plotterArea?.width && plotterArea?.height) {
+        const rawWidth = Number(plotterArea.width);
+        const rawHeight = Number(plotterArea.height);
+        if (Number.isFinite(rawWidth) && Number.isFinite(rawHeight)) {
+            const pLonger = Math.max(rawWidth, rawHeight);
+            const pShorter = Math.min(rawWidth, rawHeight);
+            plotterWidth = isPortrait ? pShorter : pLonger;
+            plotterHeight = isPortrait ? pLonger : pShorter;
+        }
+    }
+
     const boundsWidth = hasBounds ? Number(bounds.width) : Number(drawingWidth);
     const boundsHeight = hasBounds ? Number(bounds.height) : Number(drawingHeight);
     const minX = hasBounds ? Number(bounds.minX || 0) : 0;
@@ -33,16 +46,21 @@ export function createRenderContext({ paper, drawingWidth, drawingHeight, bounds
     const safeDrawingWidth = Math.max(boundsWidth, 1);
     const safeDrawingHeight = Math.max(boundsHeight, 1);
 
-    const availableWidth = Math.max(paperWidth - 2 * margin, 0);
-    const availableHeight = Math.max(paperHeight - 2 * margin, 0);
+    const availableWidth = Math.max(Math.min(paperWidth, plotterWidth) - 2 * margin, 0);
+    const availableHeight = Math.max(Math.min(paperHeight, plotterHeight) - 2 * margin, 0);
 
     const scale = Math.min(
         availableWidth / safeDrawingWidth,
         availableHeight / safeDrawingHeight
     );
 
-    const offsetX = margin + (availableWidth - safeDrawingWidth * scale) / 2;
-    const offsetY = margin + (availableHeight - safeDrawingHeight * scale) / 2;
+    const plottingWidth = Math.min(paperWidth, plotterWidth);
+    const plottingHeight = Math.min(paperHeight, plotterHeight);
+    const plotterOffsetX = (paperWidth - plottingWidth) / 2;
+    const plotterOffsetY = (paperHeight - plottingHeight) / 2;
+
+    const offsetX = plotterOffsetX + margin + (availableWidth - safeDrawingWidth * scale) / 2;
+    const offsetY = plotterOffsetY + margin + (availableHeight - safeDrawingHeight * scale) / 2;
 
     const context = {
         paperWidth,

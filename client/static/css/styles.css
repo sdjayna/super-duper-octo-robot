@@ -168,33 +168,63 @@ body, html {
     gap: 12px;
 }
 
-.paper-color-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
+#svgContainer {
+    position: relative;
+    display: inline-block;
 }
 
-.paper-color-row label {
-    font-size: 12px;
-    color: #666;
-    min-width: 60px;
+#svgContainer::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    mix-blend-mode: multiply;
 }
 
-#paperColorInput {
-    flex: 1;
-    min-width: 0;
-    height: 36px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
-    padding: 0;
-    background: white;
-    cursor: pointer;
+#svgContainer.texture-smooth::after {
+    opacity: 0.12;
+    background-image:
+        radial-gradient(rgba(0, 0, 0, 0.04) 25%, transparent 60%),
+        radial-gradient(rgba(255, 255, 255, 0.03) 30%, transparent 60%);
+    background-size: 4px 4px, 6px 6px;
+    background-position: 0 0, 1px 1px;
 }
 
-.paper-color-reset {
-    flex: 0 0 auto;
-    padding: 8px 12px;
+#svgContainer.texture-vellum::after {
+    opacity: 0.18;
+    background-image:
+        linear-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+    background-size: 5px 5px, 5px 5px;
+    background-position: 0 0, 0 0;
+}
+
+#svgContainer.texture-grain::after {
+    opacity: 0.22;
+    background-image:
+        radial-gradient(rgba(0, 0, 0, 0.07) 10%, transparent 40%),
+        radial-gradient(rgba(255, 255, 255, 0.05) 12%, transparent 45%);
+    background-size: 3px 3px, 4px 4px;
+    background-position: 0 0, 1px 1px;
+}
+
+#svgContainer.texture-gesso::after {
+    opacity: 0.3;
+    background-image:
+        linear-gradient(90deg, rgba(0, 0, 0, 0.08) 35%, transparent 35%),
+        linear-gradient(rgba(255, 255, 255, 0.06) 60%, transparent 60%);
+    background-size: 14px 14px, 8px 8px;
+    background-position: 0 0, 0 0;
+}
+
+rect.plotter-limit {
+    fill: none;
+    stroke: #4a90e2;
+    stroke-width: 0.6;
+    stroke-dasharray: 5, 2;
+    pointer-events: none;
 }
 
 .paper-description {

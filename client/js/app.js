@@ -37,7 +37,8 @@ export async function generateSVG(drawingConfig, options = {}) {
             drawingWidth: dynamicBounds?.width || drawingConfig.drawingData.width,
             drawingHeight: dynamicBounds?.height || drawingConfig.drawingData.height,
             bounds: dynamicBounds,
-            orientation: options.orientation
+            orientation: options.orientation,
+            plotterArea: options.plotterArea
         });
 
         const svg = typeConfig.drawFunction(drawingConfig, renderContext);
@@ -45,7 +46,7 @@ export async function generateSVG(drawingConfig, options = {}) {
         if (!svg) {
             throw new Error('Failed to generate SVG');
         }
-        return svg;
+        return { svg, renderContext };
     } catch (error) {
         console.error('Error generating visualization:', error);
         throw error;

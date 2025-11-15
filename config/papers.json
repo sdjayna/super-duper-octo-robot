@@ -15,6 +15,7 @@
             "surfaceStrength": "good",
             "color": "#fefefe",
             "notes": "Neutral stock with low-medium absorbency. Micron inks stay razor sharp; acrylic dries fast on the surface and may leave a neat ridge. Excellent everyday sheet for clean lines.",
+            "texture": "smooth",
             "id": "dalersmootha3"
         },
         "daleraquafinehpa3": {
@@ -32,6 +33,7 @@
             "surfaceStrength": "excellent",
             "color": "#fefefe",
             "notes": "Great for mixed media; slight suction from the watercolor sizing. Micron: tiny softening on very long strokes. Acrylic: absorbs a touch more and dries flatter, matte.",
+            "texture": "smooth",
             "id": "daleraquafinehpa3"
         },
         "vangoghblacka3": {
@@ -49,6 +51,7 @@
             "surfaceStrength": "very-strong",
             "color": "#0b0b0b",
             "notes": "High contrast background with softer micro-lines. Micron: can appear grey unless archival black and loses a little bite. Acrylic: neon/opaque colours pop and stay bold.",
+            "texture": "grain",
             "id": "vangoghblacka3"
         },
         "hahnemuhleharmonyhp": {
@@ -66,6 +69,7 @@
             "surfaceStrength": "excellent",
             "color": "#fdf9f3",
             "notes": "Slight warm tone with even behaviour. Micron: crisp, just slightly softer than premium bristol. Acrylic: smooth application, mild absorption—ideal for line + acrylic accents.",
+            "texture": "smooth",
             "id": "hahnemuhleharmonyhp"
         },
         "strathmorebristolvellum": {
@@ -83,6 +87,7 @@
             "surfaceStrength": "excellent",
             "color": "#fefefe",
             "notes": "Outstanding technical plotting sheet. Micron: the cleanest, sharpest line quality. Acrylic: sits on the surface, dries bright with almost no spread—top choice when precision matters.",
+            "texture": "vellum",
             "id": "strathmorebristolvellum"
         },
         "hahnemuhleskizze190": {
@@ -100,6 +105,7 @@
             "surfaceStrength": "moderate",
             "color": "#ffffff",
             "notes": "Great for tests and drafts; slight tooth gives texture. Micron: perfectly usable with subtle texture. Acrylic: keep coverage light to avoid buckle.",
+            "texture": "smooth",
             "id": "hahnemuhleskizze190"
         },
         "cassartbristola3": {
@@ -117,6 +123,7 @@
             "surfaceStrength": "good",
             "color": "#ffffff",
             "notes": "Clean, crisp lines; lighter than premium bristol. Micron: nearly Strathmore-level sharpness. Acrylic: fine for light-to-medium coverage. Great workhorse option.",
+            "texture": "smooth",
             "id": "cassartbristola3"
         },
         "ampersandgessobord": {
@@ -134,6 +141,7 @@
             "surfaceStrength": "excellent",
             "color": "#fdfdfd",
             "notes": "Archival hardboard panel with gesso finish. Micron: behaves like a slick vellum and stays crisp. Acrylic and paint markers excel—ink sits on the surface and dries slower but flawlessly. Premium option for mixed media.",
+            "texture": "gesso",
             "id": "ampersandgessobord"
         }
     },

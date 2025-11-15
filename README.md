@@ -18,7 +18,7 @@ If you have an AxiDraw (or any plotter that can digest SVG layers) and love algo
 ### Feature Highlights
 
 - **Tabbed control console** – switch between Drawing settings and Plotter controls without scrolling. Each panel keeps its state, so you can tweak a control, hop over to the plotter, and return without losing context.
-- **Paper-aware preview** – the merged “Paper & Margin” panel now blends the selected paper + medium metadata to set background color, simulate bleed/jitter via SVG filters, and surface warnings when a combo risks embossing or over-saturation.
+- **Paper-aware preview** – the merged “Paper & Margin” panel now blends the selected paper + medium metadata to set background color, simulate bleed/jitter via SVG filters, apply paper-specific texture overlays, surface warnings when a combo risks embossing or over-saturation, and (when rulers are on) outline the plotter’s maximum travel area.
 - **Adaptive plotter defaults** – the Plotter Control tab auto-tunes `Pen Rate Lower` for each paper + medium combination so acrylic markers keep moving fast while delicate stocks slow the carriage to stay safe.
 - **Calibration drawing** – ship a dedicated “Calibration Patterns” preset that lays out parallel lines, rings, multi-wave bundles, arc sweeps, Bezier ribbons, radial fans, touching polygons, and serpentine-filled shapes across adjustable spacing bands (including an SE/A3 micro-spacing stress row) so you can map slider values to real AxiDraw mechanics before committing a hero plot.
 - **Per-drawing UI controls** – every drawing can declare sliders/selects (stroke spacing, Hilbert recursion level, etc.) via metadata, and the UI renders them automatically with persisted values.
