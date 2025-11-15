@@ -4,6 +4,7 @@ import { startProgressListener, stopProgressListener } from './modules/progress.
 import { createPreviewController } from './modules/preview.js';
 import { initPlotterControls } from './modules/plotterControls.js';
 import { resolvePreviewProfile, evaluatePreviewWarnings, resolvePlotterDefaults } from './utils/paperProfile.js';
+import { normalizePaperColor, getPaperColor, getPaperTextureClass, computePlotterWarning, getOrientedDimensions } from './utils/paperUtils.js';
 
 window.logDebug = logDebug;
 initLogTabs();
@@ -90,7 +91,6 @@ const {
 let colorUtilsModulePromise = null;
 let drawingsModulePromise = null;
 let plotterSpecsPromise = null;
-const HEX_COLOR_PATTERN = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 const PAPER_TEXTURE_CLASSES = ['texture-smooth', 'texture-grain', 'texture-vellum', 'texture-gesso'];
 
 function loadColorUtilsModule() {
@@ -150,29 +150,6 @@ function populateMediumSelectOptions(mediumMetadata = {}) {
 
 let isRefreshActive = false;
 
-function normalizePaperColor(color) {
-    if (typeof color !== 'string') {
-        return DEFAULT_PAPER_COLOR;
-    }
-    const trimmed = color.trim();
-    const match = HEX_COLOR_PATTERN.exec(trimmed);
-    if (!match) {
-        return DEFAULT_PAPER_COLOR;
-    }
-    const hex = match[1];
-    if (hex.length === 3) {
-        return '#' + hex.split('').map(ch => `${ch}${ch}`).join('').toLowerCase();
-    }
-    return `#${hex.toLowerCase()}`;
-}
-
-function getPaperColor(paper) {
-    if (!paper) {
-        return DEFAULT_PAPER_COLOR;
-    }
-    return normalizePaperColor(paper.previewColor || paper.color || DEFAULT_PAPER_COLOR);
-}
-
 function applyPaperColor(color) {
     const normalized = normalizePaperColor(color);
     state.currentPaperColor = normalized;
@@ -191,21 +168,7 @@ function applyPaperTexture(paper) {
         return;
     }
     PAPER_TEXTURE_CLASSES.forEach(cls => container.classList.remove(cls));
-    const textureKey = paper?.texture || 'smooth';
-    container.classList.add(`texture-${textureKey}`);
-}
-
-function getOrientedDimensions(dimensions, orientation) {
-    const width = Number(dimensions?.width);
-    const height = Number(dimensions?.height);
-    if (!Number.isFinite(width) || !Number.isFinite(height)) {
-        return { width: 0, height: 0 };
-    }
-    const longer = Math.max(width, height);
-    const shorter = Math.min(width, height);
-    return orientation === 'portrait'
-        ? { width: shorter, height: longer }
-        : { width: longer, height: shorter };
+    container.classList.add(getPaperTextureClass(paper));
 }
 
 function warnIfPaperExceedsPlotter(state, paper) {
@@ -214,28 +177,14 @@ function warnIfPaperExceedsPlotter(state, paper) {
     }
     const orientation = state.currentOrientation;
     const margin = Number(state.currentMargin) || 0;
-    const paperDims = getOrientedDimensions(paper, orientation);
-    const plotterDims = getOrientedDimensions(state.plotterSpecs.paper, orientation);
-    const effectiveWidth = Math.max(paperDims.width - margin * 2, 0);
-    const effectiveHeight = Math.max(paperDims.height - margin * 2, 0);
-    const widthOverflow = Math.max(0, paperDims.width - plotterDims.width);
-    const heightOverflow = Math.max(0, paperDims.height - plotterDims.height);
-
-    if (widthOverflow <= 0 && heightOverflow <= 0) {
-        return;
-    }
-
-    const plotterName = state.plotterSpecs.name || 'Plotter';
-    if (effectiveWidth <= plotterDims.width && effectiveHeight <= plotterDims.height) {
-        logDebug(
-            `${plotterName} travel ${plotterDims.width.toFixed(1)}×${plotterDims.height.toFixed(1)}mm < paper ${paperDims.width.toFixed(1)}×${paperDims.height.toFixed(1)}mm, but current margin keeps drawing to ${effectiveWidth.toFixed(1)}×${effectiveHeight.toFixed(1)}mm.`,
-            'warning'
-        );
-    } else {
-        logDebug(
-            `${plotterName} travel ${plotterDims.width.toFixed(1)}×${plotterDims.height.toFixed(1)}mm is smaller than ${paper.name} (${paperDims.width.toFixed(1)}×${paperDims.height.toFixed(1)}mm). Reduce margins or paper size.`,
-            'error'
-        );
+    const warning = computePlotterWarning({
+        paper,
+        plotterSpecs: state.plotterSpecs,
+        orientation: state.currentOrientation,
+        margin: Number(state.currentMargin) || 0
+    });
+    if (warning) {
+        logDebug(warning.message, warning.severity);
     }
 }
 

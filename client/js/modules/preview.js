@@ -1,4 +1,5 @@
 import { applyPreviewEffects } from '../utils/previewEffects.js';
+import { getOrientedDimensions } from '../utils/paperUtils.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
