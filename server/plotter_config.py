@@ -1,13 +1,15 @@
-from paper_config import CURRENT_PAPER
+"""Plotter configuration shared between client and server."""
 
-# Configuration for different plotter models
-PLOTTER_CONFIGS = {
-    'AxiDraw SE/A3': {
-        'model': 2,   # Model number for AxiDraw SE/A3
-        'penlift': 3,    # Narrow-band brushless servo (3rd position up)
-        'paper': CURRENT_PAPER  # Maximum paper dimensions
-    }
-}
+import json
+import os
 
-# Current plotter model configuration to use
-CURRENT_PLOTTER = 'AxiDraw SE/A3'
+
+def load_plotter_config():
+    config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config', 'plotters.json')
+    with open(config_path, 'r', encoding='utf-8') as handle:
+        return json.load(handle)
+
+
+_CONFIG = load_plotter_config()
+PLOTTER_CONFIGS = _CONFIG['plotters']
+CURRENT_PLOTTER = _CONFIG['default']

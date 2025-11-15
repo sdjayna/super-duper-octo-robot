@@ -20,17 +20,38 @@ let drawingRegistry;
 
 beforeAll(async () => {
     const originalFetch = global.fetch;
-    global.fetch = async () => ({
-        json: async () => ({
-            mediums: {
-                stub: {
-                    name: 'Stub Medium',
-                    colors: { placeholder: { hex: '#000000', name: 'Placeholder' } }
-                }
-            },
-            default: 'stub'
-        })
-    });
+    global.fetch = async (resource) => {
+        const url = typeof resource === 'string' ? resource : '';
+        if (url.includes('plotters')) {
+            return {
+                ok: true,
+                json: async () => ({
+                    default: 'axidraw',
+                    plotters: {
+                        axidraw: {
+                            specs: {
+                                repeatability_mm: 0.1,
+                                cautionSpacing_mm: 0.2,
+                                micro_spacing_mm: 0.15
+                            }
+                        }
+                    }
+                })
+            };
+        }
+        return {
+            ok: true,
+            json: async () => ({
+                mediums: {
+                    stub: {
+                        name: 'Stub Medium',
+                        colors: { placeholder: { hex: '#000000', name: 'Placeholder' } }
+                    }
+                },
+                default: 'stub'
+            })
+        };
+    };
 
     drawingRegistry = await import('../../client/js/drawingRegistry.js');
     ({ drawBouwkampCode } = await import('../core/bouwkamp.js'));

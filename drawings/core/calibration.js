@@ -2,18 +2,65 @@ import {
     defineDrawing,
     SizedDrawingConfig,
     createDrawingRuntime,
-    colorPalettes
+    colorPalettes,
+    generateSingleSerpentineLine
 } from '../shared/kit.js';
 import { attachControls } from '../shared/controlsUtils.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const PATTERNS = [
     { key: 'parallel', label: 'Parallel Lines', draw: drawParallelLines },
-    { key: 'cross', label: 'Cross Hatch', draw: drawCrossHatch },
     { key: 'concentric', label: 'Concentric Rings', draw: drawConcentricRings },
-    { key: 'edgePairs', label: 'Edge Pairs', draw: drawEdgePairs },
-    { key: 'sine', label: 'Wave Guides', draw: drawSinePairs }
+    { key: 'sine', label: 'Wave Bundle', draw: drawSineBundle },
+    { key: 'arc', label: 'Arc Sweeps', draw: drawArcSweeps },
+    { key: 'bezier', label: 'Bezier Ribbons', draw: drawBezierRibbons },
+    { key: 'radial', label: 'Radial Fan', draw: drawRadialFan },
+    { key: 'tessellation', label: 'Touching Polygons', draw: drawHexTessellation },
+    { key: 'serpentinePoly', label: 'Serpentine Polygons', draw: drawSerpentinePolygons }
 ];
+
+const DEFAULT_CAPABILITIES = {
+    repeatability: 0.1,
+    cautionSpacing: 0.2,
+    microSpacing: 0.15
+};
+
+let activePlotterCapabilities = { ...DEFAULT_CAPABILITIES };
+
+async function loadPlotterCapabilities() {
+    if (typeof fetch !== 'function') {
+        return;
+    }
+    try {
+        const response = await fetch(`/config/plotters.json?v=${Date.now()}`);
+        if (!response.ok) {
+            throw new Error(`Failed to load plotter config (${response.status})`);
+        }
+        const data = await response.json();
+        const defaultId = data.default;
+        const plotter = data.plotters?.[defaultId];
+        const specs = plotter?.specs || {};
+        const repeatability = Number(specs.repeatability_mm) || DEFAULT_CAPABILITIES.repeatability;
+        const cautionSpacing = Number(specs.cautionSpacing_mm) || repeatability * 2;
+        const microSpacing = Number(specs.micro_spacing_mm) || repeatability * 1.5;
+        activePlotterCapabilities = {
+            repeatability,
+            cautionSpacing,
+            microSpacing
+        };
+    } catch (error) {
+        console.warn('Unable to load plotter specs; using defaults', error);
+        activePlotterCapabilities = { ...DEFAULT_CAPABILITIES };
+    }
+}
+
+if (typeof fetch === 'function') {
+    loadPlotterCapabilities();
+}
+
+function getPlotterCapabilities() {
+    return activePlotterCapabilities;
+}
 
 function clampNumber(value, min, max) {
     if (!Number.isFinite(value)) {
@@ -24,7 +71,14 @@ function clampNumber(value, min, max) {
 
 export class CalibrationConfig extends SizedDrawingConfig {
     constructor(params = {}) {
-        super(params);
+        const baseParams = { ...params };
+        if (!Number.isFinite(baseParams.width)) {
+            baseParams.width = Number(baseParams.paper?.width) || 420;
+        }
+        if (!Number.isFinite(baseParams.height)) {
+            baseParams.height = Number(baseParams.paper?.height) || 297;
+        }
+        super(baseParams);
         this.minSpacing = clampNumber(params.minSpacing ?? 0.45, 0.05, 10);
         const resolvedMax = clampNumber(params.maxSpacing ?? 3, this.minSpacing, 15);
         this.maxSpacing = Math.max(resolvedMax, this.minSpacing);
@@ -32,23 +86,45 @@ export class CalibrationConfig extends SizedDrawingConfig {
         this.tilePadding = clampNumber(params.tilePadding ?? 4, 0, 40);
         this.patternScale = clampNumber(params.patternScale ?? 1, 0.5, 3);
     }
+
+    getBounds({ paper, orientation } = {}) {
+        if (!paper) {
+            return super.getBounds({ paper, orientation });
+        }
+        const width = Number(paper.width);
+        const height = Number(paper.height);
+        if (!Number.isFinite(width) || !Number.isFinite(height)) {
+            return super.getBounds({ paper, orientation });
+        }
+        const shorter = Math.min(width, height);
+        const longer = Math.max(width, height);
+        const isPortrait = orientation === 'portrait';
+        return {
+            minX: 0,
+            minY: 0,
+            width: isPortrait ? shorter : longer,
+            height: isPortrait ? longer : shorter
+        };
+    }
 }
 
 export function drawCalibrationPatterns(drawingConfig, renderContext) {
     const calibration = drawingConfig.drawingData;
     const { svg, builder } = createDrawingRuntime({ drawingConfig, renderContext });
     const columnCount = PATTERNS.length;
-    const rowCount = calibration.samples;
+    const spacingValues = buildSpacingValues(calibration);
+    const rowCount = spacingValues.length;
     const padding = calibration.tilePadding;
-    const labelGutter = Math.max(20, renderContext.drawingWidth * 0.08);
-    const availableWidth = Math.max(renderContext.drawingWidth - padding * (columnCount + 1) - labelGutter, 1);
+    const labelWidth = Math.max(12, renderContext.drawingWidth * 0.035);
+    const labelAnchorX = renderContext.drawingWidth - labelWidth + 2;
+    const horizontalMargin = padding * (columnCount + 1) + labelWidth;
+    const availableWidth = Math.max(renderContext.drawingWidth - horizontalMargin, 1);
     const availableHeight = Math.max(renderContext.drawingHeight - padding * (rowCount + 1), 1);
     const tileWidth = Math.max(availableWidth / columnCount, 1);
     const tileHeight = Math.max(availableHeight / rowCount, 1);
-    const labelAnchorX = padding + columnCount * (tileWidth + padding) + padding;
 
     for (let row = 0; row < rowCount; row++) {
-        const spacing = computeSpacingValue(calibration, row, rowCount);
+        const spacing = spacingValues[row];
         let lastCell = null;
         for (let column = 0; column < columnCount; column++) {
             const cell = {
@@ -80,6 +156,19 @@ function computeSpacingValue(calibration, index, totalCount) {
     return clampNumber(spacing, 0.05, 25);
 }
 
+function buildSpacingValues(calibration) {
+    const capabilities = getPlotterCapabilities();
+    const microSpacing = capabilities.microSpacing;
+    const values = [];
+    if (microSpacing && calibration.minSpacing - microSpacing > 0.05) {
+        values.push(microSpacing);
+    }
+    for (let row = 0; row < calibration.samples; row++) {
+        values.push(computeSpacingValue(calibration, row, calibration.samples));
+    }
+    return values;
+}
+
 function innerCell(cell) {
     const inset = Math.min(cell.width, cell.height) * 0.08;
     return {
@@ -105,22 +194,6 @@ function drawParallelLines(builder, cell, spacing) {
     }
 }
 
-function drawCrossHatch(builder, cell, spacing) {
-    drawParallelLines(builder, cell, spacing);
-    const inner = innerCell(cell);
-    const safeSpacing = Math.max(spacing, 0.05);
-    const count = Math.max(2, Math.floor(inner.width / safeSpacing));
-    const offset = (inner.width - (count - 1) * safeSpacing) / 2;
-    for (let i = 0; i < count; i++) {
-        const x = inner.x + offset + i * safeSpacing;
-        const points = builder.projectPoints([
-            { x, y: inner.y },
-            { x, y: inner.y + inner.height }
-        ]);
-        builder.appendPath(points, { geometry: inner });
-    }
-}
-
 function drawConcentricRings(builder, cell, spacing, scale) {
     const inner = innerCell(cell);
     const safeSpacing = Math.max(spacing * 0.5, 0.05) * scale;
@@ -136,53 +209,121 @@ function drawConcentricRings(builder, cell, spacing, scale) {
     }
 }
 
-function drawEdgePairs(builder, cell, spacing) {
-    const inner = innerCell(cell);
-    const lineLength = inner.height;
-    const safeSpacing = Math.max(spacing, 0.05);
-    const pairStride = Math.max(safeSpacing * 3, inner.width * 0.2);
-    const y0 = inner.y;
-    const y1 = inner.y + lineLength;
-    let currentX = inner.x + safeSpacing;
-    while (currentX + safeSpacing <= inner.x + inner.width) {
-        const first = builder.projectPoints([{ x: currentX, y: y0 }, { x: currentX, y: y1 }]);
-        const second = builder.projectPoints([
-            { x: currentX + safeSpacing, y: y0 },
-            { x: currentX + safeSpacing, y: y1 }
-        ]);
-        builder.appendPath(first, { geometry: inner });
-        builder.appendPath(second, { geometry: inner });
-        currentX += pairStride;
-    }
-}
-
-function drawSinePairs(builder, cell, spacing, scale) {
+function drawSineBundle(builder, cell, spacing, scale) {
     const inner = innerCell(cell);
     const startX = inner.x;
     const endX = inner.x + inner.width;
     const midY = inner.y + inner.height / 2;
     const safeSpacing = Math.max(spacing, 0.05);
     const amplitude = Math.min(inner.height / 3, safeSpacing * 2 * scale);
-    const sampleCount = 80;
-    const offset = safeSpacing / 2;
+    const sampleCount = 120;
+    const offsets = [-1.5, -0.5, 0.5, 1.5].map(mult => mult * safeSpacing * 0.4);
 
-    const createWavePoints = (direction) => {
-        const points = [];
+    offsets.forEach(offset => {
+        const wave = [];
         for (let i = 0; i <= sampleCount; i++) {
             const t = i / sampleCount;
             const x = startX + t * (endX - startX);
             const angle = t * Math.PI * 2 * scale;
-            const y = midY + Math.sin(angle) * amplitude + direction * offset;
-            points.push({ x, y });
+            const y = midY + Math.sin(angle) * amplitude + offset;
+            wave.push({ x, y });
         }
-        return points;
-    };
-
-    [1, -1].forEach(direction => {
-        const wave = createWavePoints(direction);
         const projected = builder.projectPoints(wave);
         builder.appendPath(projected, { geometry: inner });
     });
+}
+
+function drawArcSweeps(builder, cell, spacing, scale) {
+    const inner = innerCell(cell);
+    const center = {
+        x: inner.x + inner.width / 2,
+        y: inner.y + inner.height / 2
+    };
+    const safeSpacing = Math.max(spacing * 0.4, 0.05);
+    const radiusBase = Math.min(inner.width, inner.height) / 2 - safeSpacing;
+    const sweeps = [60, 120, 180];
+    sweeps.forEach((sweep, index) => {
+        const radius = Math.max(radiusBase - index * safeSpacing * 1.2, safeSpacing * 2);
+        const start = -90 - index * 10;
+        const arcPoints = createArcPoints(center, radius, start, start + sweep, Math.ceil(32 * scale));
+        const projected = builder.projectPoints(arcPoints);
+        builder.appendPath(projected, { geometry: inner });
+    });
+}
+
+function drawBezierRibbons(builder, cell, spacing, scale) {
+    const inner = innerCell(cell);
+    const strokeGap = Math.max(spacing * 0.6, 0.2);
+    const ribbonCount = 3;
+    const height = inner.height;
+    const width = inner.width;
+    const offsets = [-strokeGap, 0, strokeGap];
+
+    offsets.forEach((offset, idx) => {
+        const p0 = { x: inner.x, y: inner.y + height * (0.2 + idx * 0.3) };
+        const p3 = { x: inner.x + width, y: inner.y + height * (0.8 - idx * 0.2) };
+        const curvature = height * 0.4 * scale;
+        const p1 = { x: p0.x + width * 0.33, y: p0.y - curvature + offset };
+        const p2 = { x: p0.x + width * 0.66, y: p3.y + curvature - offset };
+        const bezierPoints = sampleCubicBezier(p0, p1, p2, p3, 80);
+        const projected = builder.projectPoints(bezierPoints);
+        builder.appendPath(projected, { geometry: inner });
+    });
+}
+
+function drawRadialFan(builder, cell, spacing, scale) {
+    const inner = innerCell(cell);
+    const center = {
+        x: inner.x + inner.width * 0.2,
+        y: inner.y + inner.height / 2
+    };
+    const radius = Math.min(inner.width * 0.75, inner.height / 1.1);
+    const safeSpacing = Math.max(spacing, 0.05);
+    const angleIncrement = Math.max(5, safeSpacing * 3);
+    for (let angle = -60; angle <= 60; angle += angleIncrement) {
+        const rad = (angle * Math.PI) / 180;
+        const endPoint = {
+            x: center.x + Math.cos(rad) * radius,
+            y: center.y + Math.sin(rad) * radius
+        };
+        const projected = builder.projectPoints([center, endPoint]);
+        builder.appendPath(projected, { geometry: inner });
+    }
+}
+
+
+function drawHexTessellation(builder, cell, spacing) {
+    const inner = innerCell(cell);
+    const contactGap = Math.max(spacing - 0.45, 0);
+    const targetCols = Math.max(4, Math.floor(inner.width / 35));
+    const targetRows = Math.max(3, Math.floor(inner.height / 30));
+    const radiusFromWidth = (inner.width - contactGap) / (targetCols * 1.5 + 0.5);
+    const radiusFromHeight = (inner.height - contactGap) / (targetRows * Math.sqrt(3));
+    const radius = Math.max(Math.min(radiusFromWidth, radiusFromHeight), 1.5);
+    const horizontalStride = radius * 1.5 + contactGap;
+    const verticalStride = radius * Math.sqrt(3) + contactGap * 0.5;
+    const yStart = inner.y + radius;
+    const yEnd = inner.y + inner.height - radius;
+
+    let rowIndex = 0;
+    for (let cy = yStart; cy <= yEnd; cy += verticalStride) {
+        const offset = (rowIndex % 2) * (horizontalStride / 2);
+        const xStart = inner.x + radius + offset;
+        const xEnd = inner.x + inner.width - radius;
+        for (let cx = xStart; cx <= xEnd; cx += horizontalStride) {
+            const hexPoints = createHexPoints({ x: cx, y: cy }, radius);
+            const projected = builder.projectPoints([...hexPoints, hexPoints[0]]);
+            builder.appendPath(projected, {
+                geometry: {
+                    x: cx - radius,
+                    y: cy - radius,
+                    width: radius * 2,
+                    height: radius * 2
+                }
+            });
+        }
+        rowIndex++;
+    }
 }
 
 function createCirclePoints(center, radius, segments = 48) {
@@ -197,6 +338,157 @@ function createCirclePoints(center, radius, segments = 48) {
     return points;
 }
 
+function createHexPoints(center, radius) {
+    const points = [];
+    for (let i = 0; i < 6; i++) {
+        const angle = Math.PI / 3 * i;
+        points.push({
+            x: center.x + Math.cos(angle) * radius,
+            y: center.y + Math.sin(angle) * radius
+        });
+    }
+    return points;
+}
+
+function createArcPoints(center, radius, startDeg, endDeg, segments = 48) {
+    const points = [];
+    const start = (startDeg * Math.PI) / 180;
+    const end = (endDeg * Math.PI) / 180;
+    const step = (end - start) / segments;
+    for (let i = 0; i <= segments; i++) {
+        const angle = start + step * i;
+        points.push({
+            x: center.x + Math.cos(angle) * radius,
+            y: center.y + Math.sin(angle) * radius
+        });
+    }
+    return points;
+}
+
+function sampleCubicBezier(p0, p1, p2, p3, samples = 60) {
+    const points = [];
+    for (let i = 0; i <= samples; i++) {
+        const t = i / samples;
+        const mt = 1 - t;
+        const x = mt ** 3 * p0.x +
+            3 * mt ** 2 * t * p1.x +
+            3 * mt * t ** 2 * p2.x +
+            t ** 3 * p3.x;
+        const y = mt ** 3 * p0.y +
+            3 * mt ** 2 * t * p1.y +
+            3 * mt * t ** 2 * p2.y +
+            t ** 3 * p3.y;
+        points.push({ x, y });
+    }
+    return points;
+}
+
+
+function drawSerpentinePolygons(builder, cell, spacing) {
+    const inner = innerCell(cell);
+    const cols = Math.max(2, Math.floor(inner.width / 35));
+    const rows = Math.max(2, Math.floor(inner.height / 35));
+    const gridWidth = inner.width / cols;
+    const gridHeight = inner.height / rows;
+    const polygons = [
+        [
+            { x: 0.1, y: 0.1 },
+            { x: 0.9, y: 0.1 },
+            { x: 0.9, y: 0.9 },
+            { x: 0.1, y: 0.9 }
+        ],
+        [
+            { x: 0.2, y: 0.1 },
+            { x: 0.8, y: 0.1 },
+            { x: 0.9, y: 0.5 },
+            { x: 0.8, y: 0.9 },
+            { x: 0.2, y: 0.9 },
+            { x: 0.1, y: 0.5 }
+        ],
+        [
+            { x: 0.5, y: 0.1 },
+            { x: 0.9, y: 0.5 },
+            { x: 0.5, y: 0.9 },
+            { x: 0.1, y: 0.5 }
+        ]
+    ];
+
+    let index = 0;
+    for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+            const template = polygons[index % polygons.length];
+            const rect = {
+                x: inner.x + col * gridWidth,
+                y: inner.y + row * gridHeight,
+                width: gridWidth,
+                height: gridHeight
+            };
+            const bounds = polygonBounds(template);
+            const scaleX = rect.width / (bounds.maxX - bounds.minX);
+            const scaleY = rect.height / (bounds.maxY - bounds.minY);
+            const scaledPoints = template.map(point => ({
+                x: rect.x + (point.x - bounds.minX) * scaleX,
+                y: rect.y + (point.y - bounds.minY) * scaleY
+            }));
+            const polygonPath = builder.projectPoints([...scaledPoints, scaledPoints[0]]);
+            builder.appendPath(polygonPath, { geometry: rect });
+
+            const hatchRect = insetRect(polygonBounds(scaledPoints), spacing * 0.1);
+            const serpentine = generateSingleSerpentineLine(
+                hatchRect,
+                Math.max(spacing, 0.2),
+                builder.context?.defaultStrokeWidth || 0.4
+            );
+            const clipped = clipPathToPolygon(serpentine, scaledPoints);
+            if (clipped.length > 1) {
+                const projected = builder.projectPoints(clipped);
+                builder.appendPath(projected, { geometry: rect });
+            }
+            index++;
+        }
+    }
+}
+
+function polygonBounds(points) {
+    const xs = points.map(p => p.x);
+    const ys = points.map(p => p.y);
+    return {
+        minX: Math.min(...xs),
+        maxX: Math.max(...xs),
+        minY: Math.min(...ys),
+        maxY: Math.max(...ys),
+        width: Math.max(...xs) - Math.min(...xs),
+        height: Math.max(...ys) - Math.min(...ys)
+    };
+}
+
+function insetRect(bounds, inset) {
+    const safeInset = Math.max(inset, 0);
+    return {
+        x: bounds.minX + safeInset,
+        y: bounds.minY + safeInset,
+        width: Math.max(bounds.width - safeInset * 2, 0.5),
+        height: Math.max(bounds.height - safeInset * 2, 0.5)
+    };
+}
+
+function clipPathToPolygon(points, polygon) {
+    // Simple point filter: keep points inside polygon
+    return points.filter(point => isPointInPolygon(point, polygon));
+}
+
+function isPointInPolygon(point, polygon) {
+    let inside = false;
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+        const xi = polygon[i].x, yi = polygon[i].y;
+        const xj = polygon[j].x, yj = polygon[j].y;
+        const intersect = ((yi > point.y) !== (yj > point.y)) &&
+            (point.x < (xj - xi) * (point.y - yi) / (yj - yi + 1e-9) + xi);
+        if (intersect) inside = !inside;
+    }
+    return inside;
+}
+
 function annotateSpacing(builder, svg, cell, spacing, anchorX) {
     if (!svg) {
         return;
@@ -208,15 +500,56 @@ function annotateSpacing(builder, svg, cell, spacing, anchorX) {
     const inset = Math.max(cell.width * 0.015, 1.5);
     const textX = projected.x + inset;
     const textY = projected.y;
+    const capability = describeSpacingCapability(spacing, getPlotterCapabilities());
+
     const text = document.createElementNS(SVG_NS, 'text');
-    text.setAttribute('x', String(textX));
-    text.setAttribute('y', String(textY));
     text.setAttribute('text-anchor', 'start');
-    text.setAttribute('dominant-baseline', 'middle');
     text.setAttribute('font-size', '6');
-    text.setAttribute('fill', '#666');
-    text.textContent = `${spacing.toFixed(2)} mm`;
+    text.setAttribute('fill', capability.color);
+
+    const valueLine = document.createElementNS(SVG_NS, 'tspan');
+    valueLine.setAttribute('x', String(textX));
+    valueLine.setAttribute('y', String(textY));
+    valueLine.setAttribute('dominant-baseline', 'middle');
+    valueLine.textContent = `${spacing.toFixed(2)} mm`;
+    text.appendChild(valueLine);
+
+    if (capability.note) {
+        const noteLine = document.createElementNS(SVG_NS, 'tspan');
+        noteLine.setAttribute('x', String(textX));
+        noteLine.setAttribute('dy', '6');
+        noteLine.setAttribute('font-size', '4');
+        noteLine.textContent = capability.note;
+        text.appendChild(noteLine);
+    }
+
     svg.appendChild(text);
+}
+
+function describeSpacingCapability(spacing, capabilities) {
+    const repeatability = capabilities.repeatability || DEFAULT_CAPABILITIES.repeatability;
+    if (spacing <= repeatability + 0.02) {
+        return {
+            note: `Below plotter repeatability (~${repeatability.toFixed(2)} mm)`,
+            color: '#c0392b'
+        };
+    }
+    if (spacing <= (capabilities.cautionSpacing || DEFAULT_CAPABILITIES.cautionSpacing)) {
+        return {
+            note: 'Watch for carriage drift; slow speeds',
+            color: '#e67e22'
+        };
+    }
+    if (spacing <= 0.5) {
+        return {
+            note: 'Ideal fineliner spacing',
+            color: '#2c3e50'
+        };
+    }
+    return {
+        note: 'Safe for acrylic / paint fills',
+        color: '#16a085'
+    };
 }
 
 const calibrationControls = [

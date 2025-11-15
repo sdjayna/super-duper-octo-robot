@@ -1,0 +1,37 @@
+{
+    "default": "axidraw_se_a3",
+    "plotters": {
+        "axidraw_se_a3": {
+            "id": "axidraw_se_a3",
+            "name": "AxiDraw SE/A3",
+            "model": 2,
+            "penlift": 3,
+            "paper": {
+                "width": 430,
+                "height": 297
+            },
+            "specs": {
+                "usable_travel_mm": [
+                    430,
+                    297
+                ],
+                "vertical_travel_mm": 17,
+                "max_travel_speed_mm_s": 381,
+                "resolution_steps_per_mm": 80,
+                "repeatability_mm": 0.1,
+                "pen_diameter_max_mm": 25.4,
+                "overall_dimensions_cm": [
+                    66,
+                    48,
+                    13
+                ],
+                "weight_kg": 3.8
+            },
+            "notes": [
+                "Brushless upgrade carriage with machined aluminum frame.",
+                "Holds pens/markers up to 1 inch diameter.",
+                "Best accuracy in the central 250 mm square area; stay below 40 mm/s with fineliners."
+            ]
+        }
+    }
+}

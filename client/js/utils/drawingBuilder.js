@@ -2,6 +2,7 @@ import { createDrawingContext } from './drawingContext.js';
 
 export function createDrawingBuilder({ svg, drawingConfig, renderContext }) {
     const drawingContext = createDrawingContext(svg, drawingConfig.colorPalette);
+    drawingContext.defaultStrokeWidth = drawingConfig.line?.strokeWidth ?? 0.4;
 
     const applyLineDefaults = (options = {}) => ({
         strokeWidth: options.strokeWidth ?? drawingConfig.line?.strokeWidth,

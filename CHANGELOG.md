@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `attachControls` helper + unit tests so drawings like Bouwkamp and Delaunay can expose controls with a single call.
 - Added paper/medium-aware preview profiles (`client/js/utils/paperProfile.js`) plus SVG filter helpers/tests so the on-screen render simulates bleed, jitter, and warns about risky combinations.
 - Added pen-rate defaults per paper/medium combo so the Plotter Control slider snaps to sensible values (fast for acrylic markers, gentler for fragile stock).
-- Added a “Calibration Patterns” drawing with spacing controls so users can test ink behavior across primitives before committing to a plot; covered by unit tests.
+- Added a “Calibration Patterns” drawing with Axidraw SE/A3-aware spacing annotations, micro-spacing stress rows, speed guides, serpentine polygon hatching, and documentation so users can test ink behavior across primitives (lines, arcs, waves, Beziers, radial fans, tessellations) before committing to a plot; covered by unit tests.
 
 ### Changed
 - Drawings now export declarative definitions (config class + draw fn + presets) instead of self-registering, which removes duplicate registration errors during hot reloads.
@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hilbert generation uses an iterative bitwise algorithm (rather than deeply recursive calls) to keep high recursion levels responsive.
 - Simple Perfect Rectangle controls use descriptive names (“Square Margin”, “Hatch Spacing”) and slider widgets for better UX.
 - README + docs now explain the paper descriptions, preview heuristics, and new slider styling so contributors know how to extend them.
+- Plotter metadata now lives in `config/plotters.json`, and the server reads it dynamically via `plotter_config.py` so switching hardware only requires editing JSON.
 
 ### Fixed
 - Eliminated manifest endpoint crashes by ensuring `load_drawings_manifest` is a properly declared class method and by stripping query strings in the HTTP handler.

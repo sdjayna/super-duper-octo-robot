@@ -24,6 +24,7 @@ JavaScript files are ES modules with 4-space indentation, `camelCase` functions 
 ### Paper, Mediums, Preview Profiles, and Plotter Defaults
 - Paper definitions belong in `config/papers.json` and must include descriptive metadata (`description`, `finish`, `absorbency`, `surfaceStrength`, weight, colour, notes). This copy renders directly in the UI, so keep it succinct and accurate.
 - Medium definitions live in `config/mediums.json`; store preview hints inside `preview` (`pressure`, `hatchSpacing`, `jitter`, `bleedRadius`) and plotter tuning inside `plotterDefaults` (`penRateLower` baseline). When you add a new medium, ensure colors, preview values, and pen-rate defaults are all present.
+- Plotter definitions belong in `config/plotters.json`; each entry needs at least `model`, `penlift`, and a `paper` object (width/height). Update `default` to swap hardware, and keep the JSON in sync with any hard-spec edits you make to `server/plotter_config.py`.
 - The preview/plotter system merges paper + medium metadata via `client/js/utils/paperProfile.js`. Add or update overrides there (both visual and `PAPER_MEDIUM_PLOTTER_OVERRIDES`) whenever a new stock/pen combination needs special casing.
 - Mirror any new combination in `drawings/shared/__tests__/previewProfile.test.js` so Vitest guards the heuristics. Tests must hoist mocks for `mediumMetadata`.
 - Preview filters are applied only for the on-screen SVG. `previewEffects.js` must not mutate exported SVGs; add or update tests if you change that logic.

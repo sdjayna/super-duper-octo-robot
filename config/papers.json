@@ -5,7 +5,7 @@
             "height": 420,
             "margin": 20,
             "name": "Daler Rowney Smooth Heavyweight A3",
-            "description": "White cartridge stock, cellulose sized",
+            "description": "A3 (297 × 420 mm) smooth cartridge; cellulose, sized",
             "weightGsm": 220,
             "finish": "smooth",
             "absorbency": "low-medium",
@@ -14,7 +14,7 @@
             "featherRisk": "low",
             "surfaceStrength": "good",
             "color": "#fefefe",
-            "notes": "Excellent for crisp technical plotting. Micron: razor sharp with almost no spread. Acrylic (Molotow/Yono): dries fast on the surface and may leave a neat ridge. Overall: neutral, predictable stock.",
+            "notes": "Neutral stock with low-medium absorbency. Micron inks stay razor sharp; acrylic dries fast on the surface and may leave a neat ridge. Excellent everyday sheet for clean lines.",
             "id": "dalersmootha3"
         },
         "daleraquafinehpa3": {
@@ -22,7 +22,7 @@
             "height": 420,
             "margin": 22,
             "name": "Daler Rowney Aquafine HP A3",
-            "description": "Hot-pressed watercolour sheet",
+            "description": "A3 (297 × 420 mm) hot-pressed watercolour; cellulose, sized",
             "weightGsm": 300,
             "finish": "hot-press",
             "absorbency": "medium",
@@ -31,7 +31,7 @@
             "featherRisk": "low-medium",
             "surfaceStrength": "excellent",
             "color": "#fefefe",
-            "notes": "Handles layered ink with a slight spread under heavy fills. Micron: stays crisp with tiny softening on long strokes. Acrylic: absorbs slightly more because of watercolor sizing and dries flatter.",
+            "notes": "Great for mixed media; slight suction from the watercolor sizing. Micron: tiny softening on very long strokes. Acrylic: absorbs a touch more and dries flatter, matte.",
             "id": "daleraquafinehpa3"
         },
         "vangoghblacka3": {
@@ -39,7 +39,7 @@
             "height": 420,
             "margin": 18,
             "name": "Van Gogh Black Watercolour A3",
-            "description": "Fine grain black watercolour stock",
+            "description": "A3 (297 × 420 mm) fine-grain watercolour; cellulose",
             "weightGsm": 360,
             "finish": "fine-grain",
             "absorbency": "medium-high",
@@ -48,7 +48,7 @@
             "featherRisk": "medium",
             "surfaceStrength": "very-strong",
             "color": "#0b0b0b",
-            "notes": "High contrast background, softer micro-lines. Micron: appears grey unless archival black; loses a bit of bite on fine grain. Acrylic: neon/opaque colours pop dramatically.",
+            "notes": "High contrast background with softer micro-lines. Micron: can appear grey unless archival black and loses a little bite. Acrylic: neon/opaque colours pop and stay bold.",
             "id": "vangoghblacka3"
         },
         "hahnemuhleharmonyhp": {
@@ -56,7 +56,7 @@
             "height": 406,
             "margin": 25,
             "name": "Hahnemühle Harmony Hot-Pressed 30.5×40.6cm",
-            "description": "Slightly warm white cellulose sheet",
+            "description": "30.5 × 40.6 cm hot-pressed watercolour; cellulose, sized",
             "weightGsm": 300,
             "finish": "hot-press",
             "absorbency": "medium",
@@ -65,7 +65,7 @@
             "featherRisk": "low-medium",
             "surfaceStrength": "excellent",
             "color": "#fdf9f3",
-            "notes": "Strong performer; subtle warm tone. Micron: crisp though slightly softer than premium bristol. Acrylic: smooth application with mild absorption. Ideal for sketch-line plus acrylic highlight pieces.",
+            "notes": "Slight warm tone with even behaviour. Micron: crisp, just slightly softer than premium bristol. Acrylic: smooth application, mild absorption—ideal for line + acrylic accents.",
             "id": "hahnemuhleharmonyhp"
         },
         "strathmorebristolvellum": {
@@ -73,7 +73,7 @@
             "height": 432,
             "margin": 23,
             "name": "Strathmore Bristol Vellum 2-ply 27.9×43.2cm",
-            "description": "100% cotton vellum surface",
+            "description": "11 × 17 in vellum bristol; 100% cotton, two-ply",
             "weightGsm": 280,
             "finish": "vellum",
             "absorbency": "low",
@@ -82,7 +82,7 @@
             "featherRisk": "very-low",
             "surfaceStrength": "excellent",
             "color": "#fefefe",
-            "notes": "Outstanding for technical plotting; takes fine detail. Micron: the cleanest lines of the set. Acrylic: sits on the surface and dries bright with minimal spread. Top choice when precision matters.",
+            "notes": "Outstanding technical plotting sheet. Micron: the cleanest, sharpest line quality. Acrylic: sits on the surface, dries bright with almost no spread—top choice when precision matters.",
             "id": "strathmorebristolvellum"
         },
         "hahnemuhleskizze190": {
@@ -90,7 +90,7 @@
             "height": 420,
             "margin": 20,
             "name": "Hahnemühle Skizze 190",
-            "description": "Smooth cellulose sketch stock",
+            "description": "A3 (297 × 420 mm) smooth sketch paper; cellulose",
             "weightGsm": 190,
             "finish": "smooth",
             "absorbency": "low",
@@ -99,7 +99,7 @@
             "featherRisk": "low-medium",
             "surfaceStrength": "moderate",
             "color": "#ffffff",
-            "notes": "Great for tests and drafts. Micron: perfectly usable, slight tooth adds texture. Acrylic: heavy layers can make the sheet buckle, so keep coverage light.",
+            "notes": "Great for tests and drafts; slight tooth gives texture. Micron: perfectly usable with subtle texture. Acrylic: keep coverage light to avoid buckle.",
             "id": "hahnemuhleskizze190"
         },
         "cassartbristola3": {
@@ -107,7 +107,7 @@
             "height": 420,
             "margin": 20,
             "name": "Cass Art Bristol A3",
-            "description": "Smooth cellulose bristol",
+            "description": "A3 (297 × 420 mm) smooth bristol; cellulose, acid-free",
             "weightGsm": 190,
             "finish": "smooth",
             "absorbency": "low",
@@ -116,8 +116,25 @@
             "featherRisk": "low",
             "surfaceStrength": "good",
             "color": "#ffffff",
-            "notes": "Clean, crisp lines; lighter than premium bristol. Micron: nearly Strathmore-level sharpness. Acrylic: handles light to medium coverage without issue. Good workhorse bristol.",
+            "notes": "Clean, crisp lines; lighter than premium bristol. Micron: nearly Strathmore-level sharpness. Acrylic: fine for light-to-medium coverage. Great workhorse option.",
             "id": "cassartbristola3"
+        },
+        "ampersandgessobord": {
+            "width": 279,
+            "height": 355,
+            "margin": 10,
+            "name": "Ampersand Gessobord 11×14",
+            "description": "27.9 × 35.5 cm semi-smooth gesso-primed hardboard panel",
+            "weightGsm": 0,
+            "finish": "semi-smooth gesso",
+            "absorbency": "low-medium",
+            "lineSharpness": "high",
+            "dryingSpeed": "medium-slow",
+            "featherRisk": "very-low",
+            "surfaceStrength": "excellent",
+            "color": "#fdfdfd",
+            "notes": "Archival hardboard panel with gesso finish. Micron: behaves like a slick vellum and stays crisp. Acrylic and paint markers excel—ink sits on the surface and dries slower but flawlessly. Premium option for mixed media.",
+            "id": "ampersandgessobord"
         }
     },
     "default": "dalersmootha3"
