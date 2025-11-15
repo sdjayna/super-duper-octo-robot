@@ -7,6 +7,12 @@
             "strokeWidth": 0.45,
             "strokeLinecap": "round",
             "strokeLinejoin": "round",
+            "preview": {
+                "pressure": 0.35,
+                "hatchSpacing": 0.5,
+                "jitter": 0.01,
+                "bleedRadius": 0.05
+            },
             "colors": {
                 "black": { "hex": "#000000", "name": "Black" },
                 "red": { "hex": "#FF0000", "name": "Red" },
@@ -34,6 +40,12 @@
             "strokeWidth": 2.0,
             "strokeLinecap": "round",
             "strokeLinejoin": "round",
+            "preview": {
+                "pressure": 0.6,
+                "hatchSpacing": 1.5,
+                "jitter": 0.02,
+                "bleedRadius": 0.15
+            },
             "colors": {
                 "amazonasLight": { "hex": "#7a9b7a", "name": "Amazonas Light" },
                 "blueGreyDark": { "hex": "#6e7172", "name": "Blue Grey Dark" },
@@ -86,6 +98,12 @@
             "strokeWidth": 2.25,
             "strokeLinecap": "round",
             "strokeLinejoin": "round",
+            "preview": {
+                "pressure": 0.65,
+                "hatchSpacing": 2.0,
+                "jitter": 0.025,
+                "bleedRadius": 0.18
+            },
             "colors": {
                 "neonGreen": { "hex": "#39FF14", "name": "Neon Green" },
                 "neonYellow": { "hex": "#FFFF33", "name": "Neon Yellow" },

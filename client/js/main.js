@@ -3,6 +3,7 @@ import { playCompletionSiren, toggleMute } from './modules/audio.js';
 import { startProgressListener, stopProgressListener } from './modules/progress.js';
 import { createPreviewController } from './modules/preview.js';
 import { initPlotterControls } from './modules/plotterControls.js';
+import { resolvePreviewProfile } from './utils/paperProfile.js';
 
 window.logDebug = logDebug;
 initLogTabs();
@@ -45,6 +46,7 @@ const paperColorInput = document.getElementById('paperColorInput');
 const resetPaperColorButton = document.getElementById('resetPaperColor');
 const controlTabs = document.querySelectorAll('.control-tab');
 const controlPanels = document.querySelectorAll('.control-panel');
+const paperDescription = document.getElementById('paperDescription');
 
 const state = {
     paperConfig: null,
@@ -60,7 +62,8 @@ const state = {
     currentLineCap: 'round',
     currentLineJoin: 'round',
     rulersVisible: false,
-    drawingControlValues: {}
+    drawingControlValues: {},
+    previewProfile: null
 };
 
 const previewController = createPreviewController({
@@ -417,6 +420,59 @@ async function handleDrawingControlChange(context, control, rawValue) {
     updatePlotterStatus();
 }
 
+function describePaper(paper) {
+    if (!paper) {
+        return '';
+    }
+    const traits = [];
+    if (paper.weightGsm) {
+        traits.push(`${paper.weightGsm}gsm`);
+    }
+    if (paper.finish) {
+        traits.push(paper.finish);
+    }
+    if (paper.absorbency) {
+        traits.push(`absorbency: ${paper.absorbency}`);
+    }
+    return traits.join(', ');
+}
+
+function logPaperSelection(paper) {
+    if (!paper) {
+        return;
+    }
+    const traits = describePaper(paper);
+    const note = traits ? ` (${traits})` : '';
+    logDebug(`Paper set to ${paper.name}${note}`);
+    if (paper.notes) {
+        logDebug(paper.notes);
+    }
+}
+
+function updatePaperDescription(paper) {
+    if (!paperDescription) {
+        return;
+    }
+    if (!paper) {
+        paperDescription.textContent = '';
+        paperDescription.classList.add('hidden');
+        return;
+    }
+    const parts = [];
+    if (paper.description) {
+        parts.push(paper.description);
+    }
+    const traits = describePaper(paper);
+    if (traits) {
+        parts.push(traits);
+    }
+    if (paper.notes) {
+        parts.push(paper.notes);
+    }
+    paperDescription.textContent = parts.join(' • ');
+    paperDescription.classList.remove('hidden');
+}
+
 function startRefresh() {
     previewStartRefresh();
     isRefreshActive = true;
@@ -531,6 +587,8 @@ async function initialize() {
         updateMarginControls(state.currentPaper);
         const initialPaperColor = getPaperColor(state.currentPaper);
         applyPaperColor(initialPaperColor);
+        logPaperSelection(state.currentPaper);
+        updatePaperDescription(state.currentPaper);
 
         const colorUtilsModule = await loadColorUtilsModule();
         const mediumOptions = populateMediumSelectOptions(colorUtilsModule.mediumMetadata);
@@ -780,6 +838,8 @@ document.getElementById('paperSelect').addEventListener('change', async (e) => {
     applyPaperColor(defaultColor);
     logDebug(`Paper colour reset to ${defaultColor}`);
     logDebug(`Changing paper size to ${state.currentPaper.name} (${state.currentPaper.width}×${state.currentPaper.height}mm)`);
+    logPaperSelection(state.currentPaper);
+    updatePaperDescription(state.currentPaper);
     await draw();
 });
 
@@ -839,4 +899,9 @@ async function applyMediumSettings(mediumId, colorUtilsModule) {
         }
     }
     state.currentMediumId = mediumId;
+    state.previewProfile = resolvePreviewProfile({
+        paper: state.currentPaper,
+        mediumId: mediumId
+    });
+    logDebug(`Preview profile → pressure ${state.previewProfile.pressure.toFixed(2)}, spacing ${state.previewProfile.hatchSpacing.toFixed(2)}, bleed ${state.previewProfile.bleedRadius.toFixed(2)}`);
 }

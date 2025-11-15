@@ -1,0 +1,8 @@
+{
+    "defaults": {
+        "pressure": 0.5,
+        "hatchSpacing": 1.0,
+        "jitter": 0.01,
+        "bleedRadius": 0.05
+    }
+}

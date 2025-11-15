@@ -2,9 +2,9 @@ export async function loadPaperConfig() {
     try {
         const response = await fetch(`/config/papers.json?v=${Date.now()}`);
         const config = await response.json();
-        return {
+return {
             papers: config.papers,
-            default: config.papers[config.default]
+            default: config.default
         };
     } catch (error) {
         console.error('Error loading paper config:', error);

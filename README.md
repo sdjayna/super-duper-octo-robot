@@ -153,7 +153,7 @@ After dropping a new file in `drawings/core/` or `drawings/community/`, run `mak
 
 - **Hot reload** - `server/server_runner.py` watches files so your new drawing appears after a save.
 - **Constraint-aware helpers** - shared adapters expose color, geometry, and SVG utilities so modules don’t need deep client imports.
-- **Paper + medium presets** - drop in a new pen brand or sheet size via JSON and it immediately appears in the UI selectors. Papers can specify an optional `color` (3- or 6-digit hex) that seeds the preview background, and you can override it live with the colour picker that sits next to the Paper dropdown.
+- **Paper + medium presets** - drop in a new pen brand or sheet size via JSON and it immediately appears in the UI selectors. Papers can specify finish, weight, absorbency, and preview colour (see [Paper Presets](#paper-presets)) and you can override the colour live with the picker next to the Paper dropdown.
 
 ### Custom Drawing Controls
 
@@ -214,6 +214,43 @@ Overrides live alongside the drawing config, so a slider change sticks even if y
 
 Need to simulate black stock or toned paper before the plotter moves? Each paper preset may include an optional `"color": "#fefefe"` property in `config/papers.json`, and the UI now exposes a colour picker plus reset button next to the paper selector. The current colour only affects the preview/export metadata, so feel free to match whatever sheet is taped down without touching the drawing config itself.
 
+## Paper Presets
+
+Paper definitions live in `config/papers.json`. Each entry can include metadata that feeds both the UI (preview colour, bleed filters, hover logs) and the plotting defaults (pressure hints, recommended spacing).
+
+```json
+"strathmoreBristolVellum": {
+  "width": 279,
+  "height": 432,
+  "margin": 23,
+  "name": "Strathmore Bristol Vellum 2-ply",
+  "description": "100% cotton vellum surface",
+  "weightGsm": 280,
+  "finish": "vellum",
+  "absorbency": "low",
+  "lineSharpness": "very-high",
+  "dryingSpeed": "fast",
+  "featherRisk": "very-low",
+  "surfaceStrength": "excellent",
+  "color": "#fefefe",
+  "notes": "Outstanding for technical plotting."
+}
+```
+
+The current presets ship with the following traits:
+
+| Paper | Size (mm) | Weight | Finish | Traits & Notes |
+|-------|-----------|--------|--------|----------------|
+| Daler Rowney Smooth Heavyweight | 297 × 420 | 220 gsm | Smooth cartridge | Low bleed, fast drying, ideal for crisp technical lines |
+| Daler Rowney Aquafine HP | 297 × 420 | 300 gsm | Hot-pressed watercolour | Slightly softer edges under heavy ink, excellent strength |
+| Van Gogh Black Watercolour | 297 × 420 | 360 gsm | Fine grain | Deep black surface; medium bleed; slower drying |
+| Hahnemühle Harmony Hot-Pressed | 305 × 406 | 300 gsm | Hot-pressed | Warm white tone, balanced absorbency, great strength |
+| Strathmore Bristol Vellum 2-ply | 279 × 432 | ~280 gsm | Vellum (100% cotton) | Very sharp lines, minimal feathering, perfect for technical plotting |
+| Hahnemühle Skizze 190 | 297 × 420 | 190 gsm | Smooth sketch | Lightweight sheet for tests and drafts |
+| Cass Art Bristol A3 | 297 × 420 | 190 gsm | Smooth bristol | Crisp white surface, low bleed, ideal for lighter-weight plotting |
+
+Add your own stock by copying one of the entries, tweaking the dimensions, and filling out whatever metadata makes sense for your workflow. The UI will automatically log the new traits when you select it, and the preview colour will match whatever `color` you set.
+
 ## Color & Multi-Pen Layering
 
 - Smart palette selection prevents adjacent fills from sharing a color, reducing smears on real paper.
@@ -265,3 +302,4 @@ Additional backlog items live in `TODOs.md`.
 ## Built with AI Pair Programming
 
 Development leaned on AI copilots (aider.chat, DeepSeek R1, Claude 3 Sonnet) for fast iteration while keeping humans in the loop for aesthetics, safety, and hardware testing.
+- **Paper presets** – edit `config/papers.json` to describe stock in terms of size, weight, finish, absorbency, bleed, and notes. The UI logs these traits when you switch sheets so you don’t lose track of what’s loaded on the bed.

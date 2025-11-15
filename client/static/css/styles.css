@@ -197,6 +197,16 @@ body, html {
     padding: 8px 12px;
 }
 
+.paper-description {
+    font-size: 11px;
+    color: #555;
+    line-height: 1.4;
+}
+
+.paper-description.hidden {
+    display: none;
+}
+
 .merged-margin-controls {
     display: flex;
     flex-direction: column;
