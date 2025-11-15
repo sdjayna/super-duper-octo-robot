@@ -2,51 +2,52 @@
 
 ## Known Issues
 
-- Add visual regression to ensure preview/export parity stays intact
-- `/plot-progress` SSE responses run inside the single-threaded `HTTPServer`, so the long-lived heartbeat loop blocks every other request (no `/plotter` POSTs can run once a client starts listening). Switch to `ThreadingHTTPServer` or push SSE streaming into its own worker thread.
-- The plot thread streams both stdout and stderr with blocking `readline()` calls, which deadlock when stderr is quiet. Use non-blocking reads (e.g., `select`, `asyncio`, or dedicated reader threads) so progress events continue and the subprocess can exit.
-- Static asset serving and SVG export trust user-supplied paths/names; `../` segments allow reading arbitrary files or writing outside `output/`. Normalize and validate paths before disk access.
-- Auto-refresh in `plotter.html` spawns overlapping `draw()` calls (async re-imports + DOM updates) every second, frequently clobbering UI state. Gate refreshes with an "in-flight" flag so only one render runs at a time.
+- [ ] Add visual regression to ensure preview/export parity stays intact.
+- [ ] `/plot-progress` SSE responses run inside the single-threaded `HTTPServer`, so the long-lived heartbeat loop blocks every other request. Switch to `ThreadingHTTPServer` or push SSE streaming into its own worker thread.
+- [ ] Plot thread streams both stdout and stderr with blocking `readline()` calls that deadlock when stderr is quiet. Use non-blocking reads (e.g., `select`, `asyncio`, or reader threads).
+- [ ] Static asset serving and SVG export trust user-supplied paths/names; `../` segments allow access outside `output/`. Normalize and validate paths.
+- [ ] Auto-refresh in `plotter.html` spawns overlapping `draw()` calls. Gate refreshes with an "in-flight" flag so only one render runs at a time.
 
 ## High Priority
 
-1. Finalize paper/medium handling ✅
-   - Centralize paper configuration management ✅
-   - Add paper size validation (pending)
-   - Improve margin handling consistency ✅
-   - Add paper size preview in UI (pending)
-   - Standardize paper size changes across drawing types ✅
+1. Finalize paper/medium handling  
+   - [x] Centralize paper configuration management  
+   - [ ] Add paper size validation  
+   - [x] Improve margin handling consistency  
+   - [ ] Add paper size preview/overlay  
+   - [x] Standardize paper size changes across drawing types  
 
-2. Lower the barrier for new drawings
-   - Autoload drawing modules (no manual imports)
-   - Provide a CLI or scaffold script (`npm run scaffold:drawing`)
-   - Surface per-drawing settings in UI (spacing, vertex gap, etc.)
-   - Document registry/helpers in CONTRIBUTING
+2. Lower the barrier for new drawings  
+   - [x] Autoload drawing modules (manifest-driven)  
+   - [ ] Provide a CLI or scaffold script (`npm run scaffold:drawing`)  
+   - [x] Surface per-drawing settings in UI (spacing, vertex gap, etc.)  
+   - [x] Document registry/helpers in README/CONTRIBUTING  
 
-3. Enhance hatching algorithms for Simple Perfect Rectangle
-   - Add parallel line hatching
-   - Add cross-hatching
-   - Add contour hatching
-   - Add stippling
-   - Make hatching type configurable per drawing instance
-   - Add hatching angle control
-   - Add density/spacing controls
+3. Enhance hatching algorithms for Simple Perfect Rectangle  
+   - [ ] Add parallel line hatching  
+   - [ ] Add cross-hatching  
+   - [ ] Add contour hatching  
+   - [ ] Add stippling  
+   - [ ] Make hatching type configurable per drawing instance  
+   - [ ] Add hatching angle control  
+   - [ ] Add density/spacing controls
 
 ## Medium Priority
 
-4. Finish testing story
-   - Add integration tests (UI ↔ server)
-   - Add server-side tests for `/plotter`, `/plot-progress`, and `/save-svg`
-   - Add visual regression tests
+4. Finish testing story  
+   - [ ] Add integration tests (UI ↔ server)  
+   - [ ] Add server-side tests for `/plotter`, `/plot-progress`, and `/save-svg`  
+   - [ ] Add visual regression tests  
 
-5. TypeScript adoption (longer-term)
-   - Convert core files to TypeScript
-   - Add type definitions
-   - Add compile-time checks
+5. TypeScript adoption (longer-term)  
+   - [ ] Convert core files to TypeScript  
+   - [ ] Add type definitions  
+   - [ ] Add compile-time checks  
 
 ## Low Priority
 
-6. Documentation improvements
-   - Add API documentation
-   - Improve code comments
-   - Add examples for custom drawings (with registry workflow)
+6. Documentation improvements  
+   - [x] Add high-level README, architecture map, and control examples  
+   - [ ] Add API documentation  
+   - [ ] Improve code comments in the server/drawing helpers  
+   - [ ] Add step-by-step tutorials for custom drawings (with registry workflow)  

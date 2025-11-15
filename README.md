@@ -14,6 +14,15 @@ If you have an AxiDraw (or any plotter that can digest SVG layers) and love algo
 - **Algorithm playground** - the drawing registry is tiny, modern JavaScript; adding a new tiling or curve takes one module and hot reload, and any config knobs you expose are surfaced automatically in the “Drawing Settings” panel as sliders, selects, or number inputs.
 - **Transparency-first** - no cloud, no hidden binaries; everything from the Makefile to the SSE heartbeat loop is readable and hackable.
 
+### Feature Highlights
+
+- **Tabbed control console** – switch between Drawing settings and Plotter controls without scrolling. Each panel keeps its state, so you can tweak a control, hop over to the plotter, and return without losing context.
+- **Paper-aware preview** – the merged “Paper & Margin” panel lets you pick stock, match the background colour, and adjust margins with a single slider that mirrors the drawing controls styling.
+- **Per-drawing UI controls** – every drawing can declare sliders/selects (stroke spacing, Hilbert recursion level, etc.) via metadata, and the UI renders them automatically with persisted values.
+- **Log-scale sliders** – controls like Hilbert’s segment size use logarithmic scaling under the hood to give fine-grained precision near zero while still allowing very large values.
+- **Optimised Hilbert generator** – the curve now uses an iterative, bitwise implementation that handles high recursion levels gracefully.
+- **Comprehensive tests** – Vitest covers the drawing registry, math helpers, and the new controls plumbing, so refactors stay safe.
+
 ## What Ships in This Repo
 
 - **Client** - vanilla JS + CSS app (`client/js`, `client/templates`) with live preview, layer toggles, debug console, and mm ruler overlay.
@@ -151,7 +160,9 @@ After dropping a new file in `drawings/core/` or `drawings/community/`, run `mak
 Expose any parameter you care about by declaring a `controls` array in your drawing definition. Each entry provides an `id`, `label`, `target` path (for example, `drawingData.level`), and UI metadata (`inputType`, `min`, `max`, `step`, `options`, etc.). The client automatically renders those sliders/selects under **Drawing Settings**, remembers the tweaks per drawing, and reapplies them whenever you change paper, margin, medium, or orientation.
 
 ```javascript
-controls: [
+import { attachControls } from '../shared/controlsUtils.js';
+
+const controls = [
   {
     id: 'wavyAmplitude',
     label: 'Wavy Amplitude',
@@ -174,7 +185,28 @@ controls: [
     default: 3
   }
 ]
+
+export const hilbertDrawing = attachControls(defineDrawing({
+  id: 'hilbert',
+  name: 'Hilbert Curve',
+  configClass: HilbertConfig,
+  drawFunction: drawHilbertCurve,
+  presets: [ /* ... */ ]
+}), controls);
 ```
+
+**Control metadata cheatsheet**
+
+| Field             | Purpose                                                                                                 |
+|-------------------|---------------------------------------------------------------------------------------------------------|
+| `id`              | Unique key per drawing (used for persistence).                                                          |
+| `target`          | Dot-path to mutate inside the `DrawingConfig` (e.g., `line.spacing`).                                   |
+| `inputType`       | `"range"`, `"number"`, or `"select"`.                                                                   |
+| `min` / `max`     | Absolute bounds applied to the actual value.                                                            |
+| `inputMin` / `inputMax` | Optional slider bounds when using a non-linear mapping (e.g., log-scale).                          |
+| `step` / `inputStep` | Slider increment for the actual value or just the UI control (again useful for log sliders).          |
+| `scale`           | Set to `"log10"` to map the slider to a logarithmic space (great for values that span several orders). |
+| `description`     | Appears under the control to guide users.                                                               |
 
 Overrides live alongside the drawing config, so a slider change sticks even if you swap stock, toggle rulers, or revisit the drawing later in the session.
 
@@ -195,6 +227,15 @@ Need to simulate black stock or toned paper before the plotter moves? Each paper
 - Supported commands include `plot`, `stop_plot`, `raise_pen`, `toggle`, `align`, `cycle`, `home`, and `disable_motors` (see `docs/server_commands.md` for payloads).
 - `/plot-progress` streams Server-Sent Events with heartbeats plus `PLOT_COMPLETE` / `PLOT_ERROR` markers so the UI can recover automatically.
 - `plotter_config.py` defines model numbers, servo behavior, and pen heights for each supported device; switch models by editing `CURRENT_PLOTTER`.
+
+## Development & Testing
+
+- **Install dependencies** – `make install` (Python venv + npm).
+- **Run the dev server** – `make dev` (rebuilds the drawings manifest, watches for changes, and launches the Python server with autoreload).
+- **Tests** – `npm test` runs the Vitest suite. The shared tests cover the drawing registry, control helpers, render contexts, and all drawing modules.
+- **Drawing manifest** – `npm run build:drawings` (or `make manifest`) must be executed after adding or renaming drawing modules so the client can discover them.
+- **Code style** – the repo sticks to modern ES modules, ESLint defaults, and Vitest assertions. Python files follow PEP 8 and reuse the logging helpers in `server/server.py`.
+- **Contributing** – see [CONTRIBUTING.md](CONTRIBUTING.md) for workflow details, commit conventions, and review expectations.
 
 ## Roadmap & Known Issues
 
