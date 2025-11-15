@@ -5,28 +5,32 @@
             "height": 420,
             "margin": 59.4,
             "name": "A3",
-            "description": "ISO A3 Paper"
+            "description": "ISO A3 Paper",
+            "color": "#ffffff"
         },
         "A4": {
             "width": 210,
             "height": 297,
             "margin": 42,
             "name": "A4",
-            "description": "ISO A4 Paper"
+            "description": "ISO A4 Paper",
+            "color": "#ffffff"
         },
         "bristol": {
             "width": 432,
             "height": 279,
             "margin": 86.4,
             "name": "Bristol",
-            "description": "Bristol Paper 432×279mm"
+            "description": "Bristol Paper 432×279mm",
+            "color": "#ffffff"
         },
         "cm305x406": {
             "width": 305,
             "height": 406,
             "margin": 61,
             "name": "Hahnemuhle",
-            "description": "Custom 30.5cm by 40.6cm sheet"
+            "description": "Custom 30.5cm by 40.6cm sheet",
+            "color": "#ffffff"
         }
     },
     "default": "a3"

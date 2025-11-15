@@ -33,17 +33,21 @@ function beginProgressListener() {
 }
 const marginUtils = await import('./utils/marginUtils.js?v=' + Date.now());
 const { DEFAULT_MARGIN } = marginUtils;
+const DEFAULT_PAPER_COLOR = '#ffffff';
 
 const select = document.getElementById('drawingSelect');
 const container = document.getElementById('svgContainer');
 const exportButton = document.getElementById('exportSvg');
 const mediumStrokeInput = document.getElementById('mediumStrokeInput');
 const mediumSelect = document.getElementById('mediumSelect');
+const paperColorInput = document.getElementById('paperColorInput');
+const resetPaperColorButton = document.getElementById('resetPaperColor');
 
 const state = {
     paperConfig: null,
     currentPaperId: null,
     currentPaper: null,
+    currentPaperColor: DEFAULT_PAPER_COLOR,
     currentOrientation: 'landscape',
     currentMargin: DEFAULT_MARGIN,
     lastRenderedPaper: null,
@@ -75,6 +79,7 @@ const {
 } = previewController;
 
 let colorUtilsModulePromise = null;
+const HEX_COLOR_PATTERN = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 
 function loadColorUtilsModule() {
     if (!colorUtilsModulePromise) {
@@ -100,6 +105,45 @@ function populateMediumSelectOptions(mediumMetadata = {}) {
 }
 
 let isRefreshActive = false;
+
+function normalizePaperColor(color) {
+    if (typeof color !== 'string') {
+        return DEFAULT_PAPER_COLOR;
+    }
+    const trimmed = color.trim();
+    const match = HEX_COLOR_PATTERN.exec(trimmed);
+    if (!match) {
+        return DEFAULT_PAPER_COLOR;
+    }
+    const hex = match[1];
+    if (hex.length === 3) {
+        return '#' + hex.split('').map(ch => `${ch}${ch}`).join('').toLowerCase();
+    }
+    return `#${hex.toLowerCase()}`;
+}
+
+function getPaperColor(paper) {
+    if (!paper) {
+        return DEFAULT_PAPER_COLOR;
+    }
+    return normalizePaperColor(paper.previewColor || paper.color || DEFAULT_PAPER_COLOR);
+}
+
+function applyPaperColor(color) {
+    const normalized = normalizePaperColor(color);
+    state.currentPaperColor = normalized;
+    if (paperColorInput && paperColorInput.value !== normalized) {
+        paperColorInput.value = normalized;
+    }
+    const svg = container.querySelector('svg');
+    if (svg) {
+        svg.style.backgroundColor = normalized;
+    }
+    if (state.lastRenderedPaper) {
+        state.lastRenderedPaper.color = normalized;
+    }
+    return normalized;
+}
 
 function startRefresh() {
     previewStartRefresh();
@@ -213,6 +257,8 @@ async function initialize() {
         state.currentPaper = state.currentPaperId ? state.paperConfig.papers[state.currentPaperId] : null;
         state.currentMargin = marginUtils.clampMargin(state.currentPaper, state.currentMargin);
         updateMarginControls(state.currentPaper);
+        const initialPaperColor = getPaperColor(state.currentPaper);
+        applyPaperColor(initialPaperColor);
 
         const colorUtilsModule = await loadColorUtilsModule();
         const mediumOptions = populateMediumSelectOptions(colorUtilsModule.mediumMetadata);
@@ -443,9 +489,27 @@ document.getElementById('paperSelect').addEventListener('change', async (e) => {
     }
     state.currentMargin = marginUtils.clampMargin(state.currentPaper, state.currentMargin);
     updateMarginControls(state.currentPaper);
+    const defaultColor = getPaperColor(state.currentPaper);
+    applyPaperColor(defaultColor);
+    logDebug(`Paper colour reset to ${defaultColor}`);
     logDebug(`Changing paper size to ${state.currentPaper.name} (${state.currentPaper.width}×${state.currentPaper.height}mm)`);
     await draw();
 });
+
+if (paperColorInput) {
+    paperColorInput.addEventListener('input', (e) => {
+        const normalized = applyPaperColor(e.target.value);
+        logDebug(`Preview paper colour set to ${normalized}`);
+    });
+}
+
+if (resetPaperColorButton) {
+    resetPaperColorButton.addEventListener('click', () => {
+        const defaultColor = getPaperColor(state.currentPaper);
+        const normalized = applyPaperColor(defaultColor);
+        logDebug(`Paper colour reset to ${normalized}`);
+    });
+}
 
 // Medium selection handler
 if (mediumSelect) {

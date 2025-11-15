@@ -32,7 +32,8 @@ export function createPreviewController({
 
             const marginValue = resolveMargin(basePaper, state.currentMargin);
             state.currentMargin = marginValue;
-            const paperForRender = { ...basePaper, margin: marginValue };
+            const previewColor = state.currentPaperColor || basePaper.color || '#ffffff';
+            const paperForRender = { ...basePaper, margin: marginValue, color: previewColor };
             state.lastRenderedPaper = paperForRender;
             container.innerHTML = '';
 
@@ -41,6 +42,7 @@ export function createPreviewController({
                 orientation: state.currentOrientation
             });
             svg.setAttribute('preserveAspectRatio', 'none');
+            svg.style.backgroundColor = previewColor;
             container.appendChild(svg);
             populateLayerSelect(container);
             document.getElementById('layerSelect').value = currentLayer;
