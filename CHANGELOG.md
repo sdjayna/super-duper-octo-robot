@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added per-drawing control descriptors plus a reusable “Drawing Settings” panel so modules can expose arbitrary sliders/selects without touching shared UI (Hilbert curve now surfaces level, wavy amplitude, frequency, and segment size).
 - Added tabbed Drawing/Plotter panels, a combined “Paper & Margin” section, and log-scale slider plumbing so the UI feels cohesive on large control sets.
 - Added `attachControls` helper + unit tests so drawings like Bouwkamp and Delaunay can expose controls with a single call.
+- Added paper/medium-aware preview profiles (`client/js/utils/paperProfile.js`) plus SVG filter helpers/tests so the on-screen render simulates bleed, jitter, and warns about risky combinations.
 
 ### Changed
 - Drawings now export declarative definitions (config class + draw fn + presets) instead of self-registering, which removes duplicate registration errors during hot reloads.
@@ -26,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Paper + margin controls now share a single panel with a simplified slider display that mirrors the Drawing Settings UI.
 - Hilbert generation uses an iterative bitwise algorithm (rather than deeply recursive calls) to keep high recursion levels responsive.
 - Simple Perfect Rectangle controls use descriptive names (“Square Margin”, “Hatch Spacing”) and slider widgets for better UX.
+- README + docs now explain the paper descriptions, preview heuristics, and new slider styling so contributors know how to extend them.
 
 ### Fixed
 - Eliminated manifest endpoint crashes by ensuring `load_drawings_manifest` is a properly declared class method and by stripping query strings in the HTTP handler.
@@ -35,6 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Drawing definitions now attach controls directly to their config classes, guaranteeing the UI can discover per-drawing settings even if the manifest loader or cache misses an earlier registration.
 - Hatch spacing now honors a slider value of zero instead of falling back to the default spacing, so tight hatching is possible.
 - Margin slider/value updates occur in one place, preventing mismatched slider/input states when toggling paper presets.
+- Preview tests run offline by mocking medium metadata, preventing accidental network fetches during Vitest runs.
 
 ## [1.4.8] - 2025-02-16
 

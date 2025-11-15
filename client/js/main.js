@@ -3,7 +3,7 @@ import { playCompletionSiren, toggleMute } from './modules/audio.js';
 import { startProgressListener, stopProgressListener } from './modules/progress.js';
 import { createPreviewController } from './modules/preview.js';
 import { initPlotterControls } from './modules/plotterControls.js';
-import { resolvePreviewProfile } from './utils/paperProfile.js';
+import { resolvePreviewProfile, evaluatePreviewWarnings } from './utils/paperProfile.js';
 
 window.logDebug = logDebug;
 initLogTabs();
@@ -473,6 +473,21 @@ function updatePaperDescription(paper) {
     paperDescription.classList.remove('hidden');
 }
 
+function updatePreviewProfile() {
+    if (!state.currentMediumId) {
+        return;
+    }
+    state.previewProfile = resolvePreviewProfile({
+        paper: state.currentPaper,
+        mediumId: state.currentMediumId
+    });
+    if (state.previewProfile) {
+        logDebug(`Preview profile → pressure ${state.previewProfile.pressure.toFixed(2)}, spacing ${state.previewProfile.hatchSpacing.toFixed(2)}, bleed ${state.previewProfile.bleedRadius.toFixed(2)}`);
+        const warnings = evaluatePreviewWarnings(state.currentPaper, state.previewProfile);
+        warnings.forEach(message => logDebug(message, 'error'));
+    }
+}
+
 function startRefresh() {
     previewStartRefresh();
     isRefreshActive = true;
@@ -509,7 +524,18 @@ async function exportSvg() {
         const { drawings, drawingsReady } = await import('./drawings.js?v=' + Date.now());
         await drawingsReady;
         const currentConfig = drawings[select.value];
-        const svgData = new XMLSerializer().serializeToString(svg);
+        const exportSvgElement = svg.cloneNode(true);
+        const previewFilterId = svg.getAttribute('data-preview-filter');
+        if (previewFilterId) {
+            exportSvgElement.style.filter = '';
+            exportSvgElement.removeAttribute('data-preview-filter');
+            const defs = exportSvgElement.querySelector('defs');
+            const previewFilter = defs?.querySelector(`#${previewFilterId}`);
+            if (previewFilter) {
+                previewFilter.remove();
+            }
+        }
+        const svgData = new XMLSerializer().serializeToString(exportSvgElement);
 
         const paperForExport = state.lastRenderedPaper || state.currentPaper || currentConfig.paper;
         const exportConfig = {
@@ -589,6 +615,7 @@ async function initialize() {
         applyPaperColor(initialPaperColor);
         logPaperSelection(state.currentPaper);
         updatePaperDescription(state.currentPaper);
+        updatePreviewProfile();
 
         const colorUtilsModule = await loadColorUtilsModule();
         const mediumOptions = populateMediumSelectOptions(colorUtilsModule.mediumMetadata);
@@ -840,6 +867,7 @@ document.getElementById('paperSelect').addEventListener('change', async (e) => {
     logDebug(`Changing paper size to ${state.currentPaper.name} (${state.currentPaper.width}×${state.currentPaper.height}mm)`);
     logPaperSelection(state.currentPaper);
     updatePaperDescription(state.currentPaper);
+    updatePreviewProfile();
     await draw();
 });
 
@@ -899,9 +927,5 @@ async function applyMediumSettings(mediumId, colorUtilsModule) {
         }
     }
     state.currentMediumId = mediumId;
-    state.previewProfile = resolvePreviewProfile({
-        paper: state.currentPaper,
-        mediumId: mediumId
-    });
-    logDebug(`Preview profile → pressure ${state.previewProfile.pressure.toFixed(2)}, spacing ${state.previewProfile.hatchSpacing.toFixed(2)}, bleed ${state.previewProfile.bleedRadius.toFixed(2)}`);
+    updatePreviewProfile();
 }

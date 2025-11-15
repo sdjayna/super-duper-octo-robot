@@ -17,7 +17,7 @@ If you have an AxiDraw (or any plotter that can digest SVG layers) and love algo
 ### Feature Highlights
 
 - **Tabbed control console** – switch between Drawing settings and Plotter controls without scrolling. Each panel keeps its state, so you can tweak a control, hop over to the plotter, and return without losing context.
-- **Paper-aware preview** – the merged “Paper & Margin” panel lets you pick stock, match the background colour, and adjust margins with a single slider that mirrors the drawing controls styling.
+- **Paper-aware preview** – the merged “Paper & Margin” panel now blends the selected paper + medium metadata to set background color, simulate bleed/jitter via SVG filters, and surface warnings when a combo risks embossing or over-saturation.
 - **Per-drawing UI controls** – every drawing can declare sliders/selects (stroke spacing, Hilbert recursion level, etc.) via metadata, and the UI renders them automatically with persisted values.
 - **Log-scale sliders** – controls like Hilbert’s segment size use logarithmic scaling under the hood to give fine-grained precision near zero while still allowing very large values.
 - **Optimised Hilbert generator** – the curve now uses an iterative, bitwise implementation that handles high recursion levels gracefully.
@@ -249,6 +249,16 @@ The current presets ship with the following traits:
 | Hahnemühle Skizze 190 | 297 × 420 | 190 gsm | Smooth sketch | Lightweight sheet for tests and drafts |
 | Cass Art Bristol A3 | 297 × 420 | 190 gsm | Smooth bristol | Crisp white surface, low bleed, ideal for lighter-weight plotting |
 
+When you select a sheet, the UI renders the `description` + quick performance notes right under the dropdown, so you always know what is taped to the bed (even after a long debug session). These descriptions roll up the traits from JSON plus any medium-specific notes (e.g., how Sakura Microns vs. acrylic markers behave on a given stock).
+
+The preview realism comes from `client/js/utils/paperProfile.js`, which merges:
+
+1. Baseline medium behaviour (stroke pressure, hatch spacing, jitter, bleed) from `config/mediums.json`.
+2. Paper metadata (finish, absorbency, surface strength) from `config/papers.json`.
+3. Optional overrides for specific medium + paper pairs (e.g., “Sakura on Strathmore Bristol”).
+
+The resulting profile drives the live SVG filter (`client/js/utils/previewEffects.js`) that adds a subtle Gaussian blur + displacement map. The filters are injected only for the preview and stripped automatically before you export or plot, so the vector output remains crisp.
+
 Add your own stock by copying one of the entries, tweaking the dimensions, and filling out whatever metadata makes sense for your workflow. The UI will automatically log the new traits when you select it, and the preview colour will match whatever `color` you set.
 
 ## Color & Multi-Pen Layering
@@ -269,7 +279,7 @@ Add your own stock by copying one of the entries, tweaking the dimensions, and f
 
 - **Install dependencies** – `make install` (Python venv + npm).
 - **Run the dev server** – `make dev` (rebuilds the drawings manifest, watches for changes, and launches the Python server with autoreload).
-- **Tests** – `npm test` runs the Vitest suite. The shared tests cover the drawing registry, control helpers, render contexts, and all drawing modules.
+- **Tests** – `npm test` runs the Vitest suite. The shared tests cover the drawing registry, control helpers, render contexts, preview heuristics (`drawings/shared/__tests__/previewProfile.test.js`), and the SVG filter plumbing (`client/js/utils/__tests__/previewEffects.test.js`) without touching the network.
 - **Drawing manifest** – `npm run build:drawings` (or `make manifest`) must be executed after adding or renaming drawing modules so the client can discover them.
 - **Code style** – the repo sticks to modern ES modules, ESLint defaults, and Vitest assertions. Python files follow PEP 8 and reuse the logging helpers in `server/server.py`.
 - **Contributing** – see [CONTRIBUTING.md](CONTRIBUTING.md) for workflow details, commit conventions, and review expectations.

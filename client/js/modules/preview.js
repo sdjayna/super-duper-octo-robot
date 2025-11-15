@@ -1,3 +1,5 @@
+import { applyPreviewEffects } from '../utils/previewEffects.js';
+
 export function createPreviewController({
     container,
     select,
@@ -43,6 +45,7 @@ export function createPreviewController({
             });
             svg.setAttribute('preserveAspectRatio', 'none');
             svg.style.backgroundColor = previewColor;
+            applyPreviewEffects(svg, state.previewProfile);
             container.appendChild(svg);
             populateLayerSelect(container);
             document.getElementById('layerSelect').value = currentLayer;
