@@ -45,28 +45,23 @@
                             </div>
                         </div>
                     </div>
-                    <div class="control-row">
-                        <div class="control-section half-width">
-                            <h4>Paper</h4>
-                            <div class="control-section-content paper-controls">
-                                <select id="paperSelect" class="plotter-button">
-                                    <!-- Populated dynamically from paper config -->
-                                </select>
-                                <div class="paper-color-row">
-                                    <label for="paperColorInput">Colour</label>
-                                    <input type="color" id="paperColorInput" value="#ffffff" title="Set the preview background colour">
-                                    <button type="button" id="resetPaperColor" class="plotter-button paper-color-reset" title="Reset to the paper's default colour">Reset</button>
-                                </div>
+                    <div class="control-section">
+                        <h4>Paper & Margin</h4>
+                        <div class="control-section-content paper-controls">
+                            <select id="paperSelect" class="plotter-button">
+                                <!-- Populated dynamically from paper config -->
+                            </select>
+                            <div class="paper-color-row">
+                                <label for="paperColorInput">Colour</label>
+                                <input type="color" id="paperColorInput" value="#ffffff" title="Set the preview background colour">
+                                <button type="button" id="resetPaperColor" class="plotter-button paper-color-reset" title="Reset to the paper's default colour">Reset</button>
                             </div>
-                        </div>
-                        <div class="control-section half-width">
-                            <h4>Margin</h4>
-                            <div class="control-section-content margin-controls">
+                            <div class="margin-controls merged-margin-controls">
+                                <label class="margin-label" for="marginSlider">
+                                    <span>Margin</span>
+                                    <span class="drawing-control-value" id="marginValueLabel">20 mm</span>
+                                </label>
                                 <input type="range" id="marginSlider" min="0" max="100" step="1">
-                                <span class="stroke-wrapper">
-                                    <input type="number" id="marginInput" min="0" max="100" step="0.5" class="plotter-button stroke-display" value="20">
-                                    <span class="stroke-unit">mm</span>
-                                </span>
                             </div>
                         </div>
                     </div>

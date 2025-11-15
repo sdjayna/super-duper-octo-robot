@@ -6,6 +6,7 @@ import {
     generateSingleSerpentineLine,
     colorPalettes
 } from '../shared/kit.js';
+import { attachControls } from '../shared/controlsUtils.js';
 
 export class BouwkampConfig extends SizedDrawingConfig {
     constructor(params = {}) {
@@ -27,6 +28,10 @@ export class BouwkampConfig extends SizedDrawingConfig {
 
 export function drawBouwkampCode(drawingConfig, renderContext) {
     const bouwkamp = drawingConfig.drawingData;
+    const desiredSpacing = typeof drawingConfig.line?.spacing === 'number'
+        ? drawingConfig.line.spacing
+        : 2.5;
+    const spacing = Math.max(0.1, desiredSpacing);
     const { svg, builder } = createDrawingRuntime({ drawingConfig, renderContext });
 
     const helper = new Array(900).fill(0);
@@ -50,7 +55,7 @@ export function drawBouwkampCode(drawingConfig, renderContext) {
             height: size - 2 * vertexGap
         };
         const projectedRect = builder.projectRect(rectData);
-        const points = generateSingleSerpentineLine(projectedRect, drawingConfig.line.spacing, drawingConfig.line.strokeWidth);
+        const points = generateSingleSerpentineLine(projectedRect, spacing, drawingConfig.line.strokeWidth);
         
         builder.appendPath(points, { geometry: projectedRect });
 
@@ -61,7 +66,34 @@ export function drawBouwkampCode(drawingConfig, renderContext) {
     return svg;
 }
 
-export const bouwkampDrawing = defineDrawing({
+export const bouwkampControls = [
+    {
+        id: 'squareMargin',
+        label: 'Square Margin',
+        target: 'line.vertexGap',
+        inputType: 'range',
+        min: 0,
+        max: 50,
+        step: 0.25,
+        default: 0.2,
+        valueType: 'number',
+        description: 'Inset distance from each square edge before the hatch starts (creates a clean border)'
+    },
+    {
+        id: 'hatchSpacing',
+        label: 'Hatch Spacing',
+        target: 'line.spacing',
+        inputType: 'range',
+        min: 0,
+        max: 10,
+        step: 0.25,
+        default: 2,
+        valueType: 'number',
+        description: 'Distance between each serpentine hatch pass (higher values leave larger gaps)'
+    }
+];
+
+export const bouwkampDrawing = attachControls(defineDrawing({
     id: 'bouwkamp',
     name: 'Bouwkamp Code',
     configClass: BouwkampConfig,
@@ -83,6 +115,6 @@ export const bouwkampDrawing = defineDrawing({
             }
         }
     ]
-});
+}), bouwkampControls);
 
 export default bouwkampDrawing;

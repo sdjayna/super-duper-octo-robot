@@ -4,6 +4,7 @@ import {
     createDrawingRuntime,
     colorPalettes
 } from '../shared/kit.js';
+import { attachControls } from '../shared/controlsUtils.js';
 
 export class DelaunayConfig extends PointCloudDrawingConfig {
     constructor(params = {}) {
@@ -51,7 +52,9 @@ export function drawDelaunayTriangulation(drawingConfig, renderContext) {
     return svg;
 }
 
-export const delaunayDrawing = defineDrawing({
+const delaunayControls = [];
+
+export const delaunayDrawing = attachControls(defineDrawing({
     id: 'delaunay',
     name: 'Delaunay Triangulation',
     configClass: DelaunayConfig,
@@ -80,7 +83,6 @@ export const delaunayDrawing = defineDrawing({
                     ]
                 },
                 line: {
-                    spacing: 1.5,
                     strokeWidth: 0.3,
                     vertexGap: 0
                 },
@@ -88,6 +90,6 @@ export const delaunayDrawing = defineDrawing({
             }
         }
     ]
-});
+}), delaunayControls);
 
 export default delaunayDrawing;

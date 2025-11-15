@@ -99,9 +99,7 @@ export function createPreviewController({
         const normalized = resolveMargin(paper, state.currentMargin);
         state.currentMargin = normalized;
         slider.max = maxMargin;
-        input.max = maxMargin;
         slider.value = normalized;
-        input.value = normalized;
         label.textContent = `${normalized} mm`;
     }
 
@@ -112,10 +110,8 @@ export function createPreviewController({
         const normalized = clampMargin(state.currentPaper, value);
         state.currentMargin = normalized;
         const slider = document.getElementById('marginSlider');
-        const input = document.getElementById('marginInput');
         const label = document.getElementById('marginValueLabel');
         if (slider) slider.value = normalized;
-        if (input) input.value = normalized;
         if (label) label.textContent = `${normalized} mm`;
         return true;
     }

@@ -165,6 +165,7 @@ body, html {
 .paper-controls {
     flex-direction: column;
     align-items: stretch;
+    gap: 12px;
 }
 
 .paper-color-row {
@@ -194,6 +195,24 @@ body, html {
 .paper-color-reset {
     flex: 0 0 auto;
     padding: 8px 12px;
+}
+
+.merged-margin-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.merged-margin-controls label {
+    font-size: 12px;
+    color: #555;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.merged-margin-controls input[type="range"] {
+    width: 100%;
 }
 
 .drawing-settings {

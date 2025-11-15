@@ -26,3 +26,7 @@ export {
     computeBoundsFromPoints,
     computeBoundsFromRects
 } from './utils/geometryUtils.js';
+
+export {
+    attachControls
+} from './controlsUtils.js';

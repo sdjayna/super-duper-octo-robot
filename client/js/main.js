@@ -198,8 +198,17 @@ function ensureControlState(drawingKey) {
 function normalizeControlValue(control, rawValue) {
     const valueType = control.valueType || 'number';
     if (valueType === 'number') {
-        const parsed = Number(rawValue);
-        return Number.isNaN(parsed) ? 0 : parsed;
+        let parsed = Number(rawValue);
+        if (Number.isNaN(parsed)) {
+            parsed = control.min ?? 0;
+        }
+        if (typeof control.min === 'number') {
+            parsed = Math.max(control.min, parsed);
+        }
+        if (typeof control.max === 'number') {
+            parsed = Math.min(control.max, parsed);
+        }
+        return parsed;
     }
     return rawValue;
 }
@@ -214,6 +223,39 @@ function formatControlValue(value, control) {
             .replace(/\.$/, '');
     }
     return `${value}`;
+}
+
+function clamp01(value) {
+    if (value < 0) return 0;
+    if (value > 1) return 1;
+    return value;
+}
+
+function controlInputToActualValue(control, rawValue) {
+    const numeric = Number(rawValue);
+    if (control.scale === 'log10') {
+        const sliderMin = control.inputMin ?? 0;
+        const sliderMax = control.inputMax ?? 1;
+        const min = Math.max(1e-6, control.min ?? 1);
+        const max = Math.max(min, control.max ?? min);
+        const normalized = clamp01((numeric - sliderMin) / ((sliderMax - sliderMin) || 1));
+        const value = min * Math.pow(max / min, normalized);
+        const precision = control.scalePrecision ?? 0;
+        return Number(value.toFixed(precision));
+    }
+    return numeric;
+}
+
+function actualValueToControlInput(control, actualValue) {
+    if (control.scale === 'log10') {
+        const sliderMin = control.inputMin ?? 0;
+        const sliderMax = control.inputMax ?? 1;
+        const min = Math.max(1e-6, control.min ?? 1);
+        const max = Math.max(min, control.max ?? min);
+        const ratio = clamp01(Math.log(actualValue / min) / Math.log(max / min || 1));
+        return sliderMin + ratio * (sliderMax - sliderMin);
+    }
+    return actualValue;
 }
 
 async function getDrawingControlContext() {
@@ -333,14 +375,21 @@ function createControlElement(control, value, onChange) {
     } else {
         inputElement = document.createElement('input');
         inputElement.type = control.inputType || 'number';
-        if (typeof control.min !== 'undefined') inputElement.min = control.min;
-        if (typeof control.max !== 'undefined') inputElement.max = control.max;
-        if (typeof control.step !== 'undefined') inputElement.step = control.step;
-        inputElement.value = value;
+        const minAttr = control.inputMin ?? control.min;
+        const maxAttr = control.inputMax ?? control.max;
+        if (typeof minAttr !== 'undefined') inputElement.min = minAttr;
+        if (typeof maxAttr !== 'undefined') inputElement.max = maxAttr;
+        if (typeof control.step !== 'undefined') {
+            inputElement.step = control.step;
+        } else if (typeof control.inputStep !== 'undefined') {
+            inputElement.step = control.inputStep;
+        }
+        inputElement.value = actualValueToControlInput(control, value);
         const eventName = control.inputType === 'range' ? 'input' : 'change';
         inputElement.addEventListener(eventName, async (event) => {
-            valueDisplay.textContent = formatControlValue(event.target.value, control);
-            await onChange(event.target.value);
+            const actualValue = controlInputToActualValue(control, event.target.value);
+            valueDisplay.textContent = formatControlValue(actualValue, control);
+            await onChange(actualValue);
         });
     }
     inputContainer.appendChild(inputElement);
@@ -546,11 +595,6 @@ document.getElementById('toggleRefresh').addEventListener('click', toggleRefresh
 document.getElementById('toggleDebug').addEventListener('click', toggleDebugPanel);
 document.getElementById('toggleOrientation').addEventListener('click', toggleOrientation);
 document.getElementById('marginSlider').addEventListener('input', async (e) => {
-    if (applyMarginValue(e.target.value)) {
-        await draw();
-    }
-});
-document.getElementById('marginInput').addEventListener('change', async (e) => {
     if (applyMarginValue(e.target.value)) {
         await draw();
     }
