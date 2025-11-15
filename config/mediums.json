@@ -13,6 +13,9 @@
                 "jitter": 0.01,
                 "bleedRadius": 0.05
             },
+            "plotterDefaults": {
+                "penRateLower": 12
+            },
             "colors": {
                 "black": {
                     "hex": "#000000",
@@ -96,6 +99,9 @@
                 "hatchSpacing": 1.5,
                 "jitter": 0.02,
                 "bleedRadius": 0.15
+            },
+            "plotterDefaults": {
+                "penRateLower": 45
             },
             "colors": {
                 "amazonasLight": {
@@ -280,6 +286,9 @@
                 "hatchSpacing": 2,
                 "jitter": 0.025,
                 "bleedRadius": 0.18
+            },
+            "plotterDefaults": {
+                "penRateLower": 50
             },
             "colors": {
                 "neonGreen": {

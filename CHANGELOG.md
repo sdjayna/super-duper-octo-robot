@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added tabbed Drawing/Plotter panels, a combined “Paper & Margin” section, and log-scale slider plumbing so the UI feels cohesive on large control sets.
 - Added `attachControls` helper + unit tests so drawings like Bouwkamp and Delaunay can expose controls with a single call.
 - Added paper/medium-aware preview profiles (`client/js/utils/paperProfile.js`) plus SVG filter helpers/tests so the on-screen render simulates bleed, jitter, and warns about risky combinations.
+- Added pen-rate defaults per paper/medium combo so the Plotter Control slider snaps to sensible values (fast for acrylic markers, gentler for fragile stock).
 
 ### Changed
 - Drawings now export declarative definitions (config class + draw fn + presets) instead of self-registering, which removes duplicate registration errors during hot reloads.

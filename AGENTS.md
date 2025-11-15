@@ -1,7 +1,7 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-Source for the browser UI lives in `client/js` with templates under `client/templates/plotter.html` and static assets in `client/static`. Drawing definitions are split between `drawings/core`, `drawings/community`, and shared helpers in `drawings/shared`; rebuild `drawings/manifest.json` whenever you add a module. The Python bridge plus CLI wrappers reside inside `server/` and `bin/`, while paper and medium presets sit in `config/`. Automated tests live beside the client code in `client/js/__tests__`, and generated SVGs are written to `output/` for archival. Preview heuristics live in `client/js/utils/paperProfile.js` and `client/js/utils/previewEffects.js`; any change there should be mirrored with tests under `drawings/shared/__tests__` or `client/js/utils/__tests__`.
+Source for the browser UI lives in `client/js` with templates under `client/templates/plotter.html` and static assets in `client/static`. Drawing definitions are split between `drawings/core`, `drawings/community`, and shared helpers in `drawings/shared`; rebuild `drawings/manifest.json` whenever you add a module. The Python bridge plus CLI wrappers reside inside `server/` and `bin/`, while paper and medium presets sit in `config/`. Automated tests live beside the client code in `client/js/__tests__`, and generated SVGs are written to `output/` for archival. Preview heuristics live in `client/js/utils/paperProfile.js` and `client/js/utils/previewEffects.js`; any change there should be mirrored with tests under `drawings/shared/__tests__` or `client/js/utils/__tests__`. When adding new papers or mediums, update the corresponding JSON entry, adjust preview+plotter overrides in `paperProfile.js`, and expand `drawings/shared/__tests__/previewProfile.test.js` with representative cases.
 
 ## Build, Test, and Development Commands
 - `make install`: Creates the Python venv, installs Node modules, and builds the drawings manifest so the UI can boot.
@@ -20,10 +20,11 @@ JavaScript files are ES modules with 4-space indentation, `camelCase` functions 
 - Stroke width is dictated solely by the selected medium; do **not** add manual stroke-width controls to individual drawings.
 - When introducing new slider styles (logarithmic, dual-range), keep the data model declarative so the client UI can stay generic.
 
-### Paper, Mediums, and Preview Profiles
-- Paper definitions belong in `config/papers.json` and must include descriptive metadata (`description`, `finish`, `absorbency`, `surfaceStrength`, weight, colour). This data is surfaced directly in the UI under the Paper dropdown—keep it accurate.
-- Medium definitions live in `config/mediums.json`; store any preview-specific hints inside the `preview` block (`pressure`, `hatchSpacing`, `jitter`, `bleedRadius`).
-- The preview system resolves a combined profile per paper/medium pair. Update `client/js/utils/paperProfile.js` when adding new overrides and ensure corresponding tests cover any new branches.
+### Paper, Mediums, Preview Profiles, and Plotter Defaults
+- Paper definitions belong in `config/papers.json` and must include descriptive metadata (`description`, `finish`, `absorbency`, `surfaceStrength`, weight, colour, notes). This copy renders directly in the UI, so keep it succinct and accurate.
+- Medium definitions live in `config/mediums.json`; store preview hints inside `preview` (`pressure`, `hatchSpacing`, `jitter`, `bleedRadius`) and plotter tuning inside `plotterDefaults` (`penRateLower` baseline). When you add a new medium, ensure colors, preview values, and pen-rate defaults are all present.
+- The preview/plotter system merges paper + medium metadata via `client/js/utils/paperProfile.js`. Add or update overrides there (both visual and `PAPER_MEDIUM_PLOTTER_OVERRIDES`) whenever a new stock/pen combination needs special casing.
+- Mirror any new combination in `drawings/shared/__tests__/previewProfile.test.js` so Vitest guards the heuristics. Tests must hoist mocks for `mediumMetadata`.
 - Preview filters are applied only for the on-screen SVG. `previewEffects.js` must not mutate exported SVGs; add or update tests if you change that logic.
 
 ## Testing Guidelines

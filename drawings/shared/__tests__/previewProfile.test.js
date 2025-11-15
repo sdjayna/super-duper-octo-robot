@@ -7,7 +7,8 @@ const mockMediums = vi.hoisted(() => ({
             hatchSpacing: 0.5,
             jitter: 0.01,
             bleedRadius: 0.05
-        }
+        },
+        plotterDefaults: { penRateLower: 12 }
     },
     molotow: {
         preview: {
@@ -15,7 +16,17 @@ const mockMediums = vi.hoisted(() => ({
             hatchSpacing: 1.2,
             jitter: 0.02,
             bleedRadius: 0.12
-        }
+        },
+        plotterDefaults: { penRateLower: 45 }
+    },
+    speedy: {
+        preview: {
+            pressure: 0.4,
+            hatchSpacing: 0.8,
+            jitter: 0.01,
+            bleedRadius: 0.04
+        },
+        plotterDefaults: { penRateLower: 120 }
     }
 }));
 
@@ -23,7 +34,7 @@ vi.mock('../../../client/js/utils/colorUtils.js', () => ({
     mediumMetadata: mockMediums
 }));
 
-import { resolvePreviewProfile, evaluatePreviewWarnings } from '../../../client/js/utils/paperProfile.js';
+import { resolvePreviewProfile, evaluatePreviewWarnings, resolvePlotterDefaults } from '../../../client/js/utils/paperProfile.js';
 
 const BASE_PAPER = {
     id: 'dalersmootha3',
@@ -89,5 +100,33 @@ describe('evaluatePreviewWarnings', () => {
             { bleedRadius: 0.02, hatchSpacing: 1.5, pressure: 0.3 }
         );
         expect(warnings).toHaveLength(0);
+    });
+});
+
+describe('resolvePlotterDefaults', () => {
+    it('combines medium baseline with paper modifiers', () => {
+        const defaults = resolvePlotterDefaults({ paper: BASE_PAPER, mediumId: 'sakura' });
+        // base 12 + low absorbency (+5) + good surface (+2)
+        expect(defaults.penRateLower).toBe(19);
+    });
+
+    it('applies combo overrides for acrylic markers on fragile sheets', () => {
+        const paper = {
+            id: 'hahnemuhleskizze190',
+            absorbency: 'low',
+            surfaceStrength: 'moderate'
+        };
+        const defaults = resolvePlotterDefaults({ paper, mediumId: 'molotow' });
+        expect(defaults.penRateLower).toBe(32); // 45 base +5 low absorb -6 surface -12 override
+    });
+
+    it('clamps aggressive presets inside slider bounds', () => {
+        const paper = {
+            id: 'dalersmootha3',
+            absorbency: 'low',
+            surfaceStrength: 'excellent'
+        };
+        const defaults = resolvePlotterDefaults({ paper, mediumId: 'speedy' });
+        expect(defaults.penRateLower).toBe(100);
     });
 });

@@ -7,6 +7,10 @@ const DEFAULT_PROFILE = {
     bleedRadius: 0.05
 };
 
+const DEFAULT_PLOTTER_DEFAULTS = {
+    penRateLower: 10
+};
+
 const PAPER_MEDIUM_OVERRIDES = {
     sakura: {
         dalersmootha3: { pressure: -0.15, hatchSpacing: -0.5 },
@@ -24,6 +28,23 @@ const PAPER_MEDIUM_OVERRIDES = {
         daleraquafinehpa3: { pressure: 0.12, hatchSpacing: 1.2, bleedRadius: 0.11 },
         vangoghblacka3: { hatchSpacing: 0.8, bleedRadius: 0.1 },
         hahnemuhleskizze190: { pressure: -0.05, hatchSpacing: 1.0, bleedRadius: 0.13 }
+    }
+};
+
+const PAPER_MEDIUM_PLOTTER_OVERRIDES = {
+    molotow: {
+        dalersmootha3: { penRateLower: 5 },
+        daleraquafinehpa3: { penRateLower: -5 },
+        vangoghblacka3: { penRateLower: 8 },
+        strathmorebristolvellum: { penRateLower: 4 },
+        hahnemuhleskizze190: { penRateLower: -12 }
+    },
+    yono: {
+        dalersmootha3: { penRateLower: 8 },
+        daleraquafinehpa3: { penRateLower: -6 },
+        vangoghblacka3: { penRateLower: 10 },
+        strathmorebristolvellum: { penRateLower: 6 },
+        hahnemuhleskizze190: { penRateLower: -15 }
     }
 };
 
@@ -89,4 +110,40 @@ export function evaluatePreviewWarnings(paper, profile) {
         warnings.push('High pen pressure on this sheet may emboss or buckle the surface.');
     }
     return warnings;
+}
+
+function derivePenRateModifier(paper = {}) {
+    let modifier = 0;
+    const absorbency = (paper.absorbency || '').toLowerCase();
+    if (absorbency.includes('medium-high')) {
+        modifier -= 3;
+    } else if (absorbency.includes('high')) {
+        modifier -= 6;
+    } else if (absorbency.includes('low-medium')) {
+        modifier += 3;
+    } else if (absorbency.includes('low')) {
+        modifier += 5;
+    }
+
+    const strength = (paper.surfaceStrength || '').toLowerCase();
+    if (strength.includes('excellent') || strength.includes('very-strong')) {
+        modifier += 4;
+    } else if (strength.includes('good')) {
+        modifier += 2;
+    } else if (strength.includes('moderate') || strength.includes('delicate')) {
+        modifier -= 6;
+    }
+
+    return modifier;
+}
+
+export function resolvePlotterDefaults({ paper, mediumId }) {
+    const medium = mediumMetadata[mediumId] || {};
+    const base = typeof medium.plotterDefaults?.penRateLower === 'number'
+        ? medium.plotterDefaults.penRateLower
+        : DEFAULT_PLOTTER_DEFAULTS.penRateLower;
+    const overrides = PAPER_MEDIUM_PLOTTER_OVERRIDES[mediumId]?.[paper?.id]?.penRateLower ?? 0;
+    const modifier = derivePenRateModifier(paper);
+    const penRateLower = clamp(Math.round(base + modifier + overrides), 1, 100);
+    return { penRateLower };
 }

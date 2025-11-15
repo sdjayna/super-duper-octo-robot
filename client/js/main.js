@@ -3,7 +3,7 @@ import { playCompletionSiren, toggleMute } from './modules/audio.js';
 import { startProgressListener, stopProgressListener } from './modules/progress.js';
 import { createPreviewController } from './modules/preview.js';
 import { initPlotterControls } from './modules/plotterControls.js';
-import { resolvePreviewProfile, evaluatePreviewWarnings } from './utils/paperProfile.js';
+import { resolvePreviewProfile, evaluatePreviewWarnings, resolvePlotterDefaults } from './utils/paperProfile.js';
 
 window.logDebug = logDebug;
 initLogTabs();
@@ -488,6 +488,27 @@ function updatePreviewProfile() {
     }
 }
 
+function updatePlotterDefaults() {
+    if (!state.currentPaper || !state.currentMediumId) {
+        return;
+    }
+    const slider = document.getElementById('penRateLower');
+    const valueLabel = document.getElementById('penRateLowerValue');
+    if (!slider || !valueLabel) {
+        return;
+    }
+    const { penRateLower } = resolvePlotterDefaults({
+        paper: state.currentPaper,
+        mediumId: state.currentMediumId
+    }) || {};
+    if (typeof penRateLower !== 'number') {
+        return;
+    }
+    slider.value = penRateLower;
+    valueLabel.textContent = penRateLower;
+    logDebug(`Pen Rate Lower auto-set to ${penRateLower} for ${state.currentPaper.name}`);
+}
+
 function startRefresh() {
     previewStartRefresh();
     isRefreshActive = true;
@@ -868,6 +889,7 @@ document.getElementById('paperSelect').addEventListener('change', async (e) => {
     logPaperSelection(state.currentPaper);
     updatePaperDescription(state.currentPaper);
     updatePreviewProfile();
+    updatePlotterDefaults();
     await draw();
 });
 
@@ -928,4 +950,5 @@ async function applyMediumSettings(mediumId, colorUtilsModule) {
     }
     state.currentMediumId = mediumId;
     updatePreviewProfile();
+    updatePlotterDefaults();
 }
