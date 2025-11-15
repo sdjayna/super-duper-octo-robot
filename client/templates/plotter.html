@@ -17,8 +17,11 @@
             <div class="panel-title">
                 <h2>Jupiter Jayna's Plotter Art Control Centre</h2>
             </div>
-            <div class="preview-section">
-                <h3>Drawing Control</h3>
+            <div class="control-tabs">
+                <button class="control-tab active" data-target="drawingPanel">Drawing Control</button>
+                <button class="control-tab" data-target="plotterPanel">Plotter Control</button>
+            </div>
+            <div id="drawingPanel" class="preview-section control-panel active">
                 <div class="preview-controls">
                     <div class="control-row">
                         <div class="control-section half-width">
@@ -34,7 +37,14 @@
                             </div>
                         </div>
                     </div>
-
+                    <div class="control-section">
+                        <h4>Drawing Settings</h4>
+                        <div class="control-section-content drawing-settings">
+                            <div id="drawingControlsContainer" class="drawing-controls-container">
+                                <p class="drawing-controls-empty">No adjustable settings for this drawing.</p>
+                            </div>
+                        </div>
+                    </div>
                     <div class="control-row">
                         <div class="control-section half-width">
                             <h4>Paper</h4>
@@ -93,8 +103,7 @@
                     
                 </div>
             </div>
-            <div class="plotter-section">
-                <h3>Plotter Control</h3>
+            <div id="plotterPanel" class="plotter-section control-panel">
                 <div class="plotter-controls">
                     <div class="control-section">
                         <h4>Plot</h4>

@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added a manifest build pipeline (`scripts/build-drawings-manifest.mjs`, `drawings/manifest.json`) and a background watcher (`npm run watch:drawings`) that rebuilds the manifest automatically.
 - Added `client/js/drawingsLoader.js` so the UI dynamically imports drawings from the manifest, plus a dedicated `client/js/main.js` module in place of the inline `<script>`.
 - Documented and wired a new `make manifest` target; `make dev` now installs deps, runs the manifest watcher, and starts the server in a single command.
+- Added a preview paper colour picker (with per-paper defaults via `config/papers.json`) so dark or toned stock can be visualized before plotting.
+- Added per-drawing control descriptors plus a reusable “Drawing Settings” panel so modules can expose arbitrary sliders/selects without touching shared UI (Hilbert curve now surfaces level, wavy amplitude, frequency, and segment size).
 
 ### Changed
 - Drawings now export declarative definitions (config class + draw fn + presets) instead of self-registering, which removes duplicate registration errors during hot reloads.
@@ -23,6 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Eliminated manifest endpoint crashes by ensuring `load_drawings_manifest` is a properly declared class method and by stripping query strings in the HTTP handler.
 - Avoided OS watch descriptor limits by switching the manifest watcher to polling/digest mode instead of `fs.watch`.
+- Drawing Settings panel now correctly surfaces controls (e.g., Hilbert level/amplitude) by attaching descriptor metadata to each `DrawingConfig`.
+- Drawing manifest loader now appends a cache-busting timestamp when importing modules so new drawing definitions (and their controls) appear immediately after a reload.
+- Drawing definitions now attach controls directly to their config classes, guaranteeing the UI can discover per-drawing settings even if the manifest loader or cache misses an earlier registration.
 
 ## [1.4.8] - 2025-02-16
 

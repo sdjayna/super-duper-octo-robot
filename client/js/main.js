@@ -43,6 +43,8 @@ const mediumSelect = document.getElementById('mediumSelect');
 const drawingControlsContainer = document.getElementById('drawingControlsContainer');
 const paperColorInput = document.getElementById('paperColorInput');
 const resetPaperColorButton = document.getElementById('resetPaperColor');
+const controlTabs = document.querySelectorAll('.control-tab');
+const controlPanels = document.querySelectorAll('.control-panel');
 
 const state = {
     paperConfig: null,
@@ -552,6 +554,22 @@ document.getElementById('marginInput').addEventListener('change', async (e) => {
     if (applyMarginValue(e.target.value)) {
         await draw();
     }
+});
+
+function setActiveControlPanel(targetId) {
+    controlTabs.forEach(tab => {
+        const isTarget = tab.dataset.target === targetId;
+        tab.classList.toggle('active', isTarget);
+    });
+    controlPanels.forEach(panel => {
+        panel.classList.toggle('active', panel.id === targetId);
+    });
+}
+
+controlTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+        setActiveControlPanel(tab.dataset.target);
+    });
 });
 
 // Ruler visibility toggle

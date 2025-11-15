@@ -11,14 +11,14 @@ If you have an AxiDraw (or any plotter that can digest SVG layers) and love algo
 
 - **Bridges UI + hardware** - front-end sliders talk to a Python server that shells out to `axicli`, streaming progress back over SSE, so you can iterate fast without babysitting the machine.
 - **Obsessive paper + pen modeling** - paper margins, nib widths, and medium presets are first-class citizens, so the SVG matches the sheet on your desk.
-- **Algorithm playground** - the drawing registry is tiny, modern JavaScript; adding a new tiling or curve takes one module and hot reload.
+- **Algorithm playground** - the drawing registry is tiny, modern JavaScript; adding a new tiling or curve takes one module and hot reload, and any config knobs you expose are surfaced automatically in the “Drawing Settings” panel as sliders, selects, or number inputs.
 - **Transparency-first** - no cloud, no hidden binaries; everything from the Makefile to the SSE heartbeat loop is readable and hackable.
 
 ## What Ships in This Repo
 
 - **Client** - vanilla JS + CSS app (`client/js`, `client/templates`) with live preview, layer toggles, debug console, and mm ruler overlay.
 - **Server** - Python `http.server` wrapper (`server/server.py`) that serves the UI, streams `/plot-progress`, and runs `bin/axicli` commands for each layer.
-- **Config data** - `config/papers.json` and `config/mediums.json` describing margins, stroke widths, nib metadata, and color palettes.
+- **Config data** - `config/papers.json` and `config/mediums.json` describing margins, stroke widths, nib metadata, color palettes, and optional default preview colors.
 - **Output pipeline** - timestamped SVGs in `output/` with configuration comments plus Inkscape-compatible layers ready for plotting or archival.
 - **Docs + tooling** - Makefile, Vitest setup, TODO/CHANGELOG/CONTRIBUTING, and a reference screenshot so people know what they’re installing.
 - **Drawings** - a top-level `drawings/` directory split into `core/` (maintained algorithms), `community/` (user-contributed experiments), and `shared/` helpers so contributions don’t need to dig through the client bundle.
@@ -113,6 +113,18 @@ export const moireDrawing = defineDrawing({
   name: 'Moire Grid',
   configClass: MoireConfig,
   drawFunction: drawMoireGrid,
+  controls: [
+    {
+      id: 'curveDensity',
+      label: 'Curve Density',
+      target: 'drawingData.seed',
+      inputType: 'range',
+      min: 2,
+      max: 12,
+      step: 1,
+      default: 6
+    }
+  ],
   presets: [
     {
       key: 'moireDefault',
@@ -132,7 +144,43 @@ After dropping a new file in `drawings/core/` or `drawings/community/`, run `mak
 
 - **Hot reload** - `server/server_runner.py` watches files so your new drawing appears after a save.
 - **Constraint-aware helpers** - shared adapters expose color, geometry, and SVG utilities so modules don’t need deep client imports.
-- **Paper + medium presets** - drop in a new pen brand or sheet size via JSON and it immediately appears in the UI selectors.
+- **Paper + medium presets** - drop in a new pen brand or sheet size via JSON and it immediately appears in the UI selectors. Papers can specify an optional `color` (3- or 6-digit hex) that seeds the preview background, and you can override it live with the colour picker that sits next to the Paper dropdown.
+
+### Custom Drawing Controls
+
+Expose any parameter you care about by declaring a `controls` array in your drawing definition. Each entry provides an `id`, `label`, `target` path (for example, `drawingData.level`), and UI metadata (`inputType`, `min`, `max`, `step`, `options`, etc.). The client automatically renders those sliders/selects under **Drawing Settings**, remembers the tweaks per drawing, and reapplies them whenever you change paper, margin, medium, or orientation.
+
+```javascript
+controls: [
+  {
+    id: 'wavyAmplitude',
+    label: 'Wavy Amplitude',
+    target: 'drawingData.wavyAmplitude',
+    inputType: 'range',
+    min: 0,
+    max: 5,
+    step: 0.1,
+    default: 1,
+    description: 'Offsets Hilbert segments for an organic feel'
+  },
+  {
+    id: 'segmentSize',
+    label: 'Segment Size',
+    target: 'drawingData.segmentSize',
+    inputType: 'number',
+    min: 2,
+    max: 10,
+    step: 1,
+    default: 3
+  }
+]
+```
+
+Overrides live alongside the drawing config, so a slider change sticks even if you swap stock, toggle rulers, or revisit the drawing later in the session.
+
+### Preview Paper Colour
+
+Need to simulate black stock or toned paper before the plotter moves? Each paper preset may include an optional `"color": "#fefefe"` property in `config/papers.json`, and the UI now exposes a colour picker plus reset button next to the paper selector. The current colour only affects the preview/export metadata, so feel free to match whatever sheet is taped down without touching the drawing config itself.
 
 ## Color & Multi-Pen Layering
 

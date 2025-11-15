@@ -12,6 +12,31 @@
     text-align: center;
 }
 
+.control-tabs {
+    display: flex;
+    border-bottom: 1px solid #ddd;
+}
+
+.control-tab {
+    flex: 1;
+    padding: 10px 12px;
+    background: #f5f5f5;
+    border: none;
+    border-right: 1px solid #ddd;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.control-tab:last-child {
+    border-right: none;
+}
+
+.control-tab.active {
+    background: #ffffff;
+    color: #000;
+}
+
 body, html {
     margin: 0;
     padding: 0;
@@ -75,6 +100,15 @@ body, html {
     flex-direction: column;
     padding: 15px;
     border-bottom: 1px solid #ccc;
+}
+
+.control-panel {
+    display: none !important;
+    flex-direction: column;
+}
+
+.control-panel.active {
+    display: flex !important;
 }
 
 .debug-section {
@@ -160,6 +194,58 @@ body, html {
 .paper-color-reset {
     flex: 0 0 auto;
     padding: 8px 12px;
+}
+
+.drawing-settings {
+    flex-direction: column;
+}
+
+.drawing-controls-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+}
+
+.drawing-control {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.drawing-control label {
+    font-size: 12px;
+    color: #555;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.drawing-control-input {
+    width: 100%;
+}
+
+.drawing-control input,
+.drawing-control select {
+    width: 100%;
+}
+
+.drawing-control-value {
+    font-size: 11px;
+    color: #888;
+    margin-left: 8px;
+}
+
+.drawing-control-help {
+    margin: 0;
+    font-size: 11px;
+    color: #777;
+}
+
+.drawing-controls-empty {
+    font-size: 12px;
+    color: #888;
+    margin: 0;
 }
 
 /* Make icon buttons bigger and fill width */
