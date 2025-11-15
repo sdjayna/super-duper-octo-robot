@@ -12,6 +12,8 @@ let drawBouwkampCode;
 let drawDelaunayTriangulation;
 let drawHilbertCurve;
 let HilbertConfig;
+let drawCalibrationPatterns;
+let CalibrationConfig;
 let registerDrawing;
 let addDrawingPreset;
 let drawingRegistry;
@@ -34,6 +36,7 @@ beforeAll(async () => {
     ({ drawBouwkampCode } = await import('../core/bouwkamp.js'));
     ({ drawDelaunayTriangulation } = await import('../core/delaunay.js'));
     ({ drawHilbertCurve, HilbertConfig } = await import('../community/hilbert.js'));
+    ({ drawCalibrationPatterns, CalibrationConfig } = await import('../core/calibration.js'));
 
     global.fetch = originalFetch;
 });
@@ -124,5 +127,32 @@ describe('drawing functions', () => {
         expect(landscape.height).toBe(100);
         expect(portrait.width).toBe(100);
         expect(portrait.height).toBe(140);
+    });
+
+    it('renders calibration patterns with multiple spacing rows', () => {
+        const paper = { width: 200, height: 200, margin: 10 };
+        const calibrationData = new CalibrationConfig({
+            minSpacing: 0.2,
+            maxSpacing: 1,
+            samples: 3,
+            tilePadding: 2,
+            patternScale: 1,
+            width: 180,
+            height: 180
+        });
+        const drawingConfig = {
+            drawingData: calibrationData,
+            paper,
+            line: { strokeWidth: 0.3 },
+            colorPalette: palette
+        };
+        const renderContext = createRenderContext({
+            paper,
+            drawingWidth: calibrationData.bounds.width,
+            drawingHeight: calibrationData.bounds.height
+        });
+        const svg = drawCalibrationPatterns(drawingConfig, renderContext);
+        expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
+        expect(svg.querySelectorAll('text').length).toBeGreaterThan(0);
     });
 });

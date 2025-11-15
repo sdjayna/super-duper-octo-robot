@@ -19,6 +19,7 @@ JavaScript files are ES modules with 4-space indentation, `camelCase` functions 
 - Reuse naming established in the UI (“Hatch Spacing”, “Square Margin”, etc.) and provide concise descriptions that match what the control actually does in the drawing code.
 - Stroke width is dictated solely by the selected medium; do **not** add manual stroke-width controls to individual drawings.
 - When introducing new slider styles (logarithmic, dual-range), keep the data model declarative so the client UI can stay generic.
+- For complex control sets, look at `drawings/core/calibration.js` for an example of combining multiple primitives under a single config class with well-described sliders.
 
 ### Paper, Mediums, Preview Profiles, and Plotter Defaults
 - Paper definitions belong in `config/papers.json` and must include descriptive metadata (`description`, `finish`, `absorbency`, `surfaceStrength`, weight, colour, notes). This copy renders directly in the UI, so keep it succinct and accurate.
@@ -26,6 +27,12 @@ JavaScript files are ES modules with 4-space indentation, `camelCase` functions 
 - The preview/plotter system merges paper + medium metadata via `client/js/utils/paperProfile.js`. Add or update overrides there (both visual and `PAPER_MEDIUM_PLOTTER_OVERRIDES`) whenever a new stock/pen combination needs special casing.
 - Mirror any new combination in `drawings/shared/__tests__/previewProfile.test.js` so Vitest guards the heuristics. Tests must hoist mocks for `mediumMetadata`.
 - Preview filters are applied only for the on-screen SVG. `previewEffects.js` must not mutate exported SVGs; add or update tests if you change that logic.
+
+### Adding a New Drawing
+1. Create `drawings/<core|community>/<name>.js` exporting a `defineDrawing` plus optional `attachControls` setup. Use existing modules (e.g., `drawings/core/calibration.js`) as templates.
+2. Register at least one preset so the drawing appears in the UI by default.
+3. Update `drawings/manifest.json` (or run `npm run build:drawings`) to include the new module, then add targeted unit tests in `drawings/__tests__` if behaviour is complex.
+4. Document user-facing features in README/CHANGELOG when appropriate.
 
 ## Testing Guidelines
 Use Vitest for client and drawing helpers; colocate specs as `*.test.js` under `client/js/__tests__` or a sibling `__tests__` directory near the module. For every new drawing or utility, add focused tests that stub paper configs the way `drawingRegistry.test.js` does. Aim for deterministic seeds, and cover boundary cases such as margin parsing or layer toggles. When changes touch the Python server, add integration mocks or doc updates explaining manual verification until a Python test harness is added.

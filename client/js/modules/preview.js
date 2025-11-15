@@ -151,9 +151,18 @@ function syncDrawingStyles(drawings, state) {
 }
 
 function populateDrawingSelect(drawings, select) {
-    select.innerHTML = Object.entries(drawings)
+    if (!select) {
+        return;
+    }
+    const entries = Object.entries(drawings)
+        .sort(([, a], [, b]) => a.name.localeCompare(b.name));
+    const previousValue = select.value;
+    select.innerHTML = entries
         .map(([key, drawing]) => `<option value="${key}">${drawing.name}</option>`)
         .join('');
+    if (previousValue && entries.some(([key]) => key === previousValue)) {
+        select.value = previousValue;
+    }
 }
 
 function populateLayerSelect(container) {

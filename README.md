@@ -20,6 +20,7 @@ If you have an AxiDraw (or any plotter that can digest SVG layers) and love algo
 - **Tabbed control console** – switch between Drawing settings and Plotter controls without scrolling. Each panel keeps its state, so you can tweak a control, hop over to the plotter, and return without losing context.
 - **Paper-aware preview** – the merged “Paper & Margin” panel now blends the selected paper + medium metadata to set background color, simulate bleed/jitter via SVG filters, and surface warnings when a combo risks embossing or over-saturation.
 - **Adaptive plotter defaults** – the Plotter Control tab auto-tunes `Pen Rate Lower` for each paper + medium combination so acrylic markers keep moving fast while delicate stocks slow the carriage to stay safe.
+- **Calibration drawing** – ship a dedicated “Calibration Patterns” preset that lays out parallel lines, crosshatch blocks, rings, edge pairs, and sine guides across adjustable spacing bands so you can dial in new paper/ink combinations without sacrificing a hero plot.
 - **Per-drawing UI controls** – every drawing can declare sliders/selects (stroke spacing, Hilbert recursion level, etc.) via metadata, and the UI renders them automatically with persisted values.
 - **Log-scale sliders** – controls like Hilbert’s segment size use logarithmic scaling under the hood to give fine-grained precision near zero while still allowing very large values.
 - **Optimised Hilbert generator** – the curve now uses an iterative, bitwise implementation that handles high recursion levels gracefully.
@@ -33,6 +34,7 @@ If you have an AxiDraw (or any plotter that can digest SVG layers) and love algo
 - **Output pipeline** - timestamped SVGs in `output/` with configuration comments plus Inkscape-compatible layers ready for plotting or archival.
 - **Docs + tooling** - Makefile, Vitest setup, TODO/CHANGELOG/CONTRIBUTING, and a reference screenshot so people know what they’re installing.
 - **Drawings** - a top-level `drawings/` directory split into `core/` (maintained algorithms), `community/` (user-contributed experiments), and `shared/` helpers so contributions don’t need to dig through the client bundle.
+    - Core set currently includes Bouwkamp perfect squares, Delaunay triangulations, Hilbert curves, and the new Calibration Patterns grid for paper/medium tuning.
 
 ```
 ├── client/
