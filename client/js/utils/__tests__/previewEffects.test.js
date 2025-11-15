@@ -18,6 +18,9 @@ describe('applyPreviewEffects', () => {
         const filter = svg.querySelector('#previewInkFilter');
         expect(filter).toBeTruthy();
 
+        const morphology = filter.querySelector('feMorphology');
+        expect(morphology?.getAttribute('radius')).toBe(String(0.2 * 2));
+
         const blur = filter.querySelector('feGaussianBlur');
         expect(blur?.getAttribute('stdDeviation')).toBe('0.2');
 
@@ -27,6 +30,7 @@ describe('applyPreviewEffects', () => {
 
         applyPreviewEffects(svg, { bleedRadius: 0.1, jitter: 0.01 });
         expect(svg.querySelectorAll('defs').length).toBe(defsCount);
+        expect(morphology?.getAttribute('radius')).toBe(String(0.1 * 2));
         expect(blur?.getAttribute('stdDeviation')).toBe('0.1');
         expect(displacement?.getAttribute('scale')).toBe(String(0.01 * 120));
     });

@@ -30,8 +30,14 @@ function ensureFilter(defs) {
         filter.setAttribute('width', '110%');
         filter.setAttribute('height', '110%');
 
+        const morphology = document.createElementNS(SVG_NS, 'feMorphology');
+        morphology.setAttribute('operator', 'dilate');
+        morphology.setAttribute('radius', '0');
+        morphology.setAttribute('in', 'SourceGraphic');
+        morphology.setAttribute('result', 'expanded');
+
         const blur = document.createElementNS(SVG_NS, 'feGaussianBlur');
-        blur.setAttribute('in', 'SourceGraphic');
+        blur.setAttribute('in', 'expanded');
         blur.setAttribute('stdDeviation', '0');
         blur.setAttribute('result', 'blurred');
 
@@ -49,15 +55,20 @@ function ensureFilter(defs) {
         displacement.setAttribute('xChannelSelector', 'R');
         displacement.setAttribute('yChannelSelector', 'G');
 
-        filter.append(blur, turbulence, displacement);
+        filter.append(morphology, blur, turbulence, displacement);
         defs.appendChild(filter);
     }
     return filter;
 }
 
 function updateFilter(filter, profile) {
+    const morphology = filter.querySelector('feMorphology');
     const blur = filter.querySelector('feGaussianBlur');
     const displacement = filter.querySelector('feDisplacementMap');
+    if (morphology) {
+        const radius = Math.max((profile.bleedRadius || 0) * 2, 0);
+        morphology.setAttribute('radius', String(radius));
+    }
     if (blur) {
         blur.setAttribute('stdDeviation', String(profile.bleedRadius || 0));
     }
