@@ -3,18 +3,20 @@ import { loadPaperConfig } from './paperConfig.js';
 export const drawingTypes = {};
 export const drawings = {};
 
-export function registerDrawing({ id, name, configClass, drawFunction, validator }) {
+export function registerDrawing({ id, name, configClass, drawFunction, validator, controls = [] }) {
     if (!id) {
         throw new Error('Drawing id is required');
     }
     if (drawingTypes[id]) {
         throw new Error(`Drawing type "${id}" is already registered`);
     }
+    const resolvedControls = controls && controls.length ? controls : (configClass.availableControls || []);
     drawingTypes[id] = {
         name,
         configClass,
         drawFunction,
-        validator
+        validator,
+        controls: resolvedControls
     };
     return drawingTypes[id];
 }
@@ -31,6 +33,8 @@ export class DrawingConfig {
         this.paper = params.paper || {};
         this.line = params.line || {};
         this.colorPalette = params.colorPalette;
+        const typeControls = drawingTypes[this.type]?.controls || [];
+        this.controls = typeControls;
         this.drawingData = this.createDrawingData(params);
     }
 
@@ -49,4 +53,8 @@ export class DrawingConfig {
         }
         return new typeConfig.configClass(params);
     }
+}
+
+export function getDrawingControls(typeId) {
+    return drawingTypes[typeId]?.controls || [];
 }

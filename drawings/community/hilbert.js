@@ -9,6 +9,9 @@ export class HilbertConfig extends SizedDrawingConfig {
     constructor(params = {}) {
         super(params);
         this.level = params.level || 7;
+        this.wavyAmplitude = typeof params.wavyAmplitude === 'number' ? params.wavyAmplitude : 1;
+        this.wavyFrequency = typeof params.wavyFrequency === 'number' ? params.wavyFrequency : 0.5;
+        this.segmentSize = typeof params.segmentSize === 'number' ? params.segmentSize : 3;
     }
 
     getBounds({ paper, orientation } = {}) {
@@ -62,7 +65,7 @@ function generateHilbertPoints(n, width, height) {
     }));
 }
 
-function addWavyEffect(points, amplitude = 1, frequency = 0.1) {
+function addWavyEffect(points, amplitude, frequency) {
     return points.map((point, index) => {
         const angle = frequency * index;
         const dx = amplitude * Math.sin(angle);
@@ -87,13 +90,16 @@ export function drawHilbertCurve(drawingConfig, renderContext) {
     });
     const rawPoints = generateHilbertPoints(hilbert.level, bounds.width, bounds.height);
     const points = builder.projectPoints(rawPoints);
+    const segmentSize = Math.max(2, Math.floor(hilbert.segmentSize) || 3);
+    const amplitude = typeof hilbert.wavyAmplitude === 'number' ? hilbert.wavyAmplitude : 1;
+    const frequency = typeof hilbert.wavyFrequency === 'number' ? hilbert.wavyFrequency : 0.5;
 
-    for (let i = 0; i < points.length - 1; i += 3) {
+    for (let i = 0; i < points.length - 1; i += segmentSize) {
         const start = i;
-        const end = Math.min(i + 3, points.length);
+        const end = Math.min(i + segmentSize, points.length);
         
         const segmentPoints = points.slice(start, end);
-        const wavyPoints = addWavyEffect(segmentPoints, 1, 0.5);
+        const wavyPoints = addWavyEffect(segmentPoints, amplitude, frequency);
         
         builder.appendPath(wavyPoints, {
             geometry: {
@@ -108,11 +114,63 @@ export function drawHilbertCurve(drawingConfig, renderContext) {
     return svg;
 }
 
-export const hilbertDrawing = defineDrawing({
+const hilbertControls = [
+    {
+        id: 'level',
+        label: 'Hilbert Level',
+        target: 'drawingData.level',
+        inputType: 'range',
+        min: 1,
+        max: 10,
+        step: 1,
+        default: 7,
+        valueType: 'number',
+        description: 'Controls recursion depth'
+    },
+    {
+        id: 'wavyAmplitude',
+        label: 'Wavy Amplitude',
+        target: 'drawingData.wavyAmplitude',
+        inputType: 'range',
+        min: 0,
+        max: 5,
+        step: 0.1,
+        default: 1,
+        valueType: 'number',
+        description: 'Offsets curve points for organic feel'
+    },
+    {
+        id: 'wavyFrequency',
+        label: 'Wavy Frequency',
+        target: 'drawingData.wavyFrequency',
+        inputType: 'range',
+        min: 0,
+        max: 2,
+        step: 0.05,
+        default: 0.5,
+        valueType: 'number',
+        description: 'Controls oscillation speed'
+    },
+    {
+        id: 'segmentSize',
+        label: 'Segment Size',
+        target: 'drawingData.segmentSize',
+        inputType: 'number',
+        min: 2,
+        max: 10,
+        step: 1,
+        default: 3,
+        valueType: 'number',
+        description: 'Number of Hilbert points per path segment'
+    }
+];
+
+const hilbertDefinition = defineDrawing({
     id: 'hilbert',
     name: 'Hilbert Curve',
     configClass: HilbertConfig,
     drawFunction: drawHilbertCurve,
+    controls: hilbertControls,
     presets: [
         {
             key: 'hilbertCurve',
@@ -120,6 +178,9 @@ export const hilbertDrawing = defineDrawing({
             params: {
                 type: 'hilbert',
                 level: 7,
+                wavyAmplitude: 1,
+                wavyFrequency: 0.5,
+                segmentSize: 3,
                 line: {
                     spacing: 1.5,
                     strokeWidth: 0.5,
@@ -131,4 +192,10 @@ export const hilbertDrawing = defineDrawing({
     ]
 });
 
-export default hilbertDrawing;
+// Defensive: ensure controls remain attached even if cached clients pull an older helper.
+if (!Array.isArray(hilbertDefinition.controls) || !hilbertDefinition.controls.length) {
+    hilbertDefinition.controls = hilbertControls;
+}
+
+export const hilbertDrawing = hilbertDefinition;
+export default hilbertDefinition;

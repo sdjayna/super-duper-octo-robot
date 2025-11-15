@@ -17,7 +17,8 @@ function registerDrawingDefinition(definition) {
         name: definition.name,
         configClass: definition.configClass,
         drawFunction: definition.drawFunction,
-        validator: definition.validator
+        validator: definition.validator,
+        controls: definition.controls
     });
 
     (definition.presets || []).forEach(preset => {
@@ -59,9 +60,11 @@ export function ensureDrawingsLoaded() {
     if (!loadPromise) {
         loadPromise = (async () => {
             const manifest = await fetchManifest();
-            const versionSuffix = manifest.version
+            const timestamp = Date.now();
+            const baseSuffix = manifest.version
                 ? `?v=${manifest.version}`
-                : `?t=${Date.now()}`;
+                : `?t=${timestamp}`;
+            const versionSuffix = `${baseSuffix}&ts=${timestamp}`;
             await Promise.all(manifest.drawings.map(entry =>
                 importDrawing(entry, versionSuffix)
             ));

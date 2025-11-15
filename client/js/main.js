@@ -40,6 +40,7 @@ const container = document.getElementById('svgContainer');
 const exportButton = document.getElementById('exportSvg');
 const mediumStrokeInput = document.getElementById('mediumStrokeInput');
 const mediumSelect = document.getElementById('mediumSelect');
+const drawingControlsContainer = document.getElementById('drawingControlsContainer');
 const paperColorInput = document.getElementById('paperColorInput');
 const resetPaperColorButton = document.getElementById('resetPaperColor');
 
@@ -56,7 +57,8 @@ const state = {
     currentStrokeWidth: null,
     currentLineCap: 'round',
     currentLineJoin: 'round',
-    rulersVisible: false
+    rulersVisible: false,
+    drawingControlValues: {}
 };
 
 const previewController = createPreviewController({
@@ -79,6 +81,7 @@ const {
 } = previewController;
 
 let colorUtilsModulePromise = null;
+let drawingsModulePromise = null;
 const HEX_COLOR_PATTERN = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 
 function loadColorUtilsModule() {
@@ -86,6 +89,13 @@ function loadColorUtilsModule() {
         colorUtilsModulePromise = import('./utils/colorUtils.js?v=' + Date.now());
     }
     return colorUtilsModulePromise;
+}
+
+function loadDrawingsModule() {
+    if (!drawingsModulePromise) {
+        drawingsModulePromise = import('./drawings.js?v=' + Date.now());
+    }
+    return drawingsModulePromise;
 }
 
 function populateMediumSelectOptions(mediumMetadata = {}) {
@@ -143,6 +153,217 @@ function applyPaperColor(color) {
         state.lastRenderedPaper.color = normalized;
     }
     return normalized;
+}
+
+function getNestedValue(obj, path) {
+    if (!obj || !path) {
+        return undefined;
+    }
+    return path.split('.').reduce((acc, key) => {
+        if (acc && typeof acc === 'object') {
+            return acc[key];
+        }
+        return undefined;
+    }, obj);
+}
+
+function setNestedValue(obj, path, value) {
+    if (!obj || !path) {
+        return;
+    }
+    const keys = path.split('.');
+    let target = obj;
+    for (let i = 0; i < keys.length - 1; i++) {
+        const key = keys[i];
+        if (typeof target[key] !== 'object' || target[key] === null) {
+            target[key] = {};
+        }
+        target = target[key];
+    }
+    target[keys[keys.length - 1]] = value;
+}
+
+function ensureControlState(drawingKey) {
+    if (!drawingKey) {
+        return {};
+    }
+    if (!state.drawingControlValues[drawingKey]) {
+        state.drawingControlValues[drawingKey] = {};
+    }
+    return state.drawingControlValues[drawingKey];
+}
+
+function normalizeControlValue(control, rawValue) {
+    const valueType = control.valueType || 'number';
+    if (valueType === 'number') {
+        const parsed = Number(rawValue);
+        return Number.isNaN(parsed) ? 0 : parsed;
+    }
+    return rawValue;
+}
+
+function formatControlValue(value, control) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) {
+        const precision = control?.displayPrecision ?? 2;
+        return parsed
+            .toFixed(precision)
+            .replace(/\.?0+$/, '')
+            .replace(/\.$/, '');
+    }
+    return `${value}`;
+}
+
+async function getDrawingControlContext() {
+    if (!select || !select.value) {
+        return null;
+    }
+    const drawingsModule = await loadDrawingsModule();
+    const { drawings, drawingTypes, drawingsReady } = drawingsModule;
+    if (drawingsReady) {
+        await drawingsReady;
+    }
+    const drawingKey = select.value;
+    const drawingConfig = drawings[drawingKey];
+    if (!drawingConfig) {
+        logDebug(`No drawing config found for ${drawingKey}`, 'error');
+        return null;
+    }
+    const controls = drawingTypes[drawingConfig.type]?.controls
+        || drawingConfig.controls
+        || [];
+    return { drawingKey, drawingConfig, controls };
+}
+
+function applyStoredControlValues(context) {
+    if (!context) {
+        return;
+    }
+    const { drawingKey, drawingConfig, controls } = context;
+    if (!controls.length) {
+        return;
+    }
+    const saved = state.drawingControlValues[drawingKey];
+    if (!saved) {
+        return;
+    }
+    controls.forEach(control => {
+        if (Object.prototype.hasOwnProperty.call(saved, control.id)) {
+            setNestedValue(drawingConfig, control.target, saved[control.id]);
+        }
+    });
+}
+
+function getControlValue(context, control) {
+    const { drawingKey, drawingConfig } = context;
+    const saved = state.drawingControlValues[drawingKey];
+    if (saved && Object.prototype.hasOwnProperty.call(saved, control.id)) {
+        return saved[control.id];
+    }
+    const current = getNestedValue(drawingConfig, control.target);
+    if (typeof current !== 'undefined') {
+        return current;
+    }
+    return control.default;
+}
+
+async function applyDrawingControlsState() {
+    const context = await getDrawingControlContext();
+    applyStoredControlValues(context);
+    return context;
+}
+
+async function refreshDrawingControlsUI() {
+    if (!drawingControlsContainer) {
+        return;
+    }
+    const context = await applyDrawingControlsState();
+    drawingControlsContainer.innerHTML = '';
+    if (!context) {
+        return;
+    }
+    const { drawingKey, controls } = context;
+    if (!controls.length) {
+        const emptyState = document.createElement('p');
+        emptyState.className = 'drawing-controls-empty';
+        emptyState.textContent = 'No adjustable settings for this drawing.';
+        drawingControlsContainer.appendChild(emptyState);
+        return;
+    }
+    const storedValues = ensureControlState(drawingKey);
+    controls.forEach(control => {
+        const value = getControlValue(context, control);
+        storedValues[control.id] = value;
+        const controlElement = createControlElement(control, value, async (nextValue) => {
+            await handleDrawingControlChange(context, control, nextValue);
+        });
+        drawingControlsContainer.appendChild(controlElement);
+    });
+}
+
+function createControlElement(control, value, onChange) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'drawing-control';
+    const label = document.createElement('label');
+    const labelText = document.createElement('span');
+    labelText.textContent = control.label || control.id;
+    const valueDisplay = document.createElement('span');
+    valueDisplay.className = 'drawing-control-value';
+    valueDisplay.textContent = formatControlValue(value, control);
+    label.appendChild(labelText);
+    label.appendChild(valueDisplay);
+    const inputContainer = document.createElement('div');
+    inputContainer.className = 'drawing-control-input';
+    let inputElement;
+    if (control.inputType === 'select') {
+        inputElement = document.createElement('select');
+        (control.options || []).forEach(option => {
+            const opt = document.createElement('option');
+            opt.value = option.value;
+            opt.textContent = option.label;
+            inputElement.appendChild(opt);
+        });
+        inputElement.value = value;
+        inputElement.addEventListener('change', async (event) => {
+            valueDisplay.textContent = formatControlValue(event.target.value, control);
+            await onChange(event.target.value);
+        });
+    } else {
+        inputElement = document.createElement('input');
+        inputElement.type = control.inputType || 'number';
+        if (typeof control.min !== 'undefined') inputElement.min = control.min;
+        if (typeof control.max !== 'undefined') inputElement.max = control.max;
+        if (typeof control.step !== 'undefined') inputElement.step = control.step;
+        inputElement.value = value;
+        const eventName = control.inputType === 'range' ? 'input' : 'change';
+        inputElement.addEventListener(eventName, async (event) => {
+            valueDisplay.textContent = formatControlValue(event.target.value, control);
+            await onChange(event.target.value);
+        });
+    }
+    inputContainer.appendChild(inputElement);
+    wrapper.appendChild(label);
+    wrapper.appendChild(inputContainer);
+    if (control.description) {
+        const help = document.createElement('p');
+        help.className = 'drawing-control-help';
+        help.textContent = control.description;
+        wrapper.appendChild(help);
+    }
+    return wrapper;
+}
+
+async function handleDrawingControlChange(context, control, rawValue) {
+    if (!context) {
+        return;
+    }
+    const normalized = normalizeControlValue(control, rawValue);
+    setNestedValue(context.drawingConfig, control.target, normalized);
+    const storedValues = ensureControlState(context.drawingKey);
+    storedValues[control.id] = normalized;
+    await draw();
+    populateLayerSelect();
+    updatePlotterStatus();
 }
 
 function startRefresh() {
@@ -272,7 +493,9 @@ async function initialize() {
         }
 
         // Draw once but don't start refresh
+        await applyDrawingControlsState();
         await draw();
+        await refreshDrawingControlsUI();
         logDebug('Initial draw complete. Auto-refresh is off.');
     } catch (error) {
         console.error('Initialization error:', error);
@@ -284,7 +507,9 @@ initialize();
 
 // Handle drawing selection changes
 select.addEventListener('change', async () => {
+    await applyDrawingControlsState();
     await draw();
+    await refreshDrawingControlsUI();
     populateLayerSelect();
     // Set layer select to "all" when drawing changes
     document.getElementById('layerSelect').value = 'all';

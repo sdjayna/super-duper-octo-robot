@@ -1,4 +1,4 @@
-export function defineDrawing({ id, name, configClass, drawFunction, validator, presets = [] }) {
+export function defineDrawing({ id, name, configClass, drawFunction, validator, presets = [], controls = [] }) {
     if (!id) {
         throw new Error('Drawing definition requires an id');
     }
@@ -12,12 +12,16 @@ export function defineDrawing({ id, name, configClass, drawFunction, validator, 
         throw new Error(`Drawing "${id}" is missing a drawFunction`);
     }
 
+    const normalizedControls = Array.isArray(controls) ? controls : [];
+    configClass.availableControls = normalizedControls;
+
     return {
         id,
         name,
         configClass,
         drawFunction,
         validator,
-        presets
+        presets,
+        controls: normalizedControls
     };
 }

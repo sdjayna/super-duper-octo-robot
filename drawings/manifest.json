@@ -1,5 +1,5 @@
 {
-  "version": "81662b85cb91",
+  "version": "299ed62948ce",
   "drawings": [
     {
       "group": "community",
@@ -14,5 +14,5 @@
       "path": "/drawings/core/delaunay.js"
     }
   ],
-  "generatedAt": "2025-11-10T11:07:39.266Z"
+  "generatedAt": "2025-11-15T17:25:39.100Z"
 }
