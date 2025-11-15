@@ -7,10 +7,11 @@ import { areRectanglesAdjacent } from '../../../drawings/shared/utils/geometryUt
 let colorPalettes = {};
 let colorPalette = {};
 let mediumMetadata = {};
+let defaultMediumId = 'sakura';
 
 async function loadColorPalettes() {
     try {
-        const response = await fetch('/config/mediums.json');
+        const response = await fetch(`/config/mediums.json?v=${Date.now()}`);
         const config = await response.json();
         Object.entries(config.mediums).forEach(([id, medium]) => {
             const paletteName = `${id}Palette`;
@@ -20,7 +21,8 @@ async function loadColorPalettes() {
                 paletteName
             };
         });
-        colorPalette = colorPalettes[`${config.default}Palette`];
+        defaultMediumId = config.default || defaultMediumId;
+        colorPalette = colorPalettes[`${defaultMediumId}Palette`];
         return colorPalettes;
     } catch (error) {
         console.error('Error loading color palettes:', error);
@@ -90,4 +92,4 @@ class ColorManager {
 
 await loadColorPalettes();
 
-export { ColorManager, colorPalettes, colorPalette, mediumMetadata };
+export { ColorManager, colorPalettes, colorPalette, mediumMetadata, defaultMediumId };

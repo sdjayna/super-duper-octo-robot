@@ -1,163 +1,123 @@
-let progressEventSource = null;
+import { logDebug, initLogTabs } from './modules/logger.js';
+import { playCompletionSiren, toggleMute } from './modules/audio.js';
+import { startProgressListener, stopProgressListener } from './modules/progress.js';
+import { createPreviewController } from './modules/preview.js';
+import { initPlotterControls } from './modules/plotterControls.js';
 
-// Audio state
-let isMuted = false;
-const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+window.logDebug = logDebug;
+initLogTabs();
+const PREVIEW_CONTROL_SELECTOR = '.preview-section button, .preview-section select';
 
-function playCompletionSiren() {
-    if (isMuted) return;
-    const oscillator = audioContext.createOscillator();
-    const gainNode = audioContext.createGain();
-    
-    oscillator.connect(gainNode);
-    gainNode.connect(audioContext.destination);
-    
-    // Set constant volume
-    gainNode.gain.setValueAtTime(0.6, audioContext.currentTime);
-    
-    // Simple oscillation between frequencies over 3 seconds
-    const duration = 3.0;
-    const steps = 6;  // Fewer steps for shorter duration
-    const stepTime = duration / steps;
-    
-    for (let i = 0; i < steps; i++) {
-        const freq = i % 2 === 0 ? 440 : 880;
-        oscillator.frequency.setValueAtTime(freq, audioContext.currentTime + (i * stepTime));
-    }
-    
-    oscillator.start();
-    oscillator.stop(audioContext.currentTime + duration);
-}
-
-function startProgressListener() {
-    if (progressEventSource) {
-        progressEventSource.close();
-    }
-    
-    logDebug('Starting progress listener...');
-    progressEventSource = new EventSource('http://localhost:8000/plot-progress');
-    
-    progressEventSource.onmessage = function(event) {
-        try {
-            console.log('SSE message received:', event.data);  // Debug log
-            const data = JSON.parse(event.data);
-            if (data.progress) {
-                if (data.progress === 'PLOT_COMPLETE') {
-                    // Special message to re-enable controls
-                    updatePlotterStatus('Ready', true);
-                    // Re-enable all preview controls
-                    document.querySelectorAll('.preview-section button, .preview-section select').forEach(control => {
-                        control.disabled = false;
-                    });
-                    // Play completion siren
-                    playCompletionSiren();
-                    // Close SSE connection as plot is complete
-                    if (progressEventSource) {
-                        progressEventSource.close();
-                        progressEventSource = null;
-                    }
-                } else if (data.progress === 'PLOT_ERROR') {
-                    // Handle plot errors
-                    updatePlotterStatus('Ready', true);
-                    // Re-enable all preview controls
-                    document.querySelectorAll('.preview-section button, .preview-section select').forEach(control => {
-                        control.disabled = false;
-                    });
-                    // Close SSE connection as plot has errored
-                    if (progressEventSource) {
-                        progressEventSource.close();
-                        progressEventSource = null;
-                    }
-                } else {
-                    // Check if the message contains an error
-                    if (data.progress.toLowerCase().includes('error')) {
-                        logDebug(data.progress, 'error');
-                    } else {
-                        logDebug(data.progress, 'info');
-                    }
-                }
-            }
-        } catch (error) {
-            console.error('SSE parse error:', error);  // Debug log
-            logDebug(`Error parsing progress data: ${error}`, 'error');
-        }
-    };
-    
-    progressEventSource.onerror = function(error) {
-        console.error('SSE error:', error);  // Debug log
-        logDebug('Progress listener error, reconnecting...', 'error');
-        if (progressEventSource) {
-            progressEventSource.close();
-            progressEventSource = null;
-        }
-        // Attempt to reconnect after a short delay
-        setTimeout(startProgressListener, 1000);
-    };
-
-    progressEventSource.onopen = function() {
-        console.log('SSE connection opened');  // Debug log
-        logDebug('Progress listener connected');
-    };
-}
-
-// Make logDebug available globally
-window.logDebug = function(message, type = 'info') {
-    const debugLog = document.getElementById('debugLog');
-    
-    // Remove bold from previous last message if it exists
-    const previousLastEntry = debugLog.lastElementChild;
-    if (previousLastEntry) {
-        previousLastEntry.style.fontWeight = 'normal';
-    }
-    
-    const entry = document.createElement('div');
-    entry.className = `debug-entry debug-${type}`;
-    entry.dataset.isPlot = message.startsWith('Plotting') ? 'true' : 'false';
-    entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
-    entry.style.fontWeight = 'bold';  // Make new entry bold
-    console.log(entry);
-    debugLog.appendChild(entry);
-    debugLog.scrollTop = debugLog.scrollHeight;
-    
-    // Keep only last 100 messages
-    while (debugLog.children.length > 100) {
-        debugLog.removeChild(debugLog.firstChild);
-    }
-
-    // Update visibility based on current tab
-    const activeTab = document.querySelector('.tab-button.active').dataset.tab;
-    if (activeTab === 'plots' && !message.startsWith('Plotting')) {
-        entry.style.display = 'none';
-    }
-}
-
-// Add tab switching functionality
-document.addEventListener('DOMContentLoaded', function() {
-    const tabButtons = document.querySelectorAll('.tab-button');
-    
-    tabButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            // Update active state
-            tabButtons.forEach(btn => btn.classList.remove('active'));
-            this.classList.add('active');
-            
-            // Show/hide messages based on tab
-            const entries = document.querySelectorAll('.debug-entry');
-            entries.forEach(entry => {
-                if (this.dataset.tab === 'all') {
-                    entry.style.display = '';
-                } else if (this.dataset.tab === 'plots') {
-                    entry.style.display = entry.dataset.isPlot === 'true' ? '' : 'none';
-                }
-            });
-        });
+function setPreviewControlsDisabled(disabled) {
+    document.querySelectorAll(PREVIEW_CONTROL_SELECTOR).forEach(control => {
+        control.disabled = disabled;
     });
-});
-const { getMaxMargin, clampMargin, resolveMargin, DEFAULT_MARGIN } = await import('./utils/marginUtils.js?v=' + Date.now());
+}
+
+function handlePlotReady(result) {
+    stopProgressListener();
+    updatePlotterStatus('Ready', true);
+    setPreviewControlsDisabled(false);
+    if (result === 'error') {
+        logDebug('Plot reported an error', 'error');
+    }
+}
+
+function beginProgressListener() {
+    setPreviewControlsDisabled(true);
+    startProgressListener({
+        logDebug,
+        onPlotReady: handlePlotReady,
+        playCompletionSiren
+    });
+}
+const marginUtils = await import('./utils/marginUtils.js?v=' + Date.now());
+const { DEFAULT_MARGIN } = marginUtils;
 
 const select = document.getElementById('drawingSelect');
 const container = document.getElementById('svgContainer');
 const exportButton = document.getElementById('exportSvg');
+const mediumStrokeInput = document.getElementById('mediumStrokeInput');
+const mediumSelect = document.getElementById('mediumSelect');
+
+const state = {
+    paperConfig: null,
+    currentPaperId: null,
+    currentPaper: null,
+    currentOrientation: 'landscape',
+    currentMargin: DEFAULT_MARGIN,
+    lastRenderedPaper: null,
+    currentMediumId: null,
+    currentPalette: null,
+    currentStrokeWidth: null,
+    currentLineCap: 'round',
+    currentLineJoin: 'round',
+    rulersVisible: false
+};
+
+const previewController = createPreviewController({
+    container,
+    select,
+    logDebug,
+    marginUtils,
+    state
+});
+
+const {
+    draw,
+    startRefresh: previewStartRefresh,
+    stopRefresh: previewStopRefresh,
+    toggleOrientation,
+    updateMarginControls,
+    applyMarginValue,
+    updateLayerVisibility,
+    populateLayerSelect
+} = previewController;
+
+let colorUtilsModulePromise = null;
+
+function loadColorUtilsModule() {
+    if (!colorUtilsModulePromise) {
+        colorUtilsModulePromise = import('./utils/colorUtils.js?v=' + Date.now());
+    }
+    return colorUtilsModulePromise;
+}
+
+function populateMediumSelectOptions(mediumMetadata = {}) {
+    if (!mediumSelect) {
+        return [];
+    }
+    mediumSelect.innerHTML = '';
+    const mediums = Object.entries(mediumMetadata)
+        .sort(([, a], [, b]) => a.name.localeCompare(b.name));
+    mediums.forEach(([id, medium]) => {
+        const option = document.createElement('option');
+        option.value = id;
+        option.textContent = medium.name;
+        mediumSelect.appendChild(option);
+    });
+    return mediums;
+}
+
+let isRefreshActive = false;
+
+function startRefresh() {
+    previewStartRefresh();
+    isRefreshActive = true;
+}
+
+function stopRefresh() {
+    previewStopRefresh();
+    isRefreshActive = false;
+}
+
+function toggleRefresh() {
+    if (isRefreshActive) {
+        stopRefresh();
+    } else {
+        startRefresh();
+    }
+}
 
 async function updateSvg() {
     stopRefresh();  // Stop auto-refresh
@@ -173,26 +133,21 @@ async function exportSvg() {
         return;
     }
 
-        try {
-            // Get the current drawing configuration
-            const { drawings, drawingsReady } = await import('./drawings.js?v=' + Date.now());
-            await drawingsReady;
-            syncDrawingStyles(drawings);
-            const currentConfig = drawings[select.value];
-
-        // Serialize SVG
+    try {
+        const { drawings, drawingsReady } = await import('./drawings.js?v=' + Date.now());
+        await drawingsReady;
+        const currentConfig = drawings[select.value];
         const svgData = new XMLSerializer().serializeToString(svg);
 
-        // Send to server with full config
-        const paperForExport = lastRenderedPaper || currentPaper || currentConfig.paper;
+        const paperForExport = state.lastRenderedPaper || state.currentPaper || currentConfig.paper;
         const exportConfig = {
             name: currentConfig.name,
             type: currentConfig.type,
             line: currentConfig.line,
             colorPalette: currentConfig.colorPalette,
             drawingData: currentConfig.drawingData,
-            paper: paperForExport ? { ...paperForExport, orientation: currentOrientation } : null,
-            medium: currentMediumId
+            paper: paperForExport ? { ...paperForExport, orientation: state.currentOrientation } : null,
+            medium: state.currentMediumId
         };
 
         const response = await fetch('http://localhost:8000/save-svg', {
@@ -218,231 +173,6 @@ async function exportSvg() {
     }
 }
 
-function updateLayerVisibility() {
-    const svg = container.querySelector('svg');
-    if (!svg) return;
-
-    const selectedLayer = document.getElementById('layerSelect').value;
-    const layers = svg.querySelectorAll('g[inkscape\\:groupmode="layer"]');
-    
-    layers.forEach(layer => {
-        const label = layer.getAttribute('inkscape:label');
-        const layerIndex = label.split('-')[0];
-        if (selectedLayer === 'all' || layerIndex === selectedLayer) {
-            layer.style.display = '';
-        } else {
-            layer.style.display = 'none';
-        }
-    });
-}
-
-function populateLayerSelect() {
-    const svg = container.querySelector('svg');
-    if (!svg) return;
-
-    const layerSelect = document.getElementById('layerSelect');
-    const layers = svg.querySelectorAll('g[inkscape\\:groupmode="layer"]');
-    
-    // Get unique color indices
-    const colorIndices = new Set();
-    layers.forEach(layer => {
-        const label = layer.getAttribute('inkscape:label');
-        const colorIndex = label.split('-')[0];
-        colorIndices.add(colorIndex);
-    });
-
-    // Clear existing options except "Show All Layers"
-    layerSelect.innerHTML = '<option value="all">Show All Layers</option>';
-    
-    // Get all unique labels and their indices, but only for layers that have content
-    const layerInfo = new Map();
-    layers.forEach(layer => {
-        // Only include layers that have child elements (paths, etc)
-        if (layer.children.length > 0) {
-            const label = layer.getAttribute('inkscape:label');
-            const index = label.split('-')[0];
-            layerInfo.set(index, label);
-        }
-    });
-
-    // Add an option for each layer that has content
-    Array.from(layerInfo.entries())
-        .sort(([a], [b]) => Number(a) - Number(b))
-        .forEach(([index, label]) => {
-            const option = document.createElement('option');
-            option.value = index;
-            option.textContent = label;
-            layerSelect.appendChild(option);
-        });
-}
-
-// Store ruler visibility state
-let rulersVisible = false;
-let paperConfig = null;
-let currentPaperId = null;
-let currentPaper = null;
-let currentOrientation = 'landscape';
-let lastRenderedPaper = null;
-let currentMargin = DEFAULT_MARGIN;
-const mediumStrokeInput = document.getElementById('mediumStrokeInput');
-let currentMediumId = document.getElementById('mediumSelect').value || 'sakura';
-let currentPalette = null;
-let currentStrokeWidth = null;
-let currentLineCap = 'round';
-let currentLineJoin = 'round';
-
-function updateMarginControls(paper) {
-    const slider = document.getElementById('marginSlider');
-    const input = document.getElementById('marginInput');
-    const label = document.getElementById('marginValueLabel');
-    if (!paper || !slider || !input || !label) {
-        return;
-    }
-    const maxMargin = getMaxMargin(paper);
-    const normalized = resolveMargin(paper, currentMargin);
-    currentMargin = normalized;
-    slider.max = maxMargin;
-    input.max = maxMargin;
-    slider.value = normalized;
-    input.value = normalized;
-    label.textContent = `${normalized} mm`;
-}
-
-function applyMarginValue(value) {
-    if (!currentPaper) {
-        return false;
-    }
-    const normalized = clampMargin(currentPaper, value);
-    currentMargin = normalized;
-    const slider = document.getElementById('marginSlider');
-    const input = document.getElementById('marginInput');
-    const label = document.getElementById('marginValueLabel');
-    if (slider) slider.value = normalized;
-    if (input) input.value = normalized;
-    if (label) label.textContent = `${normalized} mm`;
-    return true;
-}
-
-function syncDrawingStyles(drawings) {
-    if (currentPalette) {
-        Object.values(drawings).forEach(drawing => {
-            drawing.colorPalette = currentPalette;
-        });
-    }
-    if (typeof currentStrokeWidth === 'number') {
-        Object.values(drawings).forEach(drawing => {
-            drawing.line = {
-                ...drawing.line,
-                strokeWidth: currentStrokeWidth,
-                lineCap: currentLineCap,
-                lineJoin: currentLineJoin
-            };
-        });
-    }
-}
-
-async function draw() {
-    try {
-        logDebug('Reloading modules...');
-        // Reload the modules fresh each time
-        const { generateSVG } = await import('./app.js?v=' + Date.now());
-        const { drawings, drawingsReady } = await import('./drawings.js?v=' + Date.now());
-        await drawingsReady;
-        syncDrawingStyles(drawings);
-        
-        // First time only: populate select options
-        if (!select.options.length) {
-            select.innerHTML = Object.entries(drawings)
-                .map(([key, drawing]) => 
-                    `<option value="${key}">${drawing.name}</option>`)
-                .join('');
-        }
-
-        // Store current states
-        const selectedDrawing = drawings[select.value];
-        logDebug(`Generating drawing: ${selectedDrawing.name}`);
-        const currentLayer = document.getElementById('layerSelect').value;
-        const orientationButton = document.getElementById('toggleOrientation');
-        orientationButton.textContent = currentOrientation === 'portrait' ? 'Portrait' : 'Landscape';
-        const basePaper = currentPaper || selectedDrawing.paper;
-        if (!basePaper) {
-            throw new Error('Paper configuration is missing for the selected drawing');
-        }
-        const marginValue = resolveMargin(basePaper, currentMargin);
-        currentMargin = marginValue;
-        const paperForRender = { ...basePaper, margin: marginValue };
-        lastRenderedPaper = paperForRender;
-        container.innerHTML = '';
-        const svg = await generateSVG(selectedDrawing, {
-            paper: paperForRender,
-            orientation: currentOrientation
-        });
-        svg.setAttribute('preserveAspectRatio', 'none');
-        container.appendChild(svg);
-        populateLayerSelect();
-        document.getElementById('layerSelect').value = currentLayer;
-        updateLayerVisibility();
-        
-        // Apply stored ruler visibility
-        const rulerGroup = svg.querySelector('g.preview-only');
-        const marginRect = svg.querySelector('rect.preview-only');
-        if (rulerGroup && marginRect) {
-            rulerGroup.style.display = rulersVisible ? '' : 'none';
-            marginRect.style.display = rulersVisible ? '' : 'none';
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        logDebug('Error generating SVG: ' + error.message, 'error');
-    }
-}
-
-let refreshInterval;
-
-function startRefresh() {
-    logDebug('Starting automatic refresh');
-    draw();
-    refreshInterval = setInterval(draw, 1000);
-    const toggleButton = document.getElementById('toggleRefresh');
-    toggleButton.textContent = 'Pause Refresh';
-    toggleButton.classList.remove('paused');
-}
-
-function stopRefresh() {
-    if (refreshInterval) {
-        logDebug('Pausing automatic refresh');
-        clearInterval(refreshInterval);
-        refreshInterval = null;
-        const toggleButton = document.getElementById('toggleRefresh');
-        toggleButton.textContent = 'Resume Refresh';
-        toggleButton.classList.add('paused');
-    }
-}
-
-function toggleRefresh() {
-    if (refreshInterval) {
-        stopRefresh();
-    } else {
-        startRefresh();
-    }
-}
-
-async function toggleOrientation() {
-    currentOrientation = currentOrientation === 'landscape' ? 'portrait' : 'landscape';
-    const button = document.getElementById('toggleOrientation');
-    button.textContent = currentOrientation === 'portrait' ? 'Portrait' : 'Landscape';
-    logDebug(`Switched to ${currentOrientation} orientation`);
-    const previousLayer = document.getElementById('layerSelect').value;
-    await draw();
-    populateLayerSelect();
-    const layerSelect = document.getElementById('layerSelect');
-    if (Array.from(layerSelect.options).some(option => option.value === previousLayer)) {
-        layerSelect.value = previousLayer;
-    } else {
-        layerSelect.value = 'all';
-    }
-    updateLayerVisibility();
-}
-
 // Toggle debug panel visibility
 function toggleDebugPanel() {
     const debugPanel = document.querySelector('.debug-panel');
@@ -455,11 +185,11 @@ function toggleDebugPanel() {
 async function initialize() {
     try {
         const { loadPaperConfig } = await import('./paperConfig.js?v=' + Date.now());
-        paperConfig = await loadPaperConfig();
+        state.paperConfig = await loadPaperConfig();
         const paperSelect = document.getElementById('paperSelect');
         
         // Sort papers by name
-        const papers = Object.entries(paperConfig.papers)
+        const papers = Object.entries(state.paperConfig.papers)
             .sort(([,a], [,b]) => a.name.localeCompare(b.name));
         
         // Populate dropdown
@@ -470,21 +200,30 @@ async function initialize() {
             paperSelect.appendChild(option);
         });
 
-        currentPaperId = paperConfig.default || papers[0]?.[0] || null;
-        if (!currentPaperId && papers.length) {
-            currentPaperId = papers[0][0];
+        state.currentPaperId = state.paperConfig.default || papers[0]?.[0] || null;
+        if (!state.currentPaperId && papers.length) {
+            state.currentPaperId = papers[0][0];
         }
-        if (currentPaperId && paperSelect.querySelector(`option[value="${currentPaperId}"]`)) {
-            paperSelect.value = currentPaperId;
+        if (state.currentPaperId && paperSelect.querySelector(`option[value="${state.currentPaperId}"]`)) {
+            paperSelect.value = state.currentPaperId;
         } else if (papers.length) {
             paperSelect.selectedIndex = 0;
-            currentPaperId = paperSelect.value;
+            state.currentPaperId = paperSelect.value;
         }
-        currentPaper = currentPaperId ? paperConfig.papers[currentPaperId] : null;
-        currentMargin = clampMargin(currentPaper, currentMargin);
-        updateMarginControls(currentPaper);
+        state.currentPaper = state.currentPaperId ? state.paperConfig.papers[state.currentPaperId] : null;
+        state.currentMargin = marginUtils.clampMargin(state.currentPaper, state.currentMargin);
+        updateMarginControls(state.currentPaper);
 
-        await applyMediumSettings(currentMediumId);
+        const colorUtilsModule = await loadColorUtilsModule();
+        const mediumOptions = populateMediumSelectOptions(colorUtilsModule.mediumMetadata);
+        const defaultMediumId = colorUtilsModule.defaultMediumId || mediumOptions[0]?.[0] || null;
+        if (defaultMediumId && mediumSelect) {
+            mediumSelect.value = defaultMediumId;
+            state.currentMediumId = defaultMediumId;
+            await applyMediumSettings(defaultMediumId, colorUtilsModule);
+        } else if (!defaultMediumId) {
+            logDebug('No mediums available from configuration', 'error');
+        }
 
         // Draw once but don't start refresh
         await draw();
@@ -509,8 +248,7 @@ select.addEventListener('change', async () => {
 
 // Handle layer select interactions
 document.getElementById('layerSelect').addEventListener('focus', () => {
-    // Store current refresh state
-    const wasRefreshing = !!refreshInterval;
+    const wasRefreshing = isRefreshActive;
     stopRefresh();
     // Store state on the element
     document.getElementById('layerSelect').dataset.wasRefreshing = wasRefreshing;
@@ -553,8 +291,8 @@ document.getElementById('toggleRulers').addEventListener('click', () => {
     const marginRect = svg.querySelector('rect.preview-only');
     
     if (rulerGroup && marginRect) {
-        rulersVisible = rulerGroup.style.display !== 'none';
-        if (!rulersVisible) {
+        const currentlyVisible = rulerGroup.style.display !== 'none';
+        if (!currentlyVisible) {
             rulerGroup.style.display = '';
             marginRect.style.display = '';
             button.textContent = 'Hide Ruler';
@@ -565,7 +303,7 @@ document.getElementById('toggleRulers').addEventListener('click', () => {
             button.textContent = 'Show Ruler';
             logDebug('Hidden ruler and margin');
         }
-        rulersVisible = !rulersVisible;
+        state.rulersVisible = !currentlyVisible;
     }
 });
 
@@ -643,151 +381,24 @@ function updatePlotterStatus(status, isConnected = false) {
     }
 }
 
-// Track last plotted layer
-let lastPlottedLayer = null;
-
-document.getElementById('plotterPlotLayer').addEventListener('click', async () => {
-    const svg = container.querySelector('svg');
-    if (!svg) return;
-    
-    const currentLayer = document.getElementById('layerSelect').value;
-    if (currentLayer === 'all') return;
-    
-    // Get the full layer label to extract color information
-    const layerSelect = document.getElementById('layerSelect');
-    const selectedOption = layerSelect.options[layerSelect.selectedIndex];
-    const layerLabel = selectedOption.textContent;
-
-    // Check if this layer was just plotted
-    if (currentLayer === lastPlottedLayer) {
-        if (!confirm(`Are you sure you want to plot "${layerLabel}" again?`)) {
-            logDebug('Plot cancelled - same layer');
-            return;
-        }
-    }
-    
-    // Update last plotted layer
-    lastPlottedLayer = currentLayer;
-    
-    try {
-        logDebug(`Plotting layer ${layerLabel}...`);
-        startProgressListener();  // Start listening for progress
-        
-        updatePlotterStatus('Plotting', true);  // Set status before starting plot
-        
-        const svgData = new XMLSerializer().serializeToString(svg);
-        const penPosUp = parseInt(document.getElementById('penPosUp').value);
-        const penPosDown = parseInt(document.getElementById('penPosDown').value);
-        const penRateLower = parseInt(document.getElementById('penRateLower').value);
-        
-        if (await sendPlotterCommand('plot', { 
-            svg: svgData, 
-            layer: currentLayer,
-            layerLabel: layerLabel,
-            pen_pos_up: penPosUp,
-            pen_pos_down: penPosDown,
-            pen_rate_lower: penRateLower
-        })) {
-            logDebug(`Layer ${layerLabel} plot command sent successfully`);
-        } else {
-            throw new Error('Plot command failed to start');
-        }
-    } catch (error) {
-        logDebug(`Plot failed: ${error.message}`, 'error');
-        // Clean up SSE connection if it was started
-        if (progressEventSource) {
-            progressEventSource.close();
-            progressEventSource = null;
-        }
-        // Re-enable all controls
-        updatePlotterStatus('Ready', true);
-    }
-});
-
-
-// Add event listeners for new plotter buttons
-document.getElementById('plotterCycle').addEventListener('click', async () => {
-    logDebug('Sending cycle command...');
-    const penPosUp = parseInt(document.getElementById('penPosUp').value);
-    const penPosDown = parseInt(document.getElementById('penPosDown').value);
-    const penRateLower = parseInt(document.getElementById('penRateLower').value);
-    if (await sendPlotterCommand('cycle', { 
-        pen_pos_up: penPosUp, 
-        pen_pos_down: penPosDown,
-        pen_rate_lower: penRateLower 
-    })) {
-        logDebug('Cycle command completed');
-        updatePlotterStatus('Ready', true);
-    }
-});
-
-document.getElementById('plotterToggle').addEventListener('click', async () => {
-    logDebug('Sending toggle command...');
-    const penPosUp = parseInt(document.getElementById('penPosUp').value);
-    const penPosDown = parseInt(document.getElementById('penPosDown').value);
-    const penRateLower = parseInt(document.getElementById('penRateLower').value);
-    if (await sendPlotterCommand('toggle', { 
-        pen_pos_up: penPosUp, 
-        pen_pos_down: penPosDown,
-        pen_rate_lower: penRateLower 
-    })) {
-        logDebug('Toggle command completed');
-        updatePlotterStatus('Ready', true);
-    }
-});
-
-document.getElementById('plotterAlign').addEventListener('click', async () => {
-    logDebug('Sending align command...');
-    const penPosUp = parseInt(document.getElementById('penPosUp').value);
-    const penPosDown = parseInt(document.getElementById('penPosDown').value);
-    if (await sendPlotterCommand('align', { pen_pos_up: penPosUp, pen_pos_down: penPosDown })) {
-        logDebug('Align command completed');
-        updatePlotterStatus('Ready', true);
-    }
-});
-
-document.getElementById('plotterStopPlot').addEventListener('click', async () => {
-    if (progressEventSource) {
-        progressEventSource.close();
-        progressEventSource = null;
-    }
-    logDebug('Sending stop plot command...');
-    if (await sendPlotterCommand('stop_plot')) {
-        logDebug('Stop plot command sent successfully');
-        const penPosUp = parseInt(document.getElementById('penPosUp').value);
-        if (await sendPlotterCommand('raise_pen', { pen_pos_up: penPosUp })) {
-            logDebug('Pen raised after stop');
-        }
-        updatePlotterStatus('Ready', true);  // Reset status after stopping
-    }
-});
-
-document.getElementById('plotterHome').addEventListener('click', async () => {
-    logDebug('Sending home command...');
-    const penPosUp = parseInt(document.getElementById('penPosUp').value);
-    const penPosDown = parseInt(document.getElementById('penPosDown').value);
-    if (await sendPlotterCommand('home', { pen_pos_up: penPosUp, pen_pos_down: penPosDown })) {
-        logDebug('Home command completed');
-        updatePlotterStatus('Ready', true);
-    }
-});
-
-document.getElementById('plotterDisableMotors').addEventListener('click', async () => {
-    logDebug('Sending disable motors command...');
-    if (await sendPlotterCommand('disable_motors')) {
-        logDebug('Power off command completed');
-        updatePlotterStatus('Ready', true);
-    }
+initPlotterControls({
+    container,
+    logDebug,
+    sendPlotterCommand,
+    beginProgressListener,
+    handlePlotReady,
+    updatePlotterStatus,
+    setPreviewControlsDisabled
 });
 
 // Mute button handler
 document.getElementById('toggleMute').addEventListener('click', () => {
-    isMuted = !isMuted;
+    const muted = toggleMute();
     const button = document.getElementById('toggleMute');
     const icon = button.querySelector('.speaker-icon');
-    icon.textContent = isMuted ? '🔇' : '🔊';
-    icon.style.textDecoration = isMuted ? 'line-through' : 'none';
-    logDebug(`Sound ${isMuted ? 'muted' : 'unmuted'}`);
+    icon.textContent = muted ? '🔇' : '🔊';
+    icon.style.textDecoration = muted ? 'line-through' : 'none';
+    logDebug(`Sound ${muted ? 'muted' : 'unmuted'}`);
 });
 
 // Pen position sliders
@@ -820,55 +431,61 @@ document.getElementById('penPosUp').addEventListener('input', (e) => {
 
 // Paper size selection handler
 document.getElementById('paperSelect').addEventListener('change', async (e) => {
-    if (!paperConfig) {
+    if (!state.paperConfig) {
         logDebug('Paper configuration not loaded yet', 'error');
         return;
     }
-    currentPaperId = e.target.value;
-    currentPaper = paperConfig.papers[currentPaperId];
-    if (!currentPaper) {
-        logDebug(`Paper ${currentPaperId} not found in configuration`, 'error');
+    state.currentPaperId = e.target.value;
+    state.currentPaper = state.paperConfig.papers[state.currentPaperId];
+    if (!state.currentPaper) {
+        logDebug(`Paper ${state.currentPaperId} not found in configuration`, 'error');
         return;
     }
-    currentMargin = clampMargin(currentPaper, currentMargin);
-    updateMarginControls(currentPaper);
-    logDebug(`Changing paper size to ${currentPaper.name} (${currentPaper.width}×${currentPaper.height}mm)`);
+    state.currentMargin = marginUtils.clampMargin(state.currentPaper, state.currentMargin);
+    updateMarginControls(state.currentPaper);
+    logDebug(`Changing paper size to ${state.currentPaper.name} (${state.currentPaper.width}×${state.currentPaper.height}mm)`);
     await draw();
 });
 
 // Medium selection handler
-document.getElementById('mediumSelect').addEventListener('change', async (e) => {
-    const medium = e.target.value;
-    logDebug(`Changing medium to ${medium}`);
-    await applyMediumSettings(medium);
-    await draw();
-    populateLayerSelect();
-    logDebug(`Updated drawings with ${medium} settings`);
-});
+if (mediumSelect) {
+    mediumSelect.addEventListener('change', async (e) => {
+        const medium = e.target.value;
+        logDebug(`Changing medium to ${medium}`);
+        const colorUtilsModule = await loadColorUtilsModule();
+        await applyMediumSettings(medium, colorUtilsModule);
+        await draw();
+        populateLayerSelect();
+        logDebug(`Updated drawings with ${medium} settings`);
+    });
+}
 
-async function applyMediumSettings(mediumId) {
-    const { colorPalettes, mediumMetadata } = await import('./utils/colorUtils.js?v=' + Date.now());
+async function applyMediumSettings(mediumId, colorUtilsModule) {
+    if (!mediumId) {
+        return;
+    }
+    const { colorPalettes, mediumMetadata } = colorUtilsModule || await loadColorUtilsModule();
     const paletteName = `${mediumId}Palette`;
     const palette = colorPalettes[paletteName];
     if (palette) {
-        currentPalette = palette;
+        state.currentPalette = palette;
     }
     const mediumInfo = mediumMetadata[mediumId];
     if (mediumInfo?.strokeWidth) {
-        currentStrokeWidth = mediumInfo.strokeWidth;
-        currentLineCap = mediumInfo.strokeLinecap || 'round';
-        currentLineJoin = mediumInfo.strokeLinejoin || 'round';
+        state.currentStrokeWidth = mediumInfo.strokeWidth;
+        state.currentLineCap = mediumInfo.strokeLinecap || 'round';
+        state.currentLineJoin = mediumInfo.strokeLinejoin || 'round';
         logDebug(`Applied stroke width ${mediumInfo.strokeWidth}mm for ${mediumInfo.name}`);
         if (mediumStrokeInput) {
             mediumStrokeInput.value = mediumInfo.strokeWidth;
         }
     } else {
-        currentStrokeWidth = null;
-        currentLineCap = 'round';
-        currentLineJoin = 'round';
+        state.currentStrokeWidth = null;
+        state.currentLineCap = 'round';
+        state.currentLineJoin = 'round';
         if (mediumStrokeInput) {
             mediumStrokeInput.value = '';
         }
     }
-    currentMediumId = mediumId;
+    state.currentMediumId = mediumId;
 }

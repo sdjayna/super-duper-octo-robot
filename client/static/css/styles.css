@@ -204,7 +204,9 @@ input[type="range"] {
 
 .stroke-display {
     text-align: center;
-    min-width: 4rem;
+    width: 3rem;
+    min-width: 3rem;
+    padding: 4px 6px;
 }
 
 .stroke-unit {

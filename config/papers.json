@@ -20,6 +20,13 @@
             "margin": 86.4,
             "name": "Bristol",
             "description": "Bristol Paper 432×279mm"
+        },
+        "cm305x406": {
+            "width": 305,
+            "height": 406,
+            "margin": 61,
+            "name": "Hahnemuhle",
+            "description": "Custom 30.5cm by 40.6cm sheet"
         }
     },
     "default": "a3"

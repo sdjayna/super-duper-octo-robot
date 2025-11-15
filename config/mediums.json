@@ -78,6 +78,20 @@
                 "shockBlue": { "hex": "#0083ba", "name": "Shock Blue" },
                 "shockBlueMiddle": { "hex": "#00a2e2", "name": "Shock Blue Middle" }
             }
+        },
+        "yono": {
+            "name": "Marabu Yono Marker Pen",
+            "description": "Bullet tip acrylic markers (1.5mm - 3mm)",
+            "id": "yono",
+            "strokeWidth": 2.25,
+            "strokeLinecap": "round",
+            "strokeLinejoin": "round",
+            "colors": {
+                "neonGreen": { "hex": "#39FF14", "name": "Neon Green" },
+                "neonYellow": { "hex": "#FFFF33", "name": "Neon Yellow" },
+                "neonOrange": { "hex": "#FF5F1F", "name": "Neon Orange" },
+                "neonPink": { "hex": "#FF1493", "name": "Neon Pink" }
+            }
         }
     },
     "default": "sakura"
