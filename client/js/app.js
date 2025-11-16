@@ -41,7 +41,7 @@ export async function generateSVG(drawingConfig, options = {}) {
             plotterArea: options.plotterArea
         });
 
-        const svg = typeConfig.drawFunction(drawingConfig, renderContext);
+        const svg = await typeConfig.drawFunction(drawingConfig, renderContext);
         
         if (!svg) {
             throw new Error('Failed to generate SVG');

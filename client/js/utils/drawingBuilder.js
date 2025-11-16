@@ -8,7 +8,8 @@ export function createDrawingBuilder({ svg, drawingConfig, renderContext }) {
         strokeWidth: options.strokeWidth ?? drawingConfig.line?.strokeWidth,
         strokeLinecap: options.strokeLinecap ?? drawingConfig.line?.lineCap ?? 'round',
         strokeLinejoin: options.strokeLinejoin ?? drawingConfig.line?.lineJoin ?? 'round',
-        geometry: options.geometry
+        geometry: options.geometry,
+        strokeColor: options.strokeColor
     });
 
     return {

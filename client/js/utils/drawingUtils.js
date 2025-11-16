@@ -1,6 +1,6 @@
 import { createPath } from './svgUtils.js';
 
-export function appendColoredPath({ points, strokeWidth, strokeLinecap, strokeLinejoin, geometry, colorGroups, colorManager }) {
+export function appendColoredPath({ points, strokeWidth, strokeLinecap, strokeLinejoin, geometry, colorGroups, colorManager, strokeColor }) {
     if (!points || points.length === 0) {
         return null;
     }
@@ -17,13 +17,21 @@ export function appendColoredPath({ points, strokeWidth, strokeLinecap, strokeLi
     }
 
     const fallbackGeometry = geometry || deriveGeometryFromPoints(points);
-    const color = colorManager.getValidColor(fallbackGeometry);
-    const layer = colorGroups[color];
+    let resolvedColor = null;
+    if (strokeColor && colorGroups[strokeColor]) {
+        resolvedColor = strokeColor;
+    } else {
+        resolvedColor = colorManager.getValidColor(fallbackGeometry);
+    }
+    const layer = colorGroups[resolvedColor];
 
     if (layer) {
+        if (strokeColor) {
+            path.setAttribute('stroke', strokeColor);
+        }
         layer.appendChild(path);
     }
-    colorManager.updateTracking(color, fallbackGeometry);
+    colorManager.updateTracking(resolvedColor, fallbackGeometry);
     return path;
 }
 

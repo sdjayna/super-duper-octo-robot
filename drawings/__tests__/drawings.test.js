@@ -21,6 +21,9 @@ let drawPhyllotaxis;
 let drawSpirograph;
 let drawVoronoiSketch;
 let VoronoiConfig;
+let drawPhotoTriangleMosaic;
+let PhotoTriangleConfig;
+let photoTriangleTestUtils;
 let drawFlowField;
 let drawLorenzAttractor;
 let drawIkedaAttractor;
@@ -86,6 +89,7 @@ beforeAll(async () => {
     ({ drawPhyllotaxis } = await import('../core/phyllotaxis.js'));
     ({ drawSpirograph } = await import('../core/spirograph.js'));
     ({ drawVoronoiSketch, VoronoiConfig } = await import('../core/voronoi.js'));
+    ({ drawPhotoTriangleMosaic, PhotoTriangleConfig, __TEST_ONLY__: photoTriangleTestUtils } = await import('../core/photoTriangles.js'));
     ({ drawFlowField } = await import('../core/flowField.js'));
     ({ drawLorenzAttractor } = await import('../core/lorenz.js'));
     ({ drawIkedaAttractor } = await import('../core/ikeda.js'));
@@ -143,6 +147,49 @@ describe('drawing functions', () => {
         const portraitBounds = config.getBounds({ paper, orientation: 'portrait' });
         expect(landscapeBounds.width / landscapeBounds.height).toBeCloseTo(297 / 210, 3);
         expect(portraitBounds.width / portraitBounds.height).toBeCloseTo(210 / 297, 3);
+    });
+
+    it('renders a photo triangle mosaic with hatch-aware output', async () => {
+        photoTriangleTestUtils.setImageSamplerFactory(async () => ({
+            sample: () => ({ r: 120, g: 160, b: 200, brightness: 0.5 }),
+            buildWeightTable: () => ({
+                cumulative: Float64Array.from([1, 2, 3, 4]),
+                width: 2,
+                height: 2,
+                totalWeight: 4,
+                avgBrightness: 0.5,
+                darkShare: 0.5
+            })
+        }));
+        const baseParams = {
+            width: 160,
+            height: 120,
+            triangleCount: 200,
+            imageDataUrl: 'data:image/png;base64,test'
+        };
+        const scanlineConfig = new PhotoTriangleConfig(baseParams);
+        const outlineConfig = new PhotoTriangleConfig(baseParams);
+        const renderContext = createTestRenderContext({ drawingWidth: 160, drawingHeight: 120 });
+        const scanlineDrawing = createTestDrawingConfig({
+            drawingData: scanlineConfig,
+            colorPalette: palette,
+            line: { strokeWidth: 0.25, hatchStyle: 'scanline', spacing: 1.5, hatchInset: 0.2, includeBoundary: false }
+        });
+        const outlineDrawing = createTestDrawingConfig({
+            drawingData: outlineConfig,
+            colorPalette: palette,
+            line: { strokeWidth: 0.25, hatchStyle: 'none' }
+        });
+        const scanlineSvg = await drawPhotoTriangleMosaic(scanlineDrawing, renderContext);
+        const outlineSvg = await drawPhotoTriangleMosaic(outlineDrawing, renderContext);
+        expect(scanlineSvg.querySelectorAll('path').length).toBeGreaterThan(0);
+        expect(outlineSvg.querySelectorAll('path').length).toBeGreaterThan(0);
+        const scanlinePathData = scanlineSvg.querySelector('path')?.getAttribute('d');
+        const outlinePathData = outlineSvg.querySelector('path')?.getAttribute('d');
+        expect(scanlinePathData).toBeTruthy();
+        expect(outlinePathData).toBeTruthy();
+        expect(scanlinePathData).not.toBe(outlinePathData);
+        photoTriangleTestUtils.resetImageSamplerFactory();
     });
 
     it('applies hatch styles to Voronoi cells', () => {

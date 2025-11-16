@@ -12,8 +12,10 @@ export function createPreviewController({
 }) {
     const { getMaxMargin, clampMargin, resolveMargin } = marginUtils;
     let refreshInterval = null;
+    let drawRequestId = 0;
 
     async function draw() {
+        const requestId = ++drawRequestId;
         try {
             logDebug('Reloading modules...');
             const { generateSVG } = await import('../app.js?v=' + Date.now());
@@ -47,6 +49,10 @@ export function createPreviewController({
                 orientation: state.currentOrientation,
                 plotterArea: state.plotterSpecs?.paper
             });
+
+            if (requestId !== drawRequestId) {
+                return;
+            }
             svg.setAttribute('preserveAspectRatio', 'none');
             svg.style.backgroundColor = previewColor;
             applyPreviewEffects(svg, state.previewProfile);

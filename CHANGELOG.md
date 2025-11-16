@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Photo Triangles drawing: upload a reference image, sample it at configurable resolution, run a Delaunay triangulation, and map each triangle to the nearest palette color so photo mosaics can be plotted layer-by-layer.
+- Drawing builder/context now accept `strokeColor` overrides so modules can explicitly target medium palette entries when assigning geometry to layers.
+- Drawing controls gained a `file` input type with base64 persistence so image-driven modules can keep their source data inside the standard control/state flow.
 - Medium panel multi-select that lets users disable/re-enable individual pen colors per medium, backed by a reusable palette-filter helper, persisted localStorage state, and unit tests.
 - Collapsible wrappers for Drawing Settings, Paper & Margin, and Medium sections so control stacks stay compact regardless of how many sliders a drawing exposes.
 - Palette filtering utility + Vitest coverage to ensure disabled-color subsets never wipe out an entire palette.

@@ -18,11 +18,13 @@ JavaScript files are ES modules with 4-space indentation, `camelCase` functions 
 - All drawings should expose user-facing settings through the shared controls system. Use `attachControls` from `drawings/shared/controlsUtils.js` to append descriptors (`id`, `label`, `target`, `inputType`, `min/max/step`, `default`, `description`).
 - Reuse naming established in the UI (“Hatch Spacing”, “Square Margin”, etc.) and provide concise descriptions that match what the control actually does in the drawing code.
 - Stroke width is dictated solely by the selected medium; do **not** add manual stroke-width controls to individual drawings.
+- Controls can now include `inputType: 'file'` entries (returning base64 data) and `units: 'mm'` hints for slider readouts; keep file payloads small (pre-resize images) so localStorage remains under browser limits.
 - When a control governs how many layers or offsets are emitted, cap or expand its range using the palette-aware helpers in `drawings/shared/kit.js` (`useAvailableColorCountOr`, `ensureColorReachableLimit`) so the UI can reach, but never exceed, the largest medium’s color count.
 - When introducing new slider styles (logarithmic, dual-range), keep the data model declarative so the client UI can stay generic.
 - For complex control sets, look at `drawings/core/calibration.js` for an example of combining multiple primitives under a single config class with well-described sliders.
 - Wherever feasible, emit geometry in distinct layers mapped to the available colors in the selected medium by reusing the shared color-group helpers so each palette entry becomes its own layer.
 - When polygons are present, provide a hatch-fill control when practical. Serpentine hatch is the only supported fill style today, so wire the option up to that routine until additional algorithms exist.
+- Drawings that need palette-specific colouring (e.g., Photo Triangles) must pass `strokeColor` overrides into `builder.appendPath` so each triangle/segment is forced into the nearest palette layer; never invent colors the current medium cannot plot.
 
 ### Paper, Mediums, Preview Profiles, and Plotter Defaults
 - Paper definitions belong in `config/papers.json` and must include descriptive metadata (`description`, `finish`, `absorbency`, `surfaceStrength`, weight, colour, notes). This copy renders directly in the UI, so keep it succinct and accurate. Set the `texture` field (`smooth`, `grain`, `vellum`, `gesso`, etc.) so the preview can layer the right texture overlay. Paper colour is driven only from config; there’s no manual paper-colour control in the UI. `client/js/utils/paperUtils.js` already exposes helpers for colour/texture and plotter warnings—reuse those instead of duplicating math in `main.js`.

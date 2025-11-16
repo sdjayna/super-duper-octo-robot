@@ -1,5 +1,5 @@
 {
-  "version": "29617cb7edf8",
+  "version": "162f1750c785",
   "drawings": [
     {
       "group": "community",
@@ -63,6 +63,10 @@
     },
     {
       "group": "core",
+      "path": "/drawings/core/photoTriangles.js"
+    },
+    {
+      "group": "core",
       "path": "/drawings/core/phyllotaxis.js"
     },
     {
@@ -110,5 +114,5 @@
       "path": "/drawings/core/waveInterference.js"
     }
   ],
-  "generatedAt": "2025-11-16T14:49:06.187Z"
+  "generatedAt": "2025-11-16T15:25:42.448Z"
 }

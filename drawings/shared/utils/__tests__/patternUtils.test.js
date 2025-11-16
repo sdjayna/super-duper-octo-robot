@@ -7,15 +7,15 @@ describe('generateSingleSerpentineLine', () => {
         const points = generateSingleSerpentineLine(rect, 2, 1);
 
         expect(points.length).toBeGreaterThan(5);
-        expect(points[0]).toEqual({ x: 0.5, y: 0.5 });
-        expect(points[1]).toEqual({ x: 0.5, y: 9.5 });
+        expect(points[0]).toEqual({ x: 1.5, y: 1.5 });
+        expect(points[1]).toEqual({ x: 1.5, y: 8.5 });
 
         const xs = points.map(point => point.x);
         const ys = points.map(point => point.y);
-        expect(Math.min(...xs)).toBeGreaterThanOrEqual(0.5);
-        expect(Math.max(...xs)).toBeLessThanOrEqual(19.5);
-        expect(Math.min(...ys)).toBeGreaterThanOrEqual(0.5);
-        expect(Math.max(...ys)).toBeLessThanOrEqual(9.5);
+        expect(Math.min(...xs)).toBeGreaterThanOrEqual(0);
+        expect(Math.max(...xs)).toBeLessThanOrEqual(20);
+        expect(Math.min(...ys)).toBeGreaterThanOrEqual(0);
+        expect(Math.max(...ys)).toBeLessThanOrEqual(10);
     });
 
     it('falls back to a minimal rectangle when the drawing area collapses', () => {

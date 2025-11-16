@@ -44,13 +44,13 @@ describe('drawing builder', () => {
         };
         const builder = createDrawingBuilder({ svg: document.createElementNS('http://www.w3.org/2000/svg', 'svg'), drawingConfig, renderContext: baseRenderContext });
         builder.appendPath([{ x: 0, y: 0 }, { x: 10, y: 10 }], { geometry: { x: 0, y: 0, width: 10, height: 10 } });
-        expect(appendSpy).toHaveBeenCalledWith({
+        expect(appendSpy).toHaveBeenCalledWith(expect.objectContaining({
             points: [{ x: 0, y: 0 }, { x: 10, y: 10 }],
             strokeWidth: 0.5,
             strokeLinecap: 'square',
             strokeLinejoin: 'bevel',
             geometry: { x: 0, y: 0, width: 10, height: 10 }
-        });
+        }));
     });
 
     it('projects points/rectangles via render context', () => {
@@ -61,5 +61,12 @@ describe('drawing builder', () => {
         const projectedRect = builder.projectRect({ x: 0, y: 0, width: 5, height: 5 });
         expect(projectedRect.x).toBe(10);
         expect(projectedRect.y).toBe(5);
+    });
+
+    it('supports stroke color overrides', () => {
+        const drawingConfig = { colorPalette: {}, line: {} };
+        const builder = createDrawingBuilder({ svg: document.createElementNS('http://www.w3.org/2000/svg', 'svg'), drawingConfig, renderContext: baseRenderContext });
+        builder.appendPath([{ x: 0, y: 0 }, { x: 5, y: 5 }], { strokeColor: '#ff0000' });
+        expect(appendSpy).toHaveBeenCalledWith(expect.objectContaining({ strokeColor: '#ff0000' }));
     });
 });

@@ -227,6 +227,15 @@ function persistControlValues() {
     }
 }
 
+function readFileAsDataURL(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(reader.error || new Error('Failed to read file'));
+        reader.readAsDataURL(file);
+    });
+}
+
 function loadSavedDrawingKey() {
     if (typeof window === 'undefined' || !window.localStorage) {
         return null;
@@ -434,6 +443,9 @@ function normalizeControlValue(control, rawValue) {
     if (valueType === 'boolean') {
         return Boolean(rawValue);
     }
+    if (valueType === 'string') {
+        return typeof rawValue === 'string' ? rawValue : '';
+    }
     return rawValue;
 }
 
@@ -611,7 +623,13 @@ function createControlElement(control, value, onChange) {
     labelText.textContent = control.label || control.id;
     const valueDisplay = document.createElement('span');
     valueDisplay.className = 'drawing-control-value';
-    valueDisplay.textContent = formatControlValue(value, control);
+    if (control.inputType === 'file') {
+        valueDisplay.textContent = value
+            ? (control.loadedLabel || 'Image loaded')
+            : (control.emptyLabel || 'No file selected');
+    } else {
+        valueDisplay.textContent = formatControlValue(value, control);
+    }
     label.appendChild(labelText);
     label.appendChild(valueDisplay);
     const inputContainer = document.createElement('div');
@@ -639,6 +657,26 @@ function createControlElement(control, value, onChange) {
                 const actualValue = event.target.checked;
                 valueDisplay.textContent = formatControlValue(actualValue, control);
                 await onChange(actualValue);
+            });
+        } else if (control.inputType === 'file') {
+            inputElement.type = 'file';
+            if (control.accept) {
+                inputElement.accept = control.accept;
+            }
+            inputElement.addEventListener('change', async (event) => {
+                const file = event.target.files && event.target.files[0];
+                if (!file) {
+                    valueDisplay.textContent = control.emptyLabel || 'No file selected';
+                    await onChange('');
+                    return;
+                }
+                valueDisplay.textContent = file.name;
+                try {
+                    const dataUrl = await readFileAsDataURL(file);
+                    await onChange(dataUrl);
+                } catch (error) {
+                    logDebug(`Failed to load file: ${error.message}`, 'error');
+                }
             });
         } else {
             inputElement.type = control.inputType || 'number';
