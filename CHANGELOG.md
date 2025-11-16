@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Medium panel multi-select that lets users disable/re-enable individual pen colors per medium, backed by a reusable palette-filter helper, persisted localStorage state, and unit tests.
 - Collapsible wrappers for Drawing Settings, Paper & Margin, and Medium sections so control stacks stay compact regardless of how many sliders a drawing exposes.
 - Palette filtering utility + Vitest coverage to ensure disabled-color subsets never wipe out an entire palette.
+- Polygon scanline hatching utility plus per-drawing hatch-style selector (Serpentine / Scanline / None) for Simple Perfect Rectangle so future drawings can reuse consistent fill strategies.
 - Completely rewrote the README with a tangible pitch, architecture map, and hands-on onboarding plus an expanded customization example.
 - Introduced a top-level `drawings/` workspace split into `core/`, `community/`, and `config/`, along with a reusable drawing kit (runtime wrapper, geometry/pattern/validation helpers, shared adapters).
 - Added a manifest build pipeline (`scripts/build-drawings-manifest.mjs`, `drawings/manifest.json`) and a background watcher (`npm run watch:drawings`) that rebuilds the manifest automatically.

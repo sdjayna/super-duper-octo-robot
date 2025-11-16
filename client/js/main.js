@@ -424,10 +424,17 @@ function getControlValue(context, control) {
     const { drawingKey, drawingConfig } = context;
     const saved = state.drawingControlValues[drawingKey];
     if (saved && Object.prototype.hasOwnProperty.call(saved, control.id)) {
-        return saved[control.id];
+        const savedValue = saved[control.id];
+        if (control.valueType === 'string' && typeof savedValue !== 'string') {
+            return control.default ?? '';
+        }
+        return savedValue;
     }
     const current = getNestedValue(drawingConfig, control.target);
     if (typeof current !== 'undefined') {
+        if (control.valueType === 'string' && typeof current !== 'string') {
+            return control.default ?? '';
+        }
         return current;
     }
     return control.default;

@@ -4,6 +4,8 @@ import {
     createDrawingRuntime,
     validateBouwkampCode,
     generateSingleSerpentineLine,
+    generatePolygonScanlineHatch,
+    rectToPolygon,
     colorPalettes
 } from '../shared/kit.js';
 import { attachControls } from '../shared/controlsUtils.js';
@@ -32,6 +34,9 @@ export function drawBouwkampCode(drawingConfig, renderContext) {
         ? drawingConfig.line.spacing
         : 2.5;
     const spacing = Math.max(0.1, desiredSpacing);
+    const hatchStyle = typeof drawingConfig.line?.hatchStyle === 'string'
+        ? drawingConfig.line.hatchStyle
+        : 'serpentine';
     const { svg, builder } = createDrawingRuntime({ drawingConfig, renderContext });
 
     const helper = new Array(900).fill(0);
@@ -55,9 +60,18 @@ export function drawBouwkampCode(drawingConfig, renderContext) {
             height: size - 2 * vertexGap
         };
         const projectedRect = builder.projectRect(rectData);
-        const points = generateSingleSerpentineLine(projectedRect, spacing, drawingConfig.line.strokeWidth);
-        
-        builder.appendPath(points, { geometry: projectedRect });
+        const polygon = rectToPolygon(projectedRect);
+        if (hatchStyle === 'none') {
+            builder.appendPath(polygon, { geometry: projectedRect });
+        } else if (hatchStyle === 'scanline') {
+            const scanlinePath = generatePolygonScanlineHatch(polygon, spacing);
+            if (scanlinePath.length > 0) {
+                builder.appendPath(scanlinePath, { geometry: projectedRect });
+            }
+        } else {
+            const points = generateSingleSerpentineLine(projectedRect, spacing, drawingConfig.line.strokeWidth);
+            builder.appendPath(points, { geometry: projectedRect });
+        }
 
         for (let j = 0; j < size; j++) {
             helper[i + j] += size;
@@ -90,6 +104,20 @@ export const bouwkampControls = [
         default: 2,
         valueType: 'number',
         description: 'Distance between each serpentine hatch pass (higher values leave larger gaps)'
+    },
+    {
+        id: 'hatchStyle',
+        label: 'Hatch Style',
+        target: 'line.hatchStyle',
+        inputType: 'select',
+        options: [
+            { label: 'Serpentine', value: 'serpentine' },
+            { label: 'Scanline Fill', value: 'scanline' },
+            { label: 'No Hatch', value: 'none' }
+        ],
+        default: 'serpentine',
+        valueType: 'string',
+        description: 'Choose the hatching algorithm for each rectangle'
     }
 ];
 

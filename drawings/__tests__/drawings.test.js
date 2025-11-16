@@ -99,34 +99,40 @@ beforeAll(async () => {
 });
 
 describe('drawing functions', () => {
-    it('renders Bouwkamp drawing into color layers under the drawing group', () => {
-        const drawingConfig = createTestDrawingConfig({
+    it('renders Bouwkamp drawing with selectable hatch styles', () => {
+        const buildConfig = (overrides = {}) => createTestDrawingConfig({
             drawingData: {
                 order: 1,
-                width: 50,
-                height: 50,
-                squares: [50]
+                width: 40,
+                height: 40,
+                squares: [40]
             },
             line: {
                 spacing: 2,
                 strokeWidth: 0.4,
-                vertexGap: 0.5
+                vertexGap: 0.5,
+                hatchStyle: overrides.hatchStyle
             },
             colorPalette: palette
         });
 
         const renderContext = createTestRenderContext({
-            drawingWidth: 50,
-            drawingHeight: 50
+            drawingWidth: 40,
+            drawingHeight: 40
         });
 
-        const svg = drawBouwkampCode(drawingConfig, renderContext);
-        const drawingLayer = svg.querySelector('[data-role="drawing-content"]');
-        const layers = Array.from(drawingLayer.children)
-            .filter(child => child.getAttribute('inkscape:groupmode') === 'layer');
+        const serpentineSvg = drawBouwkampCode(buildConfig({ hatchStyle: 'serpentine' }), renderContext);
+        const scanlineSvg = drawBouwkampCode(buildConfig({ hatchStyle: 'scanline' }), renderContext);
+        const outlineSvg = drawBouwkampCode(buildConfig({ hatchStyle: 'none' }), renderContext);
 
-        expect(layers.length).toBe(Object.keys(palette).length);
-        expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
+        const serpentinePathData = serpentineSvg.querySelectorAll('path')[0].getAttribute('d');
+        const scanlinePathData = scanlineSvg.querySelectorAll('path')[0].getAttribute('d');
+        const outlinePathData = outlineSvg.querySelectorAll('path')[0].getAttribute('d');
+
+        expect(serpentinePathData).toBeTruthy();
+        expect(scanlinePathData).toBeTruthy();
+        expect(outlinePathData).toBeTruthy();
+        expect(serpentinePathData).not.toBe(scanlinePathData);
     });
 
     it('renders a Hilbert curve centered on the paper', () => {

@@ -25,11 +25,11 @@
    - [x] Document registry/helpers in README/CONTRIBUTING  
 
 3. Enhance hatching algorithms for Simple Perfect Rectangle  
-   - [ ] Add parallel line hatching  
+   - [x] Add parallel line hatching  
    - [ ] Add cross-hatching  
    - [ ] Add contour hatching  
    - [ ] Add stippling  
-   - [ ] Make hatching type configurable per drawing instance  
+   - [x] Make hatching type configurable per drawing instance  
    - [ ] Add hatching angle control  
    - [ ] Add density/spacing controls
 

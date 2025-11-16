@@ -1,3 +1,5 @@
+const defaultStorage = typeof window !== 'undefined' ? window.localStorage : null;
+
 export function filterPaletteByDisabledColors(palette, disabledSet) {
     if (!palette || !disabledSet || disabledSet.size === 0) {
         return palette;
@@ -11,7 +13,7 @@ export function filterPaletteByDisabledColors(palette, disabledSet) {
 
 const STORAGE_KEY = 'mediumDisabledColorMap';
 
-export function loadDisabledColorPrefs(storage = window?.localStorage) {
+export function loadDisabledColorPrefs(storage = defaultStorage) {
     const map = new Map();
     if (!storage) {
         return map;
@@ -36,7 +38,7 @@ export function loadDisabledColorPrefs(storage = window?.localStorage) {
     return map;
 }
 
-export function saveDisabledColorPrefs(disabledMap, storage = window?.localStorage) {
+export function saveDisabledColorPrefs(disabledMap, storage = defaultStorage) {
     if (!storage) {
         return;
     }

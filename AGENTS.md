@@ -53,3 +53,10 @@ Follow the Conventional Commit-style prefixes already in history (`feat:`, `fix:
 - Assume every plot should maximize color usage. Prefer multi-layer treatments, dense fills, and rich palettes over minimalist strokes so the final SVG leaves little or no paper showing through.
 - When tuning defaults or adding controls/presets, bias toward higher coverage (e.g., tighter spacing, more offsets, broader hatch fills) unless the user explicitly asks for negative space.
 - When disabling colors temporarily (via the Medium multi-select), keep in mind the overall goal is still full-paper coverage—ensure the remaining palette can span many layers so the artwork feels saturated.
+
+### Hatching Guidance
+- Separate geometry into convex/non-convex polygons wherever possible so fill routines can treat each region independently; every patch should be covered.
+- Favor fill strategies that provide continuous, serpentine-style travel and avoid re-tracing strokes; wet media lifts when the pen travels over the same line twice.
+- Minimize pen-up/pen-down events in hatching routines. Continuous fills (offset waves, spirals, snakes, space-filling curves) are preferred over discrete segment sets.
+- When experimenting with new hatch algorithms, prioritize high coverage with a single continuous toolpath: e.g., evolving spirals, offset contour snakes, or Hilbert/Peano fills with run-length smoothing.
+- Hatching utilities live under `drawings/shared/utils/hatchingUtils.js` (scanline fill, rectangle helpers). Prefer adding new algorithms there so all drawings can reuse them; expose user-facing choices through controls (`line.hatchStyle`) so plots stay configurable.

@@ -23,6 +23,11 @@ export {
 } from './utils/patternUtils.js';
 
 export {
+    generatePolygonScanlineHatch,
+    rectToPolygon
+} from './utils/hatchingUtils.js';
+
+export {
     areRectanglesAdjacent,
     computeBoundsFromPoints,
     computeBoundsFromRects
