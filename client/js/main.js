@@ -40,7 +40,6 @@ const DEFAULT_PAPER_COLOR = '#ffffff';
 const select = document.getElementById('drawingSelect');
 const container = document.getElementById('svgContainer');
 const exportButton = document.getElementById('exportSvg');
-const mediumStrokeInput = document.getElementById('mediumStrokeInput');
 const mediumSelect = document.getElementById('mediumSelect');
 const drawingControlsContainer = document.getElementById('drawingControlsContainer');
 const controlTabs = document.querySelectorAll('.control-tab');
@@ -49,6 +48,9 @@ const paperDescription = document.getElementById('paperDescription');
 const drawingSettingsToggle = document.getElementById('drawingSettingsToggle');
 const drawingSettingsContent = document.getElementById('drawingSettingsContent');
 const drawingSettingsSection = document.querySelector('[data-role="drawing-settings-section"]');
+const paperSettingsToggle = document.getElementById('paperSettingsToggle');
+const paperSettingsContent = document.getElementById('paperSettingsContent');
+const paperSettingsSection = document.querySelector('[data-role="paper-settings-section"]');
 
 const state = {
     paperConfig: null,
@@ -96,23 +98,41 @@ let drawingsModulePromise = null;
 let plotterSpecsPromise = null;
 const PAPER_TEXTURE_CLASSES = ['texture-smooth', 'texture-grain', 'texture-vellum', 'texture-gesso'];
 
-function setDrawingSettingsCollapsed(collapsed) {
-    if (!drawingSettingsSection || !drawingSettingsToggle || !drawingSettingsContent) {
+function registerSectionToggle({ section, toggle, content, defaultCollapsed = false, label }) {
+    if (!section || !toggle || !content) {
         return;
     }
-    drawingSettingsSection.classList.toggle('collapsed', collapsed);
-    drawingSettingsContent.hidden = collapsed;
-    drawingSettingsToggle.setAttribute('aria-expanded', String(!collapsed));
+    function setCollapsed(collapsed) {
+        section.classList.toggle('collapsed', collapsed);
+        content.hidden = collapsed;
+        toggle.setAttribute('aria-expanded', String(!collapsed));
+    }
+    toggle.addEventListener('click', () => {
+        const isCollapsed = section.classList.contains('collapsed');
+        setCollapsed(!isCollapsed);
+    });
+    if (label) {
+        toggle.setAttribute('aria-label', label);
+    } else if (!toggle.getAttribute('aria-label')) {
+        toggle.setAttribute('aria-label', 'Toggle section');
+    }
+    setCollapsed(defaultCollapsed);
+    return { setCollapsed };
 }
 
-if (drawingSettingsToggle) {
-    drawingSettingsToggle.addEventListener('click', () => {
-        const currentlyCollapsed = drawingSettingsSection?.classList.contains('collapsed');
-        setDrawingSettingsCollapsed(!currentlyCollapsed);
-    });
-    drawingSettingsToggle.setAttribute('aria-label', 'Toggle drawing settings panel');
-    setDrawingSettingsCollapsed(false);
-}
+registerSectionToggle({
+    section: drawingSettingsSection,
+    toggle: drawingSettingsToggle,
+    content: drawingSettingsContent,
+    label: 'Toggle drawing settings panel'
+});
+
+registerSectionToggle({
+    section: paperSettingsSection,
+    toggle: paperSettingsToggle,
+    content: paperSettingsContent,
+    label: 'Toggle paper and margin panel'
+});
 
 function loadColorUtilsModule() {
     if (!colorUtilsModulePromise) {
@@ -970,16 +990,10 @@ async function applyMediumSettings(mediumId, colorUtilsModule) {
         state.currentLineCap = mediumInfo.strokeLinecap || 'round';
         state.currentLineJoin = mediumInfo.strokeLinejoin || 'round';
         logDebug(`Applied stroke width ${mediumInfo.strokeWidth}mm for ${mediumInfo.name}`);
-        if (mediumStrokeInput) {
-            mediumStrokeInput.value = mediumInfo.strokeWidth;
-        }
     } else {
         state.currentStrokeWidth = null;
         state.currentLineCap = 'round';
         state.currentLineJoin = 'round';
-        if (mediumStrokeInput) {
-            mediumStrokeInput.value = '';
-        }
     }
     state.currentMediumId = mediumId;
     updatePreviewProfile();

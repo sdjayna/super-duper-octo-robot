@@ -49,9 +49,13 @@
                             </div>
                         </div>
                     </div>
-                    <div class="control-section">
-                        <h4>Paper & Margin</h4>
-                        <div class="control-section-content paper-controls">
+                    <div class="control-section collapsible" data-role="paper-settings-section">
+                        <button id="paperSettingsToggle" class="collapsible-toggle" type="button"
+                            aria-expanded="true" aria-controls="paperSettingsContent">
+                            <span class="collapsible-title">Paper &amp; Margin</span>
+                            <span class="collapsible-icon" aria-hidden="true"></span>
+                        </button>
+                        <div id="paperSettingsContent" class="control-section-content paper-controls">
                             <select id="paperSelect" class="plotter-button">
                                 <!-- Populated dynamically from paper config -->
                             </select>
@@ -65,23 +69,12 @@
                             </div>
                         </div>
                     </div>
-                    <div class="control-row">
-                        <div class="control-section half-width">
-                            <h4>Medium</h4>
-                            <div class="control-section-content medium-controls">
-                                <select id="mediumSelect" class="plotter-button">
-                                    <!-- Populated dynamically from medium config -->
-                                </select>
-                            </div>
-                        </div>
-                        <div class="control-section half-width">
-                            <h4>Stroke Width</h4>
-                            <div class="control-section-content">
-                                <span class="stroke-wrapper">
-                                    <input type="number" id="mediumStrokeInput" class="plotter-button stroke-display" readonly step="0.05">
-                                    <span class="stroke-unit">mm</span>
-                                </span>
-                            </div>
+                    <div class="control-section">
+                        <h4>Medium</h4>
+                        <div class="control-section-content medium-controls">
+                            <select id="mediumSelect" class="plotter-button">
+                                <!-- Populated dynamically from medium config -->
+                            </select>
                         </div>
                     </div>
 
