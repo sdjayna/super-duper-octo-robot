@@ -20,6 +20,7 @@ let drawTuringPatterns;
 let drawPhyllotaxis;
 let drawSpirograph;
 let drawVoronoiSketch;
+let VoronoiConfig;
 let drawFlowField;
 let drawLorenzAttractor;
 let drawIkedaAttractor;
@@ -84,7 +85,7 @@ beforeAll(async () => {
     ({ drawTuringPatterns } = await import('../core/turing.js'));
     ({ drawPhyllotaxis } = await import('../core/phyllotaxis.js'));
     ({ drawSpirograph } = await import('../core/spirograph.js'));
-    ({ drawVoronoiSketch } = await import('../core/voronoi.js'));
+    ({ drawVoronoiSketch, VoronoiConfig } = await import('../core/voronoi.js'));
     ({ drawFlowField } = await import('../core/flowField.js'));
     ({ drawLorenzAttractor } = await import('../core/lorenz.js'));
     ({ drawIkedaAttractor } = await import('../core/ikeda.js'));
@@ -133,6 +134,63 @@ describe('drawing functions', () => {
         expect(scanlinePathData).toBeTruthy();
         expect(outlinePathData).toBeTruthy();
         expect(serpentinePathData).not.toBe(scanlinePathData);
+    });
+
+    it('aligns Voronoi bounds with the paper aspect ratio', () => {
+        const config = new VoronoiConfig({ width: 200, height: 180 });
+        const paper = { width: 297, height: 210 };
+        const landscapeBounds = config.getBounds({ paper, orientation: 'landscape' });
+        const portraitBounds = config.getBounds({ paper, orientation: 'portrait' });
+        expect(landscapeBounds.width / landscapeBounds.height).toBeCloseTo(297 / 210, 3);
+        expect(portraitBounds.width / portraitBounds.height).toBeCloseTo(210 / 297, 3);
+    });
+
+    it('applies hatch styles to Voronoi cells', () => {
+        const buildConfig = (style, showEdges = true, cellInset = 0) => createTestDrawingConfig({
+            drawingData: {
+                pointCount: 12,
+                relaxationPasses: 1,
+                neighbors: 3,
+                boundary: 'rect',
+                jitter: 0,
+                seed: 21,
+                showEdges,
+                cellInset
+            },
+            line: {
+                spacing: 1.2,
+                hatchStyle: style,
+                hatchInset: 0.4,
+                includeBoundary: true
+            },
+            colorPalette: palette
+        });
+
+        const renderContext = createTestRenderContext({
+            drawingWidth: 60,
+            drawingHeight: 40
+        });
+
+        const scanlineSvg = drawVoronoiSketch(buildConfig('scanline'), renderContext);
+        const serpentineSvg = drawVoronoiSketch(buildConfig('serpentine'), renderContext);
+        const outlineSvg = drawVoronoiSketch(buildConfig('none'), renderContext);
+        const scanlineNoEdgesSvg = drawVoronoiSketch(buildConfig('scanline', false), renderContext);
+        const scanlineInsetSvg = drawVoronoiSketch(buildConfig('scanline', true, 2), renderContext);
+
+        const scanlinePathData = scanlineSvg.querySelector('path')?.getAttribute('d');
+        const serpentinePathData = serpentineSvg.querySelector('path')?.getAttribute('d');
+        const outlinePathData = outlineSvg.querySelector('path')?.getAttribute('d');
+        const pathCountWithEdges = scanlineSvg.querySelectorAll('path').length;
+        const pathCountWithoutEdges = scanlineNoEdgesSvg.querySelectorAll('path').length;
+        const insetPathData = scanlineInsetSvg.querySelector('path')?.getAttribute('d');
+
+        expect(scanlinePathData).toBeTruthy();
+        expect(serpentinePathData).toBeTruthy();
+        expect(outlinePathData).toMatch(/^M/);
+        expect(scanlinePathData).not.toBe(serpentinePathData);
+        expect(pathCountWithEdges).toBeGreaterThan(pathCountWithoutEdges);
+        expect(insetPathData).toBeTruthy();
+        expect(insetPathData).not.toBe(scanlinePathData);
     });
 
     it('renders a Hilbert curve centered on the paper', () => {

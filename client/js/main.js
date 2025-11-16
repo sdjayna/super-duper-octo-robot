@@ -444,10 +444,14 @@ function formatControlValue(value, control) {
     const parsed = Number(value);
     if (Number.isFinite(parsed)) {
         const precision = control?.displayPrecision ?? 2;
-        return parsed
+        const formatted = parsed
             .toFixed(precision)
             .replace(/\.?0+$/, '')
             .replace(/\.$/, '');
+        if (control?.units === 'mm') {
+            return `${formatted} mm`;
+        }
+        return formatted;
     }
     return `${value}`;
 }

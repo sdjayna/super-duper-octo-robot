@@ -24,6 +24,7 @@ export {
 
 export {
     generatePolygonScanlineHatch,
+    generatePolygonSerpentineHatch,
     rectToPolygon
 } from './utils/hatchingUtils.js';
 

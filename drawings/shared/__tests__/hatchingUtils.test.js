@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generatePolygonScanlineHatch, rectToPolygon } from '../utils/hatchingUtils.js';
+import { generatePolygonScanlineHatch, generatePolygonSerpentineHatch, rectToPolygon } from '../utils/hatchingUtils.js';
 
 describe('generatePolygonScanlineHatch', () => {
     it('returns empty for invalid polygons', () => {
@@ -13,5 +13,14 @@ describe('generatePolygonScanlineHatch', () => {
         expect(path.length).toBeGreaterThan(0);
         expect(path[0]).toEqual({ x: 1, y: 1 });
         expect(path[path.length - 1].y).toBeGreaterThanOrEqual(0);
+    });
+
+    it('supports serpentine orientation by rotating the polygon', () => {
+        const polygon = rectToPolygon({ x: 0, y: 0, width: 8, height: 4 });
+        const scanlinePath = generatePolygonScanlineHatch(polygon, 1);
+        const serpentinePath = generatePolygonSerpentineHatch(polygon, 1);
+        expect(serpentinePath.length).toBeGreaterThan(0);
+        expect(scanlinePath.length).toBeGreaterThan(0);
+        expect(serpentinePath).not.toEqual(scanlinePath);
     });
 });

@@ -180,6 +180,19 @@ export function generatePolygonScanlineHatch(polygonPoints, spacing = 2.5, optio
     return result;
 }
 
+export function generatePolygonSerpentineHatch(polygonPoints, spacing = 2.5, options = {}) {
+    const polygon = normalizePolygon(polygonPoints);
+    if (polygon.length < 4) {
+        return [];
+    }
+    const rotatedPolygon = polygon.map(point => ({ x: point.y, y: point.x }));
+    const rotatedPath = generatePolygonScanlineHatch(rotatedPolygon, spacing, options);
+    if (!rotatedPath.length) {
+        return [];
+    }
+    return rotatedPath.map(point => ({ x: point.y, y: point.x }));
+}
+
 export function rectToPolygon(rect) {
     return [
         { x: rect.x, y: rect.y },

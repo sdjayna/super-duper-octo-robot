@@ -2,7 +2,11 @@ import {
     defineDrawing,
     SizedDrawingConfig,
     createDrawingRuntime,
-    colorPalettes
+    colorPalettes,
+    generatePolygonScanlineHatch,
+    generatePolygonSerpentineHatch,
+    rectToPolygon,
+    computeBoundsFromPoints
 } from '../shared/kit.js';
 import { attachControls } from '../shared/controlsUtils.js';
 import { clampInteger, clampNumber } from '../shared/utils/paramMath.js';
@@ -12,10 +16,11 @@ const VORONOI_LIMITS = {
     relaxationPasses: { min: 0, max: 3, default: 2 },
     neighbors: { min: 2, max: 5, default: 4 },
     jitter: { min: 0, max: 1, default: 0.25 },
-    seed: { min: 1, max: 9999, default: 42 }
+    seed: { min: 1, max: 9999, default: 42 },
+    cellInset: { min: 0, max: 10, default: 0 }
 };
 
-class VoronoiConfig extends SizedDrawingConfig {
+export class VoronoiConfig extends SizedDrawingConfig {
     constructor(params = {}) {
         super(params);
         this.pointCount = clampInteger(params.pointCount, VORONOI_LIMITS.pointCount.min, VORONOI_LIMITS.pointCount.max, VORONOI_LIMITS.pointCount.default);
@@ -24,6 +29,36 @@ class VoronoiConfig extends SizedDrawingConfig {
         this.neighbors = clampInteger(params.neighbors, VORONOI_LIMITS.neighbors.min, VORONOI_LIMITS.neighbors.max, VORONOI_LIMITS.neighbors.default);
         this.jitter = clampNumber(params.jitter, VORONOI_LIMITS.jitter.min, VORONOI_LIMITS.jitter.max, VORONOI_LIMITS.jitter.default);
         this.seed = clampInteger(params.seed, VORONOI_LIMITS.seed.min, VORONOI_LIMITS.seed.max, VORONOI_LIMITS.seed.default);
+        this.showEdges = params.showEdges !== false;
+        this.cellInset = clampNumber(params.cellInset, VORONOI_LIMITS.cellInset.min, VORONOI_LIMITS.cellInset.max, VORONOI_LIMITS.cellInset.default);
+    }
+
+    getBounds(context = {}) {
+        const baseBounds = super.getBounds(context);
+        const ratio = resolvePaperAspectRatio(context.paper, context.orientation);
+        if (!ratio) {
+            return baseBounds;
+        }
+        const baseWidth = Math.max(baseBounds.width, 1);
+        const baseHeight = Math.max(baseBounds.height, 1);
+        const baseRatio = baseWidth / baseHeight;
+        if (!Number.isFinite(baseRatio) || Math.abs(baseRatio - ratio) < 1e-3) {
+            return baseBounds;
+        }
+        let width;
+        let height;
+        if (ratio >= baseRatio) {
+            height = baseHeight;
+            width = height * ratio;
+        } else {
+            width = baseWidth;
+            height = width / ratio;
+        }
+        return {
+            ...baseBounds,
+            width,
+            height
+        };
     }
 }
 
@@ -89,7 +124,7 @@ function relaxSites(sites, config, width, height) {
     return sites;
 }
 
-function buildEdges(sites, config, width, height) {
+function buildEdges(sites, config) {
     const edges = [];
     for (let i = 0; i < sites.length; i++) {
         const distances = sites.map((site, idx) => ({
@@ -98,41 +133,242 @@ function buildEdges(sites, config, width, height) {
         }));
         distances.sort((a, b) => a.dist - b.dist);
         for (let n = 0; n < config.neighbors; n++) {
-            const neighbor = sites[distances[n].idx];
-            edges.push([
-                { x: sites[i].x, y: sites[i].y },
-                { x: neighbor.x, y: neighbor.y }
-            ]);
+            const neighborIndex = distances[n]?.idx;
+            if (neighborIndex === i || typeof neighborIndex !== 'number') {
+                continue;
+            }
+            edges.push({
+                start: { x: sites[i].x, y: sites[i].y },
+                end: { x: sites[neighborIndex].x, y: sites[neighborIndex].y }
+            });
         }
     }
     return edges;
+}
+
+function buildVoronoiCells(sites, config, width, height) {
+    const boundary = createBoundaryPolygon(config.boundary, width, height);
+    return sites.map((site, siteIndex) => {
+        let cell = boundary.map(point => ({ x: point.x, y: point.y }));
+        for (let other = 0; other < sites.length; other++) {
+            if (other === siteIndex) {
+                continue;
+            }
+            cell = clipPolygonToBisector(cell, site, sites[other]);
+            if (cell.length === 0) {
+                break;
+            }
+        }
+        return closePolygon(cell);
+    });
+}
+
+function createBoundaryPolygon(boundaryType, width, height) {
+    if (boundaryType === 'circle') {
+        const segments = 80;
+        const radius = Math.min(width, height) / 2;
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const polygon = [];
+        for (let i = 0; i < segments; i++) {
+            const angle = (Math.PI * 2 * i) / segments;
+            polygon.push({
+                x: centerX + Math.cos(angle) * radius,
+                y: centerY + Math.sin(angle) * radius
+            });
+        }
+        polygon.push({ ...polygon[0] });
+        return polygon;
+    }
+    return rectToPolygon({ x: 0, y: 0, width, height });
+}
+
+function clipPolygonToBisector(polygon, site, neighbor) {
+    if (!polygon.length || !Number.isFinite(neighbor?.x) || !Number.isFinite(neighbor?.y)) {
+        return [];
+    }
+    const dx = neighbor.x - site.x;
+    const dy = neighbor.y - site.y;
+    if (Math.abs(dx) + Math.abs(dy) < 1e-9) {
+        return polygon.map(point => ({ x: point.x, y: point.y }));
+    }
+    const midX = (site.x + neighbor.x) / 2;
+    const midY = (site.y + neighbor.y) / 2;
+    const openPolygon = polygon[0] && polygon[polygon.length - 1] &&
+        polygon[0].x === polygon[polygon.length - 1].x &&
+        polygon[0].y === polygon[polygon.length - 1].y
+        ? polygon.slice(0, -1)
+        : polygon.slice();
+    if (openPolygon.length === 0) {
+        return [];
+    }
+    const evaluate = (point) => ((point.x - midX) * dx + (point.y - midY) * dy);
+    const result = [];
+    for (let i = 0; i < openPolygon.length; i++) {
+        const current = openPolygon[i];
+        const next = openPolygon[(i + 1) % openPolygon.length];
+        const currentVal = evaluate(current);
+        const nextVal = evaluate(next);
+        const currentInside = currentVal <= 0;
+        const nextInside = nextVal <= 0;
+
+        if (currentInside && nextInside) {
+            result.push({ x: next.x, y: next.y });
+        } else if (currentInside && !nextInside) {
+            result.push(interpolateOnBisector(current, next, currentVal, nextVal));
+        } else if (!currentInside && nextInside) {
+            result.push(interpolateOnBisector(current, next, currentVal, nextVal));
+            result.push({ x: next.x, y: next.y });
+        }
+    }
+    return result;
+}
+
+function interpolateOnBisector(current, next, currentVal, nextVal) {
+    const denom = currentVal - nextVal;
+    const t = Math.abs(denom) < 1e-9 ? 0 : currentVal / denom;
+    return {
+        x: current.x + (next.x - current.x) * t,
+        y: current.y + (next.y - current.y) * t
+    };
+}
+
+function closePolygon(points) {
+    if (!points.length) {
+        return [];
+    }
+    const closed = points.map(point => ({ x: point.x, y: point.y }));
+    const first = closed[0];
+    const last = closed[closed.length - 1];
+    if (Math.abs(first.x - last.x) > 1e-6 || Math.abs(first.y - last.y) > 1e-6) {
+        closed.push({ x: first.x, y: first.y });
+    }
+    return closed;
+}
+
+function insetPolygonPoints(polygon, inset) {
+    if (!polygon?.length || inset <= 0) {
+        return polygon || [];
+    }
+    const openPoints = polygon.slice(0, -1);
+    if (!openPoints.length) {
+        return [];
+    }
+    const centroid = openPoints.reduce((acc, point) => ({
+        x: acc.x + point.x,
+        y: acc.y + point.y
+    }), { x: 0, y: 0 });
+    centroid.x /= openPoints.length;
+    centroid.y /= openPoints.length;
+
+    const insetPoints = openPoints.map(point => {
+        const vx = point.x - centroid.x;
+        const vy = point.y - centroid.y;
+        const distance = Math.hypot(vx, vy) || 1;
+        const safeDistance = Math.max(distance - inset, 0);
+        const scale = safeDistance / distance;
+        return {
+            x: centroid.x + vx * scale,
+            y: centroid.y + vy * scale
+        };
+    });
+
+    insetPoints.push({ ...insetPoints[0] });
+    return insetPoints;
+}
+
+function resolvePaperAspectRatio(paper, orientation) {
+    if (!paper) {
+        return null;
+    }
+    const width = Number(paper.width);
+    const height = Number(paper.height);
+    if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+        return null;
+    }
+    const normalizedOrientation = orientation === 'portrait' ? 'portrait' : 'landscape';
+    const longer = Math.max(width, height);
+    const shorter = Math.min(width, height);
+    const orientedWidth = normalizedOrientation === 'portrait' ? shorter : longer;
+    const orientedHeight = normalizedOrientation === 'portrait' ? longer : shorter;
+    if (orientedHeight <= 0) {
+        return null;
+    }
+    return orientedWidth / orientedHeight;
 }
 
 export function drawVoronoiSketch(drawingConfig, renderContext) {
     const { svg, builder } = createDrawingRuntime({ drawingConfig, renderContext });
     const width = renderContext.drawingWidth;
     const height = renderContext.drawingHeight;
+    const spacing = Math.max(0.1, Number(drawingConfig.line?.spacing) || 2.5);
+    const hatchStyle = drawingConfig.line?.hatchStyle || 'scanline';
+    const hatchInset = typeof drawingConfig.line?.hatchInset === 'number'
+        ? drawingConfig.line.hatchInset
+        : spacing / 2;
+    const includeBoundary = drawingConfig.line?.includeBoundary !== false;
 
     let sites = generateSites(drawingConfig.drawingData, width, height);
     sites = relaxSites(sites, drawingConfig.drawingData, width, height);
-    const edges = buildEdges(sites, drawingConfig.drawingData, width, height);
+    const edges = buildEdges(sites, drawingConfig.drawingData);
+    const cells = buildVoronoiCells(sites, drawingConfig.drawingData, width, height);
 
-    edges.forEach(edge => {
-        const jitterX = drawingConfig.drawingData.jitter * (Math.random() - 0.5);
-        const jitterY = drawingConfig.drawingData.jitter * (Math.random() - 0.5);
-        const points = [
-            { x: edge[0].x + jitterX, y: edge[0].y + jitterY },
-            { x: edge[1].x + jitterX, y: edge[1].y + jitterY }
-        ];
-        builder.appendPath(builder.projectPoints(points), {
-            geometry: {
-                x: 0,
-                y: 0,
-                width,
-                height
-            }
-        });
+    const cellInset = Math.max(0, drawingConfig.drawingData.cellInset || 0);
+    cells.forEach(cell => {
+        if (!cell || cell.length < 3) {
+            return;
+        }
+        const projectedPolygon = builder.projectPoints(cell);
+        const insetPolygon = insetPolygonPoints(projectedPolygon, cellInset);
+        const polygonForFill = insetPolygon.length >= 3 ? insetPolygon : projectedPolygon;
+        const bounds = computeBoundsFromPoints(polygonForFill);
+        const geometry = {
+            x: bounds.minX,
+            y: bounds.minY,
+            width: bounds.width,
+            height: bounds.height
+        };
+        let pathPoints;
+        if (hatchStyle === 'none') {
+            pathPoints = polygonForFill;
+        } else if (hatchStyle === 'serpentine') {
+            pathPoints = generatePolygonSerpentineHatch(polygonForFill, spacing, {
+                inset: hatchInset,
+                includeBoundary
+            });
+        } else {
+            pathPoints = generatePolygonScanlineHatch(polygonForFill, spacing, {
+                inset: hatchInset,
+                includeBoundary
+            });
+        }
+        if (pathPoints.length > 1) {
+            builder.appendPath(pathPoints, { geometry });
+        }
     });
+
+    const showEdgesSetting = drawingConfig.drawingData.showEdges;
+    const shouldDrawEdges = showEdgesSetting === undefined ? true : Boolean(showEdgesSetting);
+    if (shouldDrawEdges) {
+        edges.forEach(edge => {
+            const jitterX = drawingConfig.drawingData.jitter * (Math.random() - 0.5);
+            const jitterY = drawingConfig.drawingData.jitter * (Math.random() - 0.5);
+            const points = [
+                { x: edge.start.x + jitterX, y: edge.start.y + jitterY },
+                { x: edge.end.x + jitterX, y: edge.end.y + jitterY }
+            ];
+            const projected = builder.projectPoints(points);
+            const bounds = computeBoundsFromPoints(projected);
+            builder.appendPath(projected, {
+                geometry: {
+                    x: bounds.minX,
+                    y: bounds.minY,
+                    width: bounds.width,
+                    height: bounds.height
+                }
+            });
+        });
+    }
 
     return svg;
 }
@@ -204,6 +440,27 @@ const voronoiControls = [
         step: 1,
         default: VORONOI_LIMITS.seed.default,
         description: 'Random seed for reproducible point placement'
+    },
+    {
+        id: 'cellInset',
+        label: 'Polygon Margin',
+        target: 'drawingData.cellInset',
+        inputType: 'range',
+        min: VORONOI_LIMITS.cellInset.min,
+        max: VORONOI_LIMITS.cellInset.max,
+        step: 0.1,
+        default: VORONOI_LIMITS.cellInset.default,
+        units: 'mm',
+        description: 'Shrinks each cell before filling to create gutters between polygons'
+    },
+    {
+        id: 'showEdges',
+        label: 'Show Edge Graph',
+        target: 'drawingData.showEdges',
+        inputType: 'checkbox',
+        valueType: 'boolean',
+        default: true,
+        description: 'Draw neighbor edges in addition to the filled cells'
     }
 ];
 
@@ -226,6 +483,8 @@ const voronoiDefinition = attachControls(defineDrawing({
                 boundary: 'rect',
                 jitter: 0.3,
                 seed: 101,
+                cellInset: 0,
+                showEdges: true,
                 line: {
                     strokeWidth: 0.25
                 },
