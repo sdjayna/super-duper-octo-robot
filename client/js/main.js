@@ -53,6 +53,9 @@ const drawingSettingsSection = document.querySelector('[data-role="drawing-setti
 const paperSettingsToggle = document.getElementById('paperSettingsToggle');
 const paperSettingsContent = document.getElementById('paperSettingsContent');
 const paperSettingsSection = document.querySelector('[data-role="paper-settings-section"]');
+const mediumSettingsToggle = document.getElementById('mediumSettingsToggle');
+const mediumSettingsContent = document.getElementById('mediumSettingsContent');
+const mediumSettingsSection = document.querySelector('[data-role="medium-settings-section"]');
 
 const state = {
     paperConfig: null,
@@ -135,6 +138,13 @@ registerSectionToggle({
     toggle: paperSettingsToggle,
     content: paperSettingsContent,
     label: 'Toggle paper and margin panel'
+});
+
+registerSectionToggle({
+    section: mediumSettingsSection,
+    toggle: mediumSettingsToggle,
+    content: mediumSettingsContent,
+    label: 'Toggle medium panel'
 });
 
 function populateMediumColorSelect(mediumId, mediumMetadata = {}) {

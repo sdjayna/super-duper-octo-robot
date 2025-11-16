@@ -69,9 +69,13 @@
                             </div>
                         </div>
                     </div>
-                    <div class="control-section">
-                        <h4>Medium</h4>
-                        <div class="control-section-content medium-controls">
+                    <div class="control-section collapsible" data-role="medium-settings-section">
+                        <button id="mediumSettingsToggle" class="collapsible-toggle" type="button"
+                            aria-expanded="true" aria-controls="mediumSettingsContent">
+                            <span class="collapsible-title">Medium</span>
+                            <span class="collapsible-icon" aria-hidden="true"></span>
+                        </button>
+                        <div id="mediumSettingsContent" class="control-section-content medium-controls">
                             <select id="mediumSelect" class="plotter-button">
                                 <!-- Populated dynamically from medium config -->
                             </select>

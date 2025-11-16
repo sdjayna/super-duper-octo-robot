@@ -290,7 +290,7 @@ rect.plotter-limit {
 }
 
 .control-section.collapsible {
-    padding-bottom: 0;
+    padding-bottom: 12px;
 }
 
 .collapsible-toggle {
