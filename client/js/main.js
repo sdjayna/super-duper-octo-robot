@@ -3,6 +3,7 @@ import { playCompletionSiren, toggleMute } from './modules/audio.js';
 import { startProgressListener, stopProgressListener } from './modules/progress.js';
 import { createPreviewController } from './modules/preview.js';
 import { initPlotterControls } from './modules/plotterControls.js';
+import { initializeHatchControls, applyHatchSettingsToConfig } from './modules/hatchSettings.js';
 import { resolvePreviewProfile, evaluatePreviewWarnings, resolvePlotterDefaults } from './utils/paperProfile.js';
 import { normalizePaperColor, getPaperColor, getPaperTextureClass, computePlotterWarning, getOrientedDimensions } from './utils/paperUtils.js';
 import { filterPaletteByDisabledColors, loadDisabledColorPrefs, saveDisabledColorPrefs } from './utils/paletteUtils.js';
@@ -39,7 +40,6 @@ const { DEFAULT_MARGIN } = marginUtils;
 const DEFAULT_PAPER_COLOR = '#ffffff';
 const CONTROL_STORAGE_KEY = 'drawingControlValues';
 const DRAWING_STORAGE_KEY = 'selectedDrawingKey';
-const HATCH_STORAGE_KEY = 'globalHatchSettings';
 
 const select = document.getElementById('drawingSelect');
 const container = document.getElementById('svgContainer');
@@ -69,13 +69,6 @@ const hatchInsetControl = document.getElementById('hatchInsetControl');
 const hatchInsetValueLabel = document.getElementById('hatchInsetValue');
 const hatchBoundaryControl = document.getElementById('hatchBoundaryControl');
 
-const defaultHatchSettings = {
-    hatchStyle: 'serpentine',
-    hatchSpacing: 2,
-    hatchInset: 1,
-    includeBoundary: true
-};
-
 const state = {
     paperConfig: null,
     currentPaperId: null,
@@ -91,7 +84,6 @@ const state = {
     currentLineJoin: 'round',
     rulersVisible: false,
     drawingControlValues: loadControlValuesFromStorage(),
-    hatchSettings: loadHatchSettings(),
     previewProfile: null,
     plotterSpecs: null,
     warnIfPaperExceedsPlotter: null,
@@ -178,6 +170,38 @@ registerSectionToggle({
     label: 'Toggle hatch settings panel'
 });
 
+async function handleGlobalHatchChanged() {
+    const context = await getDrawingControlContext();
+    if (context) {
+        applyHatchSettingsToConfig(context.drawingConfig);
+    }
+    await draw();
+    populateLayerSelect();
+    updatePlotterStatus();
+}
+
+initializeHatchControls({
+    styleSelect: hatchStyleControl,
+    spacingSlider: hatchSpacingControl,
+    spacingValueLabel: hatchSpacingValueLabel,
+    insetSlider: hatchInsetControl,
+    insetValueLabel: hatchInsetValueLabel,
+    boundaryCheckbox: hatchBoundaryControl
+}, handleGlobalHatchChanged);
+
+initializeHatchControls({
+    styleSelect: hatchStyleControl,
+    spacingSlider: hatchSpacingControl,
+    spacingValueLabel: hatchSpacingValueLabel,
+    insetSlider: hatchInsetControl,
+    insetValueLabel: hatchInsetValueLabel,
+    boundaryCheckbox: hatchBoundaryControl
+}, async () => {
+    await draw();
+    populateLayerSelect();
+    updatePlotterStatus();
+});
+
 function loadControlValuesFromStorage() {
     if (typeof window === 'undefined' || !window.localStorage) {
         return {};
@@ -188,54 +212,6 @@ function loadControlValuesFromStorage() {
     } catch {
         return {};
     }
-}
-
-function loadHatchSettings() {
-    if (typeof window === 'undefined' || !window.localStorage) {
-        return { ...defaultHatchSettings };
-    }
-    try {
-        const raw = window.localStorage.getItem(HATCH_STORAGE_KEY);
-        const parsed = raw ? JSON.parse(raw) : null;
-        return { ...defaultHatchSettings, ...(parsed || {}) };
-    } catch {
-        return { ...defaultHatchSettings };
-    }
-}
-
-function persistHatchSettings() {
-    if (typeof window === 'undefined' || !window.localStorage) {
-        return;
-    }
-    try {
-        window.localStorage.setItem(HATCH_STORAGE_KEY, JSON.stringify(state.hatchSettings));
-    } catch {
-        // ignore
-    }
-}
-
-function applyHatchSettingsToConfig(drawingConfig) {
-    if (!drawingConfig) {
-        return;
-    }
-    drawingConfig.line = drawingConfig.line || {};
-    drawingConfig.line.hatchStyle = state.hatchSettings.hatchStyle;
-    drawingConfig.line.hatchInset = state.hatchSettings.hatchInset;
-    drawingConfig.line.includeBoundary = state.hatchSettings.includeBoundary;
-    if (typeof state.hatchSettings.hatchSpacing === 'number' && !Number.isNaN(state.hatchSettings.hatchSpacing)) {
-        drawingConfig.line.spacing = state.hatchSettings.hatchSpacing;
-    }
-}
-
-async function handleHatchSettingsChanged() {
-    persistHatchSettings();
-    const context = await getDrawingControlContext();
-    if (context) {
-        applyHatchSettingsToConfig(context.drawingConfig);
-    }
-    await draw();
-    populateLayerSelect();
-    updatePlotterStatus();
 }
 
 function persistControlValues() {
@@ -294,53 +270,6 @@ function populateMediumColorSelect(mediumId, mediumMetadata = {}) {
     mediumColorSelect.disabled = false;
 }
 
-if (hatchStyleControl) {
-    hatchStyleControl.value = state.hatchSettings.hatchStyle;
-    hatchStyleControl.addEventListener('change', async (event) => {
-        state.hatchSettings.hatchStyle = event.target.value;
-        await handleHatchSettingsChanged();
-    });
-}
-
-if (hatchSpacingControl) {
-    const initialSpacing = Number(state.hatchSettings.hatchSpacing) || 0;
-    hatchSpacingControl.value = initialSpacing;
-    if (hatchSpacingValueLabel) {
-        hatchSpacingValueLabel.textContent = `${initialSpacing.toFixed(1)} mm`;
-    }
-    hatchSpacingControl.addEventListener('input', async (event) => {
-        const nextValue = Number(event.target.value);
-        state.hatchSettings.hatchSpacing = nextValue;
-        if (hatchSpacingValueLabel) {
-            hatchSpacingValueLabel.textContent = `${nextValue.toFixed(1)} mm`;
-        }
-        await handleHatchSettingsChanged();
-    });
-}
-
-if (hatchInsetControl) {
-    const initialInset = Number(state.hatchSettings.hatchInset) || 0;
-    hatchInsetControl.value = initialInset;
-    if (hatchInsetValueLabel) {
-        hatchInsetValueLabel.textContent = `${initialInset.toFixed(1)} mm`;
-    }
-    hatchInsetControl.addEventListener('input', async (event) => {
-        const nextValue = Number(event.target.value);
-        state.hatchSettings.hatchInset = nextValue;
-        if (hatchInsetValueLabel) {
-            hatchInsetValueLabel.textContent = `${nextValue.toFixed(1)} mm`;
-        }
-        await handleHatchSettingsChanged();
-    });
-}
-
-if (hatchBoundaryControl) {
-    hatchBoundaryControl.checked = state.hatchSettings.includeBoundary;
-    hatchBoundaryControl.addEventListener('change', async (event) => {
-        state.hatchSettings.includeBoundary = event.target.checked;
-        await handleHatchSettingsChanged();
-    });
-}
 
 function syncMediumColorSelections(mediumId) {
     if (!mediumColorSelect) {
