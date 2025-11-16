@@ -5,6 +5,7 @@ import { createPreviewController } from './modules/preview.js';
 import { initPlotterControls } from './modules/plotterControls.js';
 import { resolvePreviewProfile, evaluatePreviewWarnings, resolvePlotterDefaults } from './utils/paperProfile.js';
 import { normalizePaperColor, getPaperColor, getPaperTextureClass, computePlotterWarning, getOrientedDimensions } from './utils/paperUtils.js';
+import { filterPaletteByDisabledColors } from './utils/paletteUtils.js';
 
 window.logDebug = logDebug;
 initLogTabs();
@@ -41,6 +42,7 @@ const select = document.getElementById('drawingSelect');
 const container = document.getElementById('svgContainer');
 const exportButton = document.getElementById('exportSvg');
 const mediumSelect = document.getElementById('mediumSelect');
+const mediumColorSelect = document.getElementById('mediumColorSelect');
 const drawingControlsContainer = document.getElementById('drawingControlsContainer');
 const controlTabs = document.querySelectorAll('.control-tab');
 const controlPanels = document.querySelectorAll('.control-panel');
@@ -69,7 +71,8 @@ const state = {
     drawingControlValues: {},
     previewProfile: null,
     plotterSpecs: null,
-    warnIfPaperExceedsPlotter: null
+    warnIfPaperExceedsPlotter: null,
+    disabledColorsByMedium: new Map()
 };
 
 state.warnIfPaperExceedsPlotter = () => warnIfPaperExceedsPlotter(state, state.currentPaper);
@@ -133,6 +136,39 @@ registerSectionToggle({
     content: paperSettingsContent,
     label: 'Toggle paper and margin panel'
 });
+
+function populateMediumColorSelect(mediumId, mediumMetadata = {}) {
+    if (!mediumColorSelect) {
+        return;
+    }
+    mediumColorSelect.innerHTML = '';
+    const mediumInfo = mediumMetadata[mediumId];
+    if (!mediumInfo?.colors) {
+        mediumColorSelect.disabled = true;
+        return;
+    }
+    const disabledSet = state.disabledColorsByMedium.get(mediumId) || new Set();
+    const entries = Object.entries(mediumInfo.colors)
+        .sort(([, a], [, b]) => a.name.localeCompare(b.name));
+    entries.forEach(([colorId, color]) => {
+        const option = document.createElement('option');
+        option.value = colorId;
+        option.textContent = color.name;
+        option.selected = disabledSet.has(colorId);
+        mediumColorSelect.appendChild(option);
+    });
+    mediumColorSelect.disabled = false;
+}
+
+function syncMediumColorSelections(mediumId) {
+    if (!mediumColorSelect) {
+        return;
+    }
+    const disabledSet = state.disabledColorsByMedium.get(mediumId) || new Set();
+    Array.from(mediumColorSelect.options).forEach(option => {
+        option.selected = disabledSet.has(option.value);
+    });
+}
 
 function loadColorUtilsModule() {
     if (!colorUtilsModulePromise) {
@@ -718,6 +754,7 @@ async function initialize() {
             mediumSelect.value = defaultMediumId;
             state.currentMediumId = defaultMediumId;
             await applyMediumSettings(defaultMediumId, colorUtilsModule);
+            populateMediumColorSelect(defaultMediumId, colorUtilsModule.mediumMetadata);
         } else if (!defaultMediumId) {
             logDebug('No mediums available from configuration', 'error');
         }
@@ -965,12 +1002,41 @@ document.getElementById('paperSelect').addEventListener('change', async (e) => {
 if (mediumSelect) {
     mediumSelect.addEventListener('change', async (e) => {
         const medium = e.target.value;
+        state.currentMediumId = medium;
         logDebug(`Changing medium to ${medium}`);
         const colorUtilsModule = await loadColorUtilsModule();
         await applyMediumSettings(medium, colorUtilsModule);
+        populateMediumColorSelect(medium, colorUtilsModule.mediumMetadata);
         await draw();
         populateLayerSelect();
         logDebug(`Updated drawings with ${medium} settings`);
+    });
+}
+
+if (mediumColorSelect) {
+    mediumColorSelect.addEventListener('change', async () => {
+        const mediumId = state.currentMediumId;
+        if (!mediumId) {
+            return;
+        }
+        const selectedIds = Array.from(mediumColorSelect.selectedOptions).map(option => option.value);
+        const colorUtilsModule = await loadColorUtilsModule();
+        const mediumInfo = colorUtilsModule.mediumMetadata[mediumId];
+        const totalColors = Object.keys(mediumInfo?.colors || {}).length;
+        if (totalColors > 0 && selectedIds.length === totalColors) {
+            logDebug('At least one color must remain enabled for the selected medium', 'error');
+            syncMediumColorSelections(mediumId);
+            return;
+        }
+        if (selectedIds.length > 0) {
+            state.disabledColorsByMedium.set(mediumId, new Set(selectedIds));
+        } else {
+            state.disabledColorsByMedium.delete(mediumId);
+        }
+        await applyMediumSettings(mediumId, colorUtilsModule);
+        await draw();
+        populateLayerSelect();
+        logDebug(`Updated disabled colors for ${mediumInfo?.name || mediumId}`);
     });
 }
 
@@ -981,8 +1047,10 @@ async function applyMediumSettings(mediumId, colorUtilsModule) {
     const { colorPalettes, mediumMetadata } = colorUtilsModule || await loadColorUtilsModule();
     const paletteName = `${mediumId}Palette`;
     const palette = colorPalettes[paletteName];
-    if (palette) {
-        state.currentPalette = palette;
+    const disabledSet = state.disabledColorsByMedium.get(mediumId);
+    const filteredPalette = filterPaletteByDisabledColors(palette, disabledSet);
+    if (filteredPalette) {
+        state.currentPalette = filteredPalette;
     }
     const mediumInfo = mediumMetadata[mediumId];
     if (mediumInfo?.strokeWidth) {

@@ -18,6 +18,7 @@ JavaScript files are ES modules with 4-space indentation, `camelCase` functions 
 - All drawings should expose user-facing settings through the shared controls system. Use `attachControls` from `drawings/shared/controlsUtils.js` to append descriptors (`id`, `label`, `target`, `inputType`, `min/max/step`, `default`, `description`).
 - Reuse naming established in the UI (“Hatch Spacing”, “Square Margin”, etc.) and provide concise descriptions that match what the control actually does in the drawing code.
 - Stroke width is dictated solely by the selected medium; do **not** add manual stroke-width controls to individual drawings.
+- When a control governs how many layers or offsets are emitted, cap or expand its range using the palette-aware helpers in `drawings/shared/kit.js` (`useAvailableColorCountOr`, `ensureColorReachableLimit`) so the UI can reach, but never exceed, the largest medium’s color count.
 - When introducing new slider styles (logarithmic, dual-range), keep the data model declarative so the client UI can stay generic.
 - For complex control sets, look at `drawings/core/calibration.js` for an example of combining multiple primitives under a single config class with well-described sliders.
 - Wherever feasible, emit geometry in distinct layers mapped to the available colors in the selected medium by reusing the shared color-group helpers so each palette entry becomes its own layer.
@@ -30,6 +31,10 @@ JavaScript files are ES modules with 4-space indentation, `camelCase` functions 
 - The preview/plotter system merges paper + medium metadata via `client/js/utils/paperProfile.js`. Add or update overrides there (both visual and `PAPER_MEDIUM_PLOTTER_OVERRIDES`) whenever a new stock/pen combination needs special casing.
 - Mirror any new combination in `drawings/shared/__tests__/previewProfile.test.js` so Vitest guards the heuristics. Tests must hoist mocks for `mediumMetadata`.
 - Preview filters are applied only for the on-screen SVG. `previewEffects.js` must not mutate exported SVGs; add or update tests if you change that logic.
+
+### Control Panel UX
+- The “Drawing Settings” and “Paper & Margin” sections in `client/templates/plotter.html` are collapsible; keep them wrapped in the existing `collapsible` markup + toggle pattern so the control stack doesn’t push other dialogs off-screen. Use `registerSectionToggle` in `client/js/main.js` when wiring new collapsible panels.
+- The stroke-width block was removed from the UI because stroke width purely follows the selected medium. Don’t reintroduce a dedicated panel; reflect the width through logging/state only.
 
 ### Adding a New Drawing
 1. Create `drawings/<core|community>/<name>.js` exporting a `defineDrawing` plus optional `attachControls` setup. Use existing modules (e.g., `drawings/core/calibration.js`) as templates.

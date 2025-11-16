@@ -75,6 +75,11 @@
                             <select id="mediumSelect" class="plotter-button">
                                 <!-- Populated dynamically from medium config -->
                             </select>
+                            <label for="mediumColorSelect" class="medium-colors-label">Disabled Colors</label>
+                            <select id="mediumColorSelect" class="medium-color-select" multiple aria-describedby="mediumColorHelp" disabled>
+                                <!-- Populated dynamically once a medium is selected -->
+                            </select>
+                            <p id="mediumColorHelp" class="medium-color-help">Hold Cmd/Ctrl (or Shift) to toggle multiple pens. Selected entries are disabled.</p>
                         </div>
                     </div>
 
