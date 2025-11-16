@@ -1,7 +1,7 @@
 # Jupiter Jayna's Plotter Art Control Centre
 *A plotter-first generative art workstation that goes from browser math to multi-pen AxiDraw output without leaving the keyboard.*
 
-If you have an AxiDraw (or any plotter that can digest SVG layers) and love algorithmic art, this repo gives you a complete local studio: mm-accurate previews, color-aware layering, a Python server that proxies the axicli, and a set of battle-tested drawing algorithms (Bouwkamp perfect squares, Delaunay triangulations, Hilbert curves). Everything ships as source, so you can bend it to your own plotting rituals or hack on it live during a stream.
+If you have an AxiDraw (or any plotter that can digest SVG layers) and love algorithmic art, this repo gives you a complete local studio: mm-accurate previews, color-aware layering, a Python server that proxies the axicli, and a set of battle-tested drawing algorithms (Bouwkamp perfect squares, Hilbert curves, phyllotaxis spirals, spirograph families, Voronoi sketches, Lorenz/Ikeda/de Jong attractors, and more). Everything ships as source, so you can bend it to your own plotting rituals or hack on it live during a stream.
 
 ![Drawing Control view – 2114×1259](readme-ui-drawing-control.png)
 ![Plotter Control view – 2113×1253](readme-ui-plotter-control.png)
@@ -12,7 +12,7 @@ If you have an AxiDraw (or any plotter that can digest SVG layers) and love algo
 
 - **Bridges UI + hardware** - front-end sliders talk to a Python server that shells out to `axicli`, streaming progress back over SSE, so you can iterate fast without babysitting the machine.
 - **Obsessive paper + pen modeling** - paper margins, nib widths, and medium presets are first-class citizens, so the SVG matches the sheet on your desk.
-- **Algorithm playground** - the drawing registry is tiny, modern JavaScript; adding a new tiling or curve takes one module and hot reload, and any config knobs you expose are surfaced automatically in the “Drawing Settings” panel as sliders, selects, or number inputs.
+- **Algorithm playground** - the drawing registry is tiny, modern JavaScript; adding a new tiling or curve takes one module and hot reload, and any config knobs you expose are surfaced automatically in the “Drawing Settings” panel as sliders, selects, or number inputs. Built‑in modules cover Hilbert curves, Bouwkamp tilings, phyllotaxis spirals, spirograph families, Voronoi/Lloyd sketches, calibration grids, Lissajous curves, Superformula shapes, Clifford attractors, Lorenz/Ikeda/Peter de Jong attractors, flow fields, contour maps, wave interference, circle packing, DLA clusters, Truchet tiles, sorting arcs, and Gray‑Scott (Turing) patterns.
 - **Transparency-first** - no cloud, no hidden binaries; everything from the Makefile to the SSE heartbeat loop is readable and hackable.
 
 ### Feature Highlights
@@ -34,7 +34,7 @@ If you have an AxiDraw (or any plotter that can digest SVG layers) and love algo
 - **Output pipeline** - timestamped SVGs in `output/` with configuration comments plus Inkscape-compatible layers ready for plotting or archival.
 - **Docs + tooling** - Makefile, Vitest setup, TODO/CHANGELOG/CONTRIBUTING, and a reference screenshot so people know what they’re installing.
 - **Drawings** - a top-level `drawings/` directory split into `core/` (maintained algorithms), `community/` (user-contributed experiments), and `shared/` helpers so contributions don’t need to dig through the client bundle.
-    - Core set currently includes Bouwkamp perfect squares, Delaunay triangulations, Hilbert curves, and the new Calibration Patterns grid for paper/medium tuning.
+    - Core set currently includes Bouwkamp perfect squares, Hilbert curves, phyllotaxis spirals, spirograph families, Voronoi sketches, Lissajous curves, Superformula shapes, Clifford attractors, Lorenz/Ikeda/Peter de Jong attractors, flow fields, contour maps, wave interference, circle packing, DLA clusters, Truchet tiles, sorting arcs, Gray‑Scott/Turing patterns, and the Calibration Patterns grid for paper/medium tuning.
 
 ```
 ├── client/
@@ -94,7 +94,7 @@ make test      # runs the Vitest suite (client + helpers)
 
 ## Plotting Pipeline
 
-1. **Pick a drawing** - Bouwkamp codes, Delaunay triangulations, or Hilbert curves ship as presets; each exposes paper, margin, and color controls.
+1. **Pick a drawing** - Bouwkamp codes, phyllotaxis spirals, spirograph families, Voronoi sketches, or Hilbert curves ship as presets; each exposes paper, margin, and color controls.
 2. **Preview in mm** - the UI shows paper outlines, rulers, and margin sliders so the SVG framing matches your tape on the physical board.
 3. **Generate layered SVG** - the client writes an Inkscape-ready SVG where each color sits in its own layer with stroke widths pulled from the selected medium preset (e.g., Sakura 0.45 mm round tip, Molotow ONE4ALL 2 mm).
 4. **Stream to hardware** - pressing “Plot layer” posts the SVG + layer id to `/plotter`; the Python server writes a temp file, shells out to `bin/axicli`, and forwards stdout/stderr lines as SSE events.
@@ -317,3 +317,25 @@ Additional backlog items live in `TODOs.md`.
 
 Development leaned on AI copilots (aider.chat, DeepSeek R1, Claude 3 Sonnet) for fast iteration while keeping humans in the loop for aesthetics, safety, and hardware testing.
 - **Paper presets** – edit `config/papers.json` to describe stock in terms of size, weight, finish, absorbency, bleed, and notes. The UI logs these traits when you switch sheets so you don’t lose track of what’s loaded on the bed.
+- **A3 parameter cheatsheet** – the table below captures the ranges we’ve found to sit nicely on an A3 SE/A3 bed without murdering line density:
+
+| Algorithm | A3-friendly settings |
+|-----------|----------------------|
+| Lissajous Curves | Frequencies 3–9, phase offsets 0.1–0.3 rad, amplitude ≈ 90 % of the shorter dimension, 2k–4k samples. |
+| Superformula | `m` 3–12, `n1` `n2` `n3` between 0.3–8, radius around 130 mm with 1–3 mm layer offsets. Avoid exponents > 12 unless you want brutal spikes. |
+| Clifford Attractor | Start at `a` 1.7–1.9, `b` 1.8–2.1, `c` 0.1–0.5, `d` 0.6–1.2. Plot 150k–400k iterations; add ~0.1 mm jitter for smoky strokes. |
+| Hilbert Curve | Depth 6–7 fills A3 at sane density. Scale to ~260 × 260 mm; rotate 45° if you want a less rigid footprint. |
+| Turing Patterns | Feed 0.02–0.06, kill 0.05–0.07, diffusion ratio roughly 1 : 0.5 for classic stripes, 500×500 grid, downsample to ~150–250 contours. |
+| Phyllotaxis | Divergence 137.5°, radial step 3–6 mm, 600–1200 points, jitter up to 0.5 mm for liveliness. |
+| Epicycloids / Hypotrochoids | `R` 80–140 mm, `r` 20–70 mm, `d` 10–50 mm, 4k–12k points, layer rotations 2–8°. |
+| Voronoi / Lloyd sketches | Seed count 150–450 with 1–2 relaxations. Clip to ≈ 380 × 260 mm. Use thick pens sparingly unless you want bold geography. |
+| Flow Fields | Noise scale 0.01–0.04, step length 1–2 mm, 2k–6k particles, 200–800 integration steps. |
+| Lorenz Attractor | σ = 10, β ≈ 2.6–3.0, ρ ≈ 25–30, `dt` 0.005–0.015, 80k–400k iterations (< 0.2 mm stroke). |
+| Ikeda Attractor | `u` 0.85–0.98, 80k–250k iterations, smoothing 0–0.05 to tame crossings. |
+| Peter de Jong Attractor | Parameters `a`–`d` between −3–3, 120k–400k iterations, smoothing 0–0.1 for smoky layers. |
+| Contour Maps (noise) | Noise freq 0.003–0.02, octaves 2–5, contour spacing 3–6 units, map ≈ 400 × 280 mm. |
+| Wave Interference | 3–7 emitters, wavelengths 60–200 mm, random phases, draw contours at 0.0/0.2/0.4/0.6. |
+| Circle Packing | Radii 3–18 mm (bimodal works nicely), rejection distance 1.05–1.2× radius sum, 200–600 circles for comfortable density. |
+| Diffusion-Limited Aggregation | Stickiness 0.5–0.9, particle bias 0.01–0.05, 150–1200 particles, cluster radius 100–150 mm for delicate dendrites without melting CPUs. |
+| Truchet Tiles | Grid 20×30 up to 40×60, two or three motifs, rotation skewed toward 0°/180° for long arcs. |
+| Sorting-Algorithm Arcs | Array size 80–200, gentle shuffle for smoother arcs, bubble sort for density, quicksort for broad structure. |

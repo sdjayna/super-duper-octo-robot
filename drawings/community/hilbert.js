@@ -5,14 +5,26 @@ import {
     colorPalettes
 } from '../shared/kit.js';
 import { attachControls } from '../shared/controlsUtils.js';
+import { clampInteger, clampNumber } from '../shared/utils/paramMath.js';
+
+const HILBERT_LIMITS = {
+    level: { min: 1, max: 8, default: 6 },
+    amplitude: { min: 0, max: 5, default: 1 },
+    frequency: { min: 0, max: 2, default: 0.5 },
+    segmentSize: { min: 1, max: 10000, default: 3 }
+};
 
 export class HilbertConfig extends SizedDrawingConfig {
     constructor(params = {}) {
-        super(params);
-        this.level = params.level || 7;
-        this.wavyAmplitude = typeof params.wavyAmplitude === 'number' ? params.wavyAmplitude : 1;
-        this.wavyFrequency = typeof params.wavyFrequency === 'number' ? params.wavyFrequency : 0.5;
-        this.segmentSize = typeof params.segmentSize === 'number' ? params.segmentSize : 3;
+        super({
+            ...params,
+            width: params.width ?? 260,
+            height: params.height ?? 260
+        });
+        this.level = clampInteger(params.level, HILBERT_LIMITS.level.min, HILBERT_LIMITS.level.max, HILBERT_LIMITS.level.default);
+        this.wavyAmplitude = clampNumber(params.wavyAmplitude, HILBERT_LIMITS.amplitude.min, HILBERT_LIMITS.amplitude.max, HILBERT_LIMITS.amplitude.default);
+        this.wavyFrequency = clampNumber(params.wavyFrequency, HILBERT_LIMITS.frequency.min, HILBERT_LIMITS.frequency.max, HILBERT_LIMITS.frequency.default);
+        this.segmentSize = clampInteger(params.segmentSize, HILBERT_LIMITS.segmentSize.min, HILBERT_LIMITS.segmentSize.max, HILBERT_LIMITS.segmentSize.default);
     }
 
     getBounds({ paper, orientation } = {}) {
@@ -138,10 +150,10 @@ const hilbertControls = [
             label: 'Hilbert Level',
             target: 'drawingData.level',
             inputType: 'range',
-            min: 1,
-            max: 10,
+            min: HILBERT_LIMITS.level.min,
+            max: HILBERT_LIMITS.level.max,
             step: 1,
-            default: 7,
+            default: HILBERT_LIMITS.level.default,
             valueType: 'number',
             description: 'Recursion depth (higher levels add exponentially more segments and finer detail)'
         },
@@ -150,10 +162,10 @@ const hilbertControls = [
             label: 'Wavy Amplitude',
             target: 'drawingData.wavyAmplitude',
             inputType: 'range',
-            min: 0,
-            max: 5,
+            min: HILBERT_LIMITS.amplitude.min,
+            max: HILBERT_LIMITS.amplitude.max,
             step: 0.1,
-            default: 1,
+            default: HILBERT_LIMITS.amplitude.default,
             valueType: 'number',
             description: 'Amount of sinusoidal offset applied to each segment for organic “wobble”'
         },
@@ -162,10 +174,10 @@ const hilbertControls = [
             label: 'Wavy Frequency',
             target: 'drawingData.wavyFrequency',
             inputType: 'range',
-            min: 0,
-            max: 2,
+            min: HILBERT_LIMITS.frequency.min,
+            max: HILBERT_LIMITS.frequency.max,
             step: 0.05,
-            default: 0.5,
+            default: HILBERT_LIMITS.frequency.default,
             valueType: 'number',
             description: 'How fast the sinusoidal offset oscillates along the curve'
         },
@@ -174,10 +186,10 @@ const hilbertControls = [
             label: 'Segment Size',
             target: 'drawingData.segmentSize',
             inputType: 'range',
-            min: 1,
-            max: 10000,
+            min: HILBERT_LIMITS.segmentSize.min,
+            max: HILBERT_LIMITS.segmentSize.max,
             step: 1,
-            default: 3,
+            default: HILBERT_LIMITS.segmentSize.default,
             valueType: 'number',
             description: 'How many Hilbert points are grouped into one path before the wavy offset is recalculated',
             inputMin: 0,
@@ -199,10 +211,12 @@ const hilbertDefinition = attachControls(defineDrawing({
             name: 'Hilbert Curve',
             params: {
                 type: 'hilbert',
-                level: 7,
+                level: 6,
                 wavyAmplitude: 1,
                 wavyFrequency: 0.5,
                 segmentSize: 3,
+                width: 260,
+                height: 260,
                 line: {
                     spacing: 1.5,
                     strokeWidth: 0.5,

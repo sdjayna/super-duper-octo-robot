@@ -9,11 +9,26 @@ import { createTestPalette, createTestRenderContext, createTestDrawingConfig } f
 const palette = createTestPalette();
 
 let drawBouwkampCode;
-let drawDelaunayTriangulation;
 let drawHilbertCurve;
 let HilbertConfig;
 let drawCalibrationPatterns;
 let CalibrationConfig;
+let drawLissajous;
+let drawSuperformula;
+let drawClifford;
+let drawTuringPatterns;
+let drawPhyllotaxis;
+let drawSpirograph;
+let drawVoronoiSketch;
+let drawFlowField;
+let drawLorenzAttractor;
+let drawIkedaAttractor;
+let drawDeJongAttractor;
+let drawContourMap;
+let drawWaveInterference;
+let drawCirclePacking;
+let drawTruchetTiles;
+let drawSortingArcs;
 let registerDrawing;
 let addDrawingPreset;
 let drawingRegistry;
@@ -55,9 +70,24 @@ beforeAll(async () => {
 
     drawingRegistry = await import('../../client/js/drawingRegistry.js');
     ({ drawBouwkampCode } = await import('../core/bouwkamp.js'));
-    ({ drawDelaunayTriangulation } = await import('../core/delaunay.js'));
     ({ drawHilbertCurve, HilbertConfig } = await import('../community/hilbert.js'));
     ({ drawCalibrationPatterns, CalibrationConfig } = await import('../core/calibration.js'));
+    ({ drawLissajous } = await import('../core/lissajous.js'));
+    ({ drawSuperformula } = await import('../core/superformula.js'));
+    ({ drawClifford } = await import('../core/clifford.js'));
+    ({ drawTuringPatterns } = await import('../core/turing.js'));
+    ({ drawPhyllotaxis } = await import('../core/phyllotaxis.js'));
+    ({ drawSpirograph } = await import('../core/spirograph.js'));
+    ({ drawVoronoiSketch } = await import('../core/voronoi.js'));
+    ({ drawFlowField } = await import('../core/flowField.js'));
+    ({ drawLorenzAttractor } = await import('../core/lorenz.js'));
+    ({ drawIkedaAttractor } = await import('../core/ikeda.js'));
+    ({ drawDeJongAttractor } = await import('../core/dejong.js'));
+    ({ drawContourMap } = await import('../core/contour.js'));
+    ({ drawWaveInterference } = await import('../core/waveInterference.js'));
+    ({ drawCirclePacking } = await import('../core/circlePacking.js'));
+    ({ drawTruchetTiles } = await import('../core/truchet.js'));
+    ({ drawSortingArcs } = await import('../core/sortingArcs.js'));
 
     global.fetch = originalFetch;
 });
@@ -90,32 +120,6 @@ describe('drawing functions', () => {
             .filter(child => child.getAttribute('inkscape:groupmode') === 'layer');
 
         expect(layers.length).toBe(Object.keys(palette).length);
-        expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
-    });
-
-    it('renders Delaunay drawing using projected points', () => {
-        const drawingConfig = createTestDrawingConfig({
-            drawingData: {
-                points: [
-                    { x: 0, y: 0 },
-                    { x: 100, y: 0 },
-                    { x: 100, y: 100 },
-                    { x: 0, y: 100 }
-                ],
-                width: 100,
-                height: 100
-            },
-            line: { strokeWidth: 0.3 },
-            colorPalette: palette
-        });
-
-        const renderContext = createTestRenderContext({
-            paper: { width: 150, height: 150, margin: 5 },
-            drawingWidth: 100,
-            drawingHeight: 100
-        });
-
-        const svg = drawDelaunayTriangulation(drawingConfig, renderContext);
         expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
     });
 
@@ -175,5 +179,288 @@ describe('drawing functions', () => {
         const svg = drawCalibrationPatterns(drawingConfig, renderContext);
         expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
         expect(svg.querySelectorAll('text').length).toBeGreaterThan(0);
+    });
+
+    it('renders Lissajous curves', () => {
+        const drawingConfig = createTestDrawingConfig({
+            drawingData: {
+                freqA: 3,
+                freqB: 2,
+                phase: Math.PI / 2,
+                amplitude: 0.9,
+                samples: 600
+            },
+            line: { strokeWidth: 0.3 },
+            colorPalette: palette
+        });
+        const renderContext = createTestRenderContext({ drawingWidth: 200, drawingHeight: 200 });
+        const svg = drawLissajous(drawingConfig, renderContext);
+        expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
+    });
+
+    it('renders Superformula shapes', () => {
+        const drawingConfig = createTestDrawingConfig({
+            drawingData: {
+                m: 7,
+                n1: 0.2,
+                n2: 1.7,
+                n3: 1.7,
+                a: 1,
+                b: 1,
+                samples: 600,
+                scale: 0.9
+            },
+            line: { strokeWidth: 0.35 },
+            colorPalette: palette
+        });
+        const renderContext = createTestRenderContext({ drawingWidth: 200, drawingHeight: 200 });
+        const svg = drawSuperformula(drawingConfig, renderContext);
+        expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
+    });
+
+    it('renders Clifford attractors', () => {
+        const drawingConfig = createTestDrawingConfig({
+            drawingData: {
+                a: -1.4,
+                b: 1.6,
+                c: 1.0,
+                d: 0.7,
+                iterations: 5000,
+                noise: 0
+            },
+            line: { strokeWidth: 0.2 },
+            colorPalette: palette
+        });
+        const renderContext = createTestRenderContext({ drawingWidth: 200, drawingHeight: 200 });
+        const svg = drawClifford(drawingConfig, renderContext);
+        expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
+    });
+
+    it('renders Turing patterns', () => {
+        const drawingConfig = createTestDrawingConfig({
+            drawingData: {
+                feed: 0.034,
+                kill: 0.063,
+                diffusionU: 0.16,
+                diffusionV: 0.08,
+                steps: 50,
+                resolution: 28,
+                threshold: 0.2
+            },
+            line: { strokeWidth: 0.15 },
+            colorPalette: palette
+        });
+        const renderContext = createTestRenderContext({ drawingWidth: 100, drawingHeight: 100 });
+        const svg = drawTuringPatterns(drawingConfig, renderContext);
+        expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
+    });
+
+    it('renders phyllotaxis spirals', () => {
+        const drawingConfig = createTestDrawingConfig({
+            drawingData: {
+                divergence: 137.5,
+                radialStep: 4,
+                pointCount: 200,
+                jitter: 0.1,
+                connect: false
+            },
+            line: { strokeWidth: 0.2 },
+            colorPalette: palette
+        });
+        const renderContext = createTestRenderContext({ drawingWidth: 200, drawingHeight: 200 });
+        const svg = drawPhyllotaxis(drawingConfig, renderContext);
+        expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
+    });
+
+    it('renders spirograph curves', () => {
+        const drawingConfig = createTestDrawingConfig({
+            drawingData: {
+                R: 80,
+                r: 25,
+                d: 65,
+                samples: 600,
+                layers: 2,
+                layerOffset: Math.PI / 6,
+                mode: 'hypotrochoid'
+            },
+            line: { strokeWidth: 0.3 },
+            colorPalette: palette
+        });
+        const renderContext = createTestRenderContext({ drawingWidth: 220, drawingHeight: 220 });
+        const svg = drawSpirograph(drawingConfig, renderContext);
+        expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
+    });
+
+    it('renders Voronoi sketches', () => {
+        const drawingConfig = createTestDrawingConfig({
+            drawingData: {
+                pointCount: 25,
+                relaxationPasses: 1,
+                neighbors: 3,
+                boundary: 'rect',
+                jitter: 0.2,
+                seed: 5
+            },
+            line: { strokeWidth: 0.2 },
+            colorPalette: palette
+        });
+        const renderContext = createTestRenderContext({ drawingWidth: 220, drawingHeight: 150 });
+        const svg = drawVoronoiSketch(drawingConfig, renderContext);
+        expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
+    });
+
+    it('renders flow fields', () => {
+        const drawingConfig = createTestDrawingConfig({
+            drawingData: {
+                noiseScale: 0.01,
+                stepLength: 2.5,
+                particleCount: 80,
+                steps: 60,
+                lineJitter: 0.1,
+                noiseSeed: 99
+            },
+            line: { strokeWidth: 0.2 },
+            colorPalette: palette
+        });
+        const renderContext = createTestRenderContext({ drawingWidth: 200, drawingHeight: 120 });
+        const svg = drawFlowField(drawingConfig, renderContext);
+        expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
+    });
+
+    it('renders Lorenz attractors', () => {
+        const drawingConfig = createTestDrawingConfig({
+            drawingData: {
+                sigma: 10,
+                rho: 28,
+                beta: 8 / 3,
+                dt: 0.01,
+                steps: 12000,
+                smoothing: 0.05
+            },
+            line: { strokeWidth: 0.2 },
+            colorPalette: palette
+        });
+        const renderContext = createTestRenderContext({ drawingWidth: 200, drawingHeight: 180 });
+        const svg = drawLorenzAttractor(drawingConfig, renderContext);
+        expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
+    });
+
+    it('renders Ikeda attractors', () => {
+        const drawingConfig = createTestDrawingConfig({
+            drawingData: {
+                u: 0.918,
+                steps: 15000,
+                smoothing: 0.02
+            },
+            line: { strokeWidth: 0.2 },
+            colorPalette: palette
+        });
+        const renderContext = createTestRenderContext({ drawingWidth: 200, drawingHeight: 180 });
+        const svg = drawIkedaAttractor(drawingConfig, renderContext);
+        expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
+    });
+
+    it('renders Peter de Jong attractors', () => {
+        const drawingConfig = createTestDrawingConfig({
+            drawingData: {
+                a: -1.4,
+                b: 1.6,
+                c: -1.2,
+                d: 0.7,
+                steps: 20000,
+                smoothing: 0.03
+            },
+            line: { strokeWidth: 0.2 },
+            colorPalette: palette
+        });
+        const renderContext = createTestRenderContext({ drawingWidth: 200, drawingHeight: 180 });
+        const svg = drawDeJongAttractor(drawingConfig, renderContext);
+        expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
+    });
+
+    it('renders contour maps', () => {
+        const drawingConfig = createTestDrawingConfig({
+            drawingData: {
+                frequency: 0.01,
+                octaves: 3,
+                thresholdSpacing: 0.2,
+                thresholdCount: 5,
+                seed: 50
+            },
+            line: { strokeWidth: 0.2 },
+            colorPalette: palette
+        });
+        const renderContext = createTestRenderContext({ drawingWidth: 300, drawingHeight: 200 });
+        const svg = drawContourMap(drawingConfig, renderContext);
+        expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
+    });
+
+    it('renders wave interference contours', () => {
+        const drawingConfig = createTestDrawingConfig({
+            drawingData: {
+                emitterCount: 5,
+                wavelength: 130,
+                thresholdSpacing: 0.25,
+                thresholdCount: 4,
+                seed: 72
+            },
+            line: { strokeWidth: 0.2 },
+            colorPalette: palette
+        });
+        const renderContext = createTestRenderContext({ drawingWidth: 380, drawingHeight: 260 });
+        const svg = drawWaveInterference(drawingConfig, renderContext);
+        expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
+    });
+
+    it('renders circle packing', () => {
+        const drawingConfig = createTestDrawingConfig({
+            drawingData: {
+                minRadius: 4,
+                maxRadius: 16,
+                circleCount: 200,
+                spacingFactor: 1.1,
+                seed: 33
+            },
+            line: { strokeWidth: 0.2 },
+            colorPalette: palette
+        });
+        const renderContext = createTestRenderContext({ drawingWidth: 300, drawingHeight: 220 });
+        const svg = drawCirclePacking(drawingConfig, renderContext);
+        expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
+    });
+
+    it('renders Truchet tiles', () => {
+        const drawingConfig = createTestDrawingConfig({
+            drawingData: {
+                columns: 20,
+                rows: 30,
+                motifCount: 2,
+                rotationBias: 0.8,
+                seed: 5
+            },
+            line: { strokeWidth: 0.2 },
+            colorPalette: palette
+        });
+        const renderContext = createTestRenderContext({ drawingWidth: 300, drawingHeight: 200 });
+        const svg = drawTruchetTiles(drawingConfig, renderContext);
+        expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
+    });
+
+    it('renders sorting arcs', () => {
+        const drawingConfig = createTestDrawingConfig({
+            drawingData: {
+                arraySize: 80,
+                algorithm: 'bubble',
+                shuffleStrength: 0.2,
+                arcHeight: 40,
+                lineWidth: 0.18,
+                seed: 21
+            },
+            line: { strokeWidth: 0.18 },
+            colorPalette: palette
+        });
+        const renderContext = createTestRenderContext({ drawingWidth: 320, drawingHeight: 200 });
+        const svg = drawSortingArcs(drawingConfig, renderContext);
+        expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
     });
 });

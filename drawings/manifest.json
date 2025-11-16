@@ -1,5 +1,5 @@
 {
-  "version": "bcf7a4d28f9e",
+  "version": "89102aad91de",
   "drawings": [
     {
       "group": "community",
@@ -15,8 +15,72 @@
     },
     {
       "group": "core",
-      "path": "/drawings/core/delaunay.js"
+      "path": "/drawings/core/circlePacking.js"
+    },
+    {
+      "group": "core",
+      "path": "/drawings/core/clifford.js"
+    },
+    {
+      "group": "core",
+      "path": "/drawings/core/contour.js"
+    },
+    {
+      "group": "core",
+      "path": "/drawings/core/dejong.js"
+    },
+    {
+      "group": "core",
+      "path": "/drawings/core/dla.js"
+    },
+    {
+      "group": "core",
+      "path": "/drawings/core/flowField.js"
+    },
+    {
+      "group": "core",
+      "path": "/drawings/core/ikeda.js"
+    },
+    {
+      "group": "core",
+      "path": "/drawings/core/lissajous.js"
+    },
+    {
+      "group": "core",
+      "path": "/drawings/core/lorenz.js"
+    },
+    {
+      "group": "core",
+      "path": "/drawings/core/phyllotaxis.js"
+    },
+    {
+      "group": "core",
+      "path": "/drawings/core/sortingArcs.js"
+    },
+    {
+      "group": "core",
+      "path": "/drawings/core/spirograph.js"
+    },
+    {
+      "group": "core",
+      "path": "/drawings/core/superformula.js"
+    },
+    {
+      "group": "core",
+      "path": "/drawings/core/truchet.js"
+    },
+    {
+      "group": "core",
+      "path": "/drawings/core/turing.js"
+    },
+    {
+      "group": "core",
+      "path": "/drawings/core/voronoi.js"
+    },
+    {
+      "group": "core",
+      "path": "/drawings/core/waveInterference.js"
     }
   ],
-  "generatedAt": "2025-11-15T23:00:30.477Z"
+  "generatedAt": "2025-11-16T01:03:25.675Z"
 }
