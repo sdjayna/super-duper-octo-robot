@@ -2,11 +2,37 @@ const HATCH_STORAGE_KEY = 'globalHatchSettings';
 const DEFAULT_SETTINGS = {
     hatchStyle: 'serpentine',
     hatchSpacing: 2,
-    hatchInset: 1,
-    includeBoundary: true
+    hatchInset: 2,
+    includeBoundary: true,
+    linkSpacingOffset: true
 };
 
 let hatchSettings = loadSettings();
+
+function coerceSpacing(value, fallback = 2) {
+    const numeric = Number(value);
+    if (Number.isFinite(numeric) && numeric >= 0) {
+        return numeric;
+    }
+    return fallback;
+}
+
+function normalizeSettings(settings, partial = {}) {
+    const merged = { ...settings, ...partial };
+    merged.hatchSpacing = coerceSpacing(merged.hatchSpacing, settings.hatchSpacing);
+    merged.hatchInset = coerceSpacing(merged.hatchInset, settings.hatchInset);
+    if (merged.linkSpacingOffset) {
+        let reference = merged.hatchSpacing;
+        if (typeof partial.hatchSpacing === 'number') {
+            reference = coerceSpacing(partial.hatchSpacing, merged.hatchSpacing);
+        } else if (typeof partial.hatchInset === 'number') {
+            reference = coerceSpacing(partial.hatchInset, merged.hatchInset);
+        }
+        merged.hatchSpacing = reference;
+        merged.hatchInset = reference;
+    }
+    return merged;
+}
 
 function loadSettings() {
     if (typeof window === 'undefined' || !window?.localStorage) {
@@ -14,11 +40,9 @@ function loadSettings() {
     }
     try {
         const stored = window.localStorage.getItem(HATCH_STORAGE_KEY);
-        if (!stored) {
-            return { ...DEFAULT_SETTINGS };
-        }
-        const parsed = JSON.parse(stored);
-        return { ...DEFAULT_SETTINGS, ...(parsed || {}) };
+        const parsed = stored ? JSON.parse(stored) : null;
+        const merged = normalizeSettings({ ...DEFAULT_SETTINGS, ...(parsed || {}) });
+        return merged;
     } catch {
         return { ...DEFAULT_SETTINGS };
     }
@@ -31,12 +55,12 @@ function persistSettings() {
     try {
         window.localStorage.setItem(HATCH_STORAGE_KEY, JSON.stringify(hatchSettings));
     } catch {
-        // ignore
+        // ignore persistence failures
     }
 }
 
 function updateSettings(partial) {
-    hatchSettings = { ...hatchSettings, ...partial };
+    hatchSettings = normalizeSettings(hatchSettings, partial);
     persistSettings();
 }
 
@@ -56,10 +80,7 @@ export function applyHatchSettingsToConfig(drawingConfig) {
     drawingConfig.line.hatchStyle = hatchSettings.hatchStyle;
     drawingConfig.line.hatchInset = hatchSettings.hatchInset;
     drawingConfig.line.includeBoundary = hatchSettings.includeBoundary;
-    const spacingValue = Number(hatchSettings.hatchSpacing);
-    if (!Number.isNaN(spacingValue) && spacingValue > 0) {
-        drawingConfig.line.spacing = spacingValue;
-    }
+    drawingConfig.line.spacing = hatchSettings.hatchSpacing;
 }
 
 function formatMm(value) {
@@ -73,12 +94,13 @@ export function initializeHatchControls(elements = {}, onChange = () => {}) {
         spacingValueLabel,
         insetSlider,
         insetValueLabel,
-        boundaryCheckbox
+        boundaryCheckbox,
+        linkCheckbox
     } = elements;
 
     const notifyChange = async () => {
         const maybePromise = onChange(getHatchSettings());
-        if (maybePromise && typeof maybePromise.then === 'function') {
+        if (maybePromise?.then) {
             await maybePromise;
         }
     };
@@ -91,33 +113,64 @@ export function initializeHatchControls(elements = {}, onChange = () => {}) {
         });
     }
 
-    if (spacingSlider) {
-        spacingSlider.value = hatchSettings.hatchSpacing;
+    const syncSpacingLabel = (value) => {
         if (spacingValueLabel) {
-            spacingValueLabel.textContent = formatMm(hatchSettings.hatchSpacing);
+            spacingValueLabel.textContent = formatMm(value);
         }
+    };
+
+    const syncInsetLabel = (value) => {
+        if (insetValueLabel) {
+            insetValueLabel.textContent = formatMm(value);
+        }
+    };
+
+    const reflectSpacing = (value) => {
+        if (spacingSlider) {
+            spacingSlider.value = value;
+        }
+        syncSpacingLabel(value);
+    };
+
+    const reflectInset = (value) => {
+        if (insetSlider) {
+            insetSlider.value = value;
+        }
+        syncInsetLabel(value);
+    };
+
+    reflectSpacing(hatchSettings.hatchSpacing);
+    reflectInset(hatchSettings.hatchInset);
+
+    const handleSpacingChange = async (nextValue) => {
+        updateSettings({ hatchSpacing: nextValue });
+        reflectSpacing(hatchSettings.hatchSpacing);
+        reflectInset(hatchSettings.hatchInset);
+        await notifyChange();
+    };
+
+    const handleInsetChange = async (nextValue) => {
+        updateSettings({ hatchInset: nextValue });
+        reflectSpacing(hatchSettings.hatchSpacing);
+        reflectInset(hatchSettings.hatchInset);
+        await notifyChange();
+    };
+
+    if (spacingSlider) {
+        spacingSlider.min = 0;
+        spacingSlider.max = 10;
+        spacingSlider.step = 0.1;
         spacingSlider.addEventListener('input', async (event) => {
-            const nextValue = Number(event.target.value);
-            updateSettings({ hatchSpacing: nextValue });
-            if (spacingValueLabel) {
-                spacingValueLabel.textContent = formatMm(nextValue);
-            }
-            await notifyChange();
+            await handleSpacingChange(Number(event.target.value));
         });
     }
 
     if (insetSlider) {
-        insetSlider.value = hatchSettings.hatchInset;
-        if (insetValueLabel) {
-            insetValueLabel.textContent = formatMm(hatchSettings.hatchInset);
-        }
+        insetSlider.min = 0;
+        insetSlider.max = 10;
+        insetSlider.step = 0.1;
         insetSlider.addEventListener('input', async (event) => {
-            const nextValue = Number(event.target.value);
-            updateSettings({ hatchInset: nextValue });
-            if (insetValueLabel) {
-                insetValueLabel.textContent = formatMm(nextValue);
-            }
-            await notifyChange();
+            await handleInsetChange(Number(event.target.value));
         });
     }
 
@@ -128,14 +181,22 @@ export function initializeHatchControls(elements = {}, onChange = () => {}) {
             await notifyChange();
         });
     }
+
+    if (linkCheckbox) {
+        linkCheckbox.checked = hatchSettings.linkSpacingOffset;
+        linkCheckbox.addEventListener('change', async (event) => {
+            updateSettings({ linkSpacingOffset: event.target.checked });
+            reflectSpacing(hatchSettings.hatchSpacing);
+            reflectInset(hatchSettings.hatchInset);
+            await notifyChange();
+        });
+    }
 }
 
 export const __TEST_ONLY__ = {
     DEFAULT_SETTINGS,
-    loadSettings,
-    persistSettings,
-    reset() {
-        hatchSettings = { ...DEFAULT_SETTINGS };
-        persistSettings();
+    getInternalSettings: () => hatchSettings,
+    setInternalSettings: (next) => {
+        hatchSettings = normalizeSettings({ ...DEFAULT_SETTINGS }, next);
     }
 };

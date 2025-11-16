@@ -68,6 +68,7 @@ const hatchSpacingValueLabel = document.getElementById('hatchSpacingValue');
 const hatchInsetControl = document.getElementById('hatchInsetControl');
 const hatchInsetValueLabel = document.getElementById('hatchInsetValue');
 const hatchBoundaryControl = document.getElementById('hatchBoundaryControl');
+const hatchLinkControl = document.getElementById('hatchLinkControl');
 
 const state = {
     paperConfig: null,
@@ -186,7 +187,8 @@ initializeHatchControls({
     spacingValueLabel: hatchSpacingValueLabel,
     insetSlider: hatchInsetControl,
     insetValueLabel: hatchInsetValueLabel,
-    boundaryCheckbox: hatchBoundaryControl
+    boundaryCheckbox: hatchBoundaryControl,
+    linkCheckbox: hatchLinkControl
 }, handleGlobalHatchChanged);
 
 initializeHatchControls({
