@@ -379,10 +379,16 @@ function normalizeControlValue(control, rawValue) {
         }
         return parsed;
     }
+    if (valueType === 'boolean') {
+        return Boolean(rawValue);
+    }
     return rawValue;
 }
 
 function formatControlValue(value, control) {
+    if (control?.valueType === 'boolean') {
+        return value ? 'On' : 'Off';
+    }
     const parsed = Number(value);
     if (Number.isFinite(parsed)) {
         const precision = control?.displayPrecision ?? 2;
@@ -569,23 +575,33 @@ function createControlElement(control, value, onChange) {
         });
     } else {
         inputElement = document.createElement('input');
-        inputElement.type = control.inputType || 'number';
-        const minAttr = control.inputMin ?? control.min;
-        const maxAttr = control.inputMax ?? control.max;
-        if (typeof minAttr !== 'undefined') inputElement.min = minAttr;
-        if (typeof maxAttr !== 'undefined') inputElement.max = maxAttr;
-        if (typeof control.step !== 'undefined') {
-            inputElement.step = control.step;
-        } else if (typeof control.inputStep !== 'undefined') {
-            inputElement.step = control.inputStep;
+        if (control.inputType === 'checkbox') {
+            inputElement.type = 'checkbox';
+            inputElement.checked = Boolean(value);
+            inputElement.addEventListener('change', async (event) => {
+                const actualValue = event.target.checked;
+                valueDisplay.textContent = formatControlValue(actualValue, control);
+                await onChange(actualValue);
+            });
+        } else {
+            inputElement.type = control.inputType || 'number';
+            const minAttr = control.inputMin ?? control.min;
+            const maxAttr = control.inputMax ?? control.max;
+            if (typeof minAttr !== 'undefined') inputElement.min = minAttr;
+            if (typeof maxAttr !== 'undefined') inputElement.max = maxAttr;
+            if (typeof control.step !== 'undefined') {
+                inputElement.step = control.step;
+            } else if (typeof control.inputStep !== 'undefined') {
+                inputElement.step = control.inputStep;
+            }
+            inputElement.value = actualValueToControlInput(control, value);
+            const eventName = control.inputType === 'range' ? 'input' : 'change';
+            inputElement.addEventListener(eventName, async (event) => {
+                const actualValue = controlInputToActualValue(control, event.target.value);
+                valueDisplay.textContent = formatControlValue(actualValue, control);
+                await onChange(actualValue);
+            });
         }
-        inputElement.value = actualValueToControlInput(control, value);
-        const eventName = control.inputType === 'range' ? 'input' : 'change';
-        inputElement.addEventListener(eventName, async (event) => {
-            const actualValue = controlInputToActualValue(control, event.target.value);
-            valueDisplay.textContent = formatControlValue(actualValue, control);
-            await onChange(actualValue);
-        });
     }
     inputContainer.appendChild(inputElement);
     wrapper.appendChild(label);

@@ -71,12 +71,34 @@ function nearestPointOnPolygon(point, polygon) {
     return closest;
 }
 
+function appendBoundaryLoop(path, boundary, connection) {
+    if (!boundary?.length) {
+        return path;
+    }
+    const openBoundary = boundary.slice(0, -1);
+    if (!openBoundary.length) {
+        return path;
+    }
+    const insertIndex = ((connection?.segmentIndex ?? 0) + 1) % openBoundary.length;
+    if (connection?.point) {
+        openBoundary.splice(insertIndex, 0, { x: connection.point.x, y: connection.point.y });
+    }
+    const startIndex = insertIndex % openBoundary.length;
+    for (let i = 0; i <= openBoundary.length; i++) {
+        const idx = (startIndex + i) % openBoundary.length;
+        const point = openBoundary[idx];
+        path.push({ x: point.x, y: point.y });
+    }
+    path.push({ x: openBoundary[startIndex].x, y: openBoundary[startIndex].y });
+    return path;
+}
+
 export function generatePolygonScanlineHatch(polygonPoints, spacing = 2.5, options = {}) {
     const polygon = normalizePolygon(polygonPoints);
     if (polygon.length < 4) {
         return [];
     }
-    const step = Math.max(spacing, 0.1);
+    const rawStep = Math.max(spacing, 0.1);
     let minY = Infinity;
     let maxY = -Infinity;
     polygon.forEach(point => {
@@ -86,6 +108,13 @@ export function generatePolygonScanlineHatch(polygonPoints, spacing = 2.5, optio
     if (!Number.isFinite(minY) || !Number.isFinite(maxY) || maxY - minY <= 0) {
         return [];
     }
+    let minX = Infinity;
+    let maxX = -Infinity;
+    polygon.forEach(point => {
+        minX = Math.min(minX, point.x);
+        maxX = Math.max(maxX, point.x);
+    });
+    const horizontalInset = Math.max(0, Math.min(options.inset ?? spacing / 2, (maxX - minX) / 2));
     const path = [];
     const addPoint = (point) => {
         const last = path[path.length - 1];
@@ -94,18 +123,31 @@ export function generatePolygonScanlineHatch(polygonPoints, spacing = 2.5, optio
         }
     };
     let direction = 1;
-    const insetAmount = Math.max(0, options.inset ?? spacing * 0.25);
-    let y = minY + insetAmount;
-    while (y <= maxY + 1e-6) {
+    const insetAmount = Math.max(0, Math.min(options.inset ?? spacing / 2, (maxY - minY) / 2));
+    const startY = minY + insetAmount;
+    const endY = maxY - insetAmount;
+    if (endY < startY) {
+        return appendBoundaryLoop([], polygon, { point: polygon[0], segmentIndex: 0 });
+    }
+    const innerHeight = endY - startY;
+    const rows = Math.max(1, Math.round(innerHeight / rawStep));
+    const actualStep = rows === 0 ? innerHeight : innerHeight / rows;
+    let y = startY;
+    for (let row = 0; row <= rows; row++) {
         const intersections = computeScanlineIntersections(polygon, y);
         if (intersections.length >= 2) {
             if (path.length > 0 && path[path.length - 1].y !== y) {
                 addPoint({ x: path[path.length - 1].x, y });
             }
             for (let i = 0; i < intersections.length; i += 2) {
-                const startX = intersections[i];
-                const endX = intersections[i + 1];
+                let startX = intersections[i];
+                let endX = intersections[i + 1];
                 if (!Number.isFinite(startX) || !Number.isFinite(endX)) {
+                    continue;
+                }
+                startX = Math.min(Math.max(startX + horizontalInset, minX + horizontalInset), endX);
+                endX = Math.max(Math.min(endX - horizontalInset, maxX - horizontalInset), startX);
+                if (endX - startX <= 1e-3) {
                     continue;
                 }
                 if (direction === 1) {
@@ -118,24 +160,23 @@ export function generatePolygonScanlineHatch(polygonPoints, spacing = 2.5, optio
             }
             direction *= -1;
         }
-        y += step;
+        y = Math.min(y + actualStep, endY);
+    }
+    if (options.includeBoundary === false) {
+        return path;
     }
     const boundary = polygon.map(point => ({ x: point.x, y: point.y }));
     const result = [...path];
+    if (!result.length) {
+        appendBoundaryLoop(result, boundary, { segmentIndex: 0, point: boundary[0] });
+        return result;
+    }
     const lastPoint = result[result.length - 1];
-    const connection = lastPoint || boundary[0];
-    const nearest = nearestPointOnPolygon(connection, boundary);
-    if (!lastPoint || nearest.distance > 0) {
+    const nearest = nearestPointOnPolygon(lastPoint, boundary);
+    if (nearest.distance > 0) {
         result.push({ x: nearest.point.x, y: nearest.point.y });
     }
-    const expanded = boundary.slice(0, -1);
-    expanded.splice(nearest.segmentIndex + 1, 0, nearest.point);
-    const cycleLength = expanded.length;
-    for (let i = 0; i <= cycleLength; i++) {
-        const idx = (nearest.segmentIndex + 1 + i) % cycleLength;
-        result.push({ x: expanded[idx].x, y: expanded[idx].y });
-    }
-    result.push({ x: nearest.point.x, y: nearest.point.y });
+    appendBoundaryLoop(result, boundary, nearest);
     return result;
 }
 

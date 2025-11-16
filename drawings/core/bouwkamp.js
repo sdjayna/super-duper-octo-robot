@@ -61,15 +61,25 @@ export function drawBouwkampCode(drawingConfig, renderContext) {
         };
         const projectedRect = builder.projectRect(rectData);
         const polygon = rectToPolygon(projectedRect);
+        const hatchInset = typeof drawingConfig.line?.hatchInset === 'number'
+            ? drawingConfig.line.hatchInset
+            : spacing / 2;
+        const includeBoundary = drawingConfig.line?.includeBoundary !== false;
         if (hatchStyle === 'none') {
             builder.appendPath(polygon, { geometry: projectedRect });
         } else if (hatchStyle === 'scanline') {
-            const scanlinePath = generatePolygonScanlineHatch(polygon, spacing);
+            const scanlinePath = generatePolygonScanlineHatch(polygon, spacing, {
+                inset: hatchInset,
+                includeBoundary
+            });
             if (scanlinePath.length > 0) {
                 builder.appendPath(scanlinePath, { geometry: projectedRect });
             }
         } else {
-            const points = generateSingleSerpentineLine(projectedRect, spacing, drawingConfig.line.strokeWidth);
+            const points = generateSingleSerpentineLine(projectedRect, spacing, drawingConfig.line.strokeWidth, {
+                inset: hatchInset,
+                includeBoundary
+            });
             builder.appendPath(points, { geometry: projectedRect });
         }
 
@@ -104,6 +114,27 @@ export const bouwkampControls = [
         default: 2,
         valueType: 'number',
         description: 'Distance between each serpentine hatch pass (higher values leave larger gaps)'
+    },
+    {
+        id: 'hatchInset',
+        label: 'Hatch Offset',
+        target: 'line.hatchInset',
+        inputType: 'range',
+        min: 0,
+        max: 5,
+        step: 0.1,
+        default: 1,
+        valueType: 'number',
+        description: 'How far to pull hatching away from the boundary before the final outline pass'
+    },
+    {
+        id: 'includeBoundary',
+        label: 'Draw Boundary Outline',
+        target: 'line.includeBoundary',
+        inputType: 'checkbox',
+        default: true,
+        valueType: 'boolean',
+        description: 'Toggle the final perimeter pass (useful when testing hatch offsets)'
     },
     {
         id: 'hatchStyle',
