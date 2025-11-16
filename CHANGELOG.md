@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 - Deprecated the original Delaunay triangulation module in favor of the Voronoi sketch and other generative drawings.
+- Removed the Diffusion-Limited Aggregation (Dendrite Cluster) drawing because its simulation never finished in practice; future dendrite experiments should ship with stricter performance budgets.
 
 ### Fixed
 - Eliminated manifest endpoint crashes by ensuring `load_drawings_manifest` is a properly declared class method and by stripping query strings in the HTTP handler.

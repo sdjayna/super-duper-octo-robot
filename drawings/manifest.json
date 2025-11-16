@@ -1,5 +1,5 @@
 {
-  "version": "413f1927d5af",
+  "version": "01fd66a37815",
   "drawings": [
     {
       "group": "community",
@@ -28,10 +28,6 @@
     {
       "group": "core",
       "path": "/drawings/core/dejong.js"
-    },
-    {
-      "group": "core",
-      "path": "/drawings/core/dla.js"
     },
     {
       "group": "core",
@@ -114,5 +110,5 @@
       "path": "/drawings/core/waveInterference.js"
     }
   ],
-  "generatedAt": "2025-11-16T10:31:36.506Z"
+  "generatedAt": "2025-11-16T10:44:55.070Z"
 }

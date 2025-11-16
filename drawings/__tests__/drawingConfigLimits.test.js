@@ -241,18 +241,6 @@ const drawingCases = [
         }
     },
     {
-        name: 'DLA',
-        loadConfigClass: async () => (await import('../core/dla.js')).dlaDrawing.configClass,
-        params: { stickiness: 2, bias: 0, particleCount: 100000, maxRadius: 10, seed: 0 },
-        assertions: (config) => {
-            expect(config.stickiness).toBeCloseTo(0.9);
-            expect(config.bias).toBeCloseTo(0.01);
-            expect(config.particleCount).toBe(3500);
-            expect(config.maxRadius).toBe(120);
-            expect(config.seed).toBe(1);
-        }
-    },
-    {
         name: 'Truchet Tiles',
         loadConfigClass: async () => (await import('../core/truchet.js')).truchetDrawing.configClass,
         params: { columns: 1, rows: 1, motifCount: 80, rotationBias: 0, seed: 0 },

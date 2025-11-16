@@ -336,6 +336,5 @@ Development leaned on AI copilots (aider.chat, DeepSeek R1, Claude 3 Sonnet) for
 | Contour Maps (noise) | Noise freq 0.003–0.02, octaves 2–5, contour spacing 3–6 units, map ≈ 400 × 280 mm. |
 | Wave Interference | 3–7 emitters, wavelengths 60–200 mm, random phases, draw contours at 0.0/0.2/0.4/0.6. |
 | Circle Packing | Radii 3–18 mm (bimodal works nicely), rejection distance 1.05–1.2× radius sum, 200–600 circles for comfortable density. |
-| Diffusion-Limited Aggregation | Stickiness 0.5–0.9, particle bias 0.01–0.05, 150–1200 particles, cluster radius 100–150 mm for delicate dendrites without melting CPUs. |
 | Truchet Tiles | Grid 20×30 up to 40×60, two or three motifs, rotation skewed toward 0°/180° for long arcs. |
 | Sorting-Algorithm Arcs | Array size 80–200, gentle shuffle for smoother arcs, bubble sort for density, quicksort for broad structure. |

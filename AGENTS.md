@@ -48,3 +48,8 @@ Use Vitest for client and drawing helpers; colocate specs as `*.test.js` under `
 
 ## Commit & Pull Request Guidelines
 Follow the Conventional Commit-style prefixes already in history (`feat:`, `fix:`, `chore:`). Provide imperative, present-tense summaries, e.g., `feat: add hilbert noise drawing`. PRs should describe the user-facing impact, link related GitHub issues, and include screenshots or SVG snippets when UI or output changes are visible (attach `ui-screenshot.png` updates when relevant). Note any manifest or config migrations in the PR body so reviewers know to regenerate assets, and tick off TODO items or docs you touched.
+
+## Art Direction
+- Assume every plot should maximize color usage. Prefer multi-layer treatments, dense fills, and rich palettes over minimalist strokes so the final SVG leaves little or no paper showing through.
+- When tuning defaults or adding controls/presets, bias toward higher coverage (e.g., tighter spacing, more offsets, broader hatch fills) unless the user explicitly asks for negative space.
+- When disabling colors temporarily (via the Medium multi-select), keep in mind the overall goal is still full-paper coverage—ensure the remaining palette can span many layers so the artwork feels saturated.
