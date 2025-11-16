@@ -7,6 +7,7 @@
 - [ ] Plot thread streams both stdout and stderr with blocking `readline()` calls that deadlock when stderr is quiet. Use non-blocking reads (e.g., `select`, `asyncio`, or reader threads).
 - [ ] Static asset serving and SVG export trust user-supplied paths/names; `../` segments allow access outside `output/`. Normalize and validate paths.
 - [ ] Auto-refresh in `plotter.html` spawns overlapping `draw()` calls. Gate refreshes with an "in-flight" flag so only one render runs at a time.
+- [x] Persist per-medium disabled color selections so the new multi-select survives reloads (localStorage or config override). ✓
 
 ## High Priority
 
@@ -38,6 +39,7 @@
    - [ ] Add integration tests (UI ↔ server)  
    - [ ] Add server-side tests for `/plotter`, `/plot-progress`, and `/save-svg`  
    - [ ] Add visual regression tests  
+   - [ ] Add DOM-focused tests for collapsible panels + medium color select interactions  
 
 5. TypeScript adoption (longer-term)  
    - [ ] Convert core files to TypeScript  

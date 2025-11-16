@@ -34,6 +34,7 @@ JavaScript files are ES modules with 4-space indentation, `camelCase` functions 
 
 ### Control Panel UX
 - The “Drawing Settings” and “Paper & Margin” sections in `client/templates/plotter.html` are collapsible; keep them wrapped in the existing `collapsible` markup + toggle pattern so the control stack doesn’t push other dialogs off-screen. Use `registerSectionToggle` in `client/js/main.js` when wiring new collapsible panels.
+- The Medium section is also collapsible and now exposes a multi-select (`#mediumColorSelect`) for disabling pens on the fly; keep the helper text + `aria-describedby` wiring intact so users know selected entries are disabled.
 - The stroke-width block was removed from the UI because stroke width purely follows the selected medium. Don’t reintroduce a dedicated panel; reflect the width through logging/state only.
 
 ### Adding a New Drawing

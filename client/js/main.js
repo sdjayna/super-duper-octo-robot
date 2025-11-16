@@ -5,7 +5,7 @@ import { createPreviewController } from './modules/preview.js';
 import { initPlotterControls } from './modules/plotterControls.js';
 import { resolvePreviewProfile, evaluatePreviewWarnings, resolvePlotterDefaults } from './utils/paperProfile.js';
 import { normalizePaperColor, getPaperColor, getPaperTextureClass, computePlotterWarning, getOrientedDimensions } from './utils/paperUtils.js';
-import { filterPaletteByDisabledColors } from './utils/paletteUtils.js';
+import { filterPaletteByDisabledColors, loadDisabledColorPrefs, saveDisabledColorPrefs } from './utils/paletteUtils.js';
 
 window.logDebug = logDebug;
 initLogTabs();
@@ -75,7 +75,7 @@ const state = {
     previewProfile: null,
     plotterSpecs: null,
     warnIfPaperExceedsPlotter: null,
-    disabledColorsByMedium: new Map()
+    disabledColorsByMedium: loadDisabledColorPrefs()
 };
 
 state.warnIfPaperExceedsPlotter = () => warnIfPaperExceedsPlotter(state, state.currentPaper);
@@ -103,6 +103,10 @@ let colorUtilsModulePromise = null;
 let drawingsModulePromise = null;
 let plotterSpecsPromise = null;
 const PAPER_TEXTURE_CLASSES = ['texture-smooth', 'texture-grain', 'texture-vellum', 'texture-gesso'];
+
+function persistDisabledColorsToStorage() {
+    saveDisabledColorPrefs(state.disabledColorsByMedium);
+}
 
 function registerSectionToggle({ section, toggle, content, defaultCollapsed = false, label }) {
     if (!section || !toggle || !content) {
@@ -1043,6 +1047,7 @@ if (mediumColorSelect) {
         } else {
             state.disabledColorsByMedium.delete(mediumId);
         }
+        persistDisabledColorsToStorage();
         await applyMediumSettings(mediumId, colorUtilsModule);
         await draw();
         populateLayerSelect();

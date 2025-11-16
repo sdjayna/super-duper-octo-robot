@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Medium panel multi-select that lets users disable/re-enable individual pen colors per medium, backed by a reusable palette-filter helper, persisted localStorage state, and unit tests.
+- Collapsible wrappers for Drawing Settings, Paper & Margin, and Medium sections so control stacks stay compact regardless of how many sliders a drawing exposes.
+- Palette filtering utility + Vitest coverage to ensure disabled-color subsets never wipe out an entire palette.
 - Completely rewrote the README with a tangible pitch, architecture map, and hands-on onboarding plus an expanded customization example.
 - Introduced a top-level `drawings/` workspace split into `core/`, `community/`, and `config/`, along with a reusable drawing kit (runtime wrapper, geometry/pattern/validation helpers, shared adapters).
 - Added a manifest build pipeline (`scripts/build-drawings-manifest.mjs`, `drawings/manifest.json`) and a background watcher (`npm run watch:drawings`) that rebuilds the manifest automatically.
@@ -24,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added phyllotaxis, spirograph, Voronoi sketch, flow-field, and (now dedicated) Lorenz, Ikeda, and Peter de Jong attractor modules to broaden the algorithm playground.
 
 ### Changed
+- Control-section spacing is now consistent across the console, preventing collapsed panels from clipping their content.
 - Drawings now export declarative definitions (config class + draw fn + presets) instead of self-registering, which removes duplicate registration errors during hot reloads.
 - Browser-agnostic utilities were moved into `drawings/shared/`, so drawing modules import from one kit instead of deep `client/` paths, and the Python server simply serves a precomputed manifest.
 - CONTRIBUTING.md now walks through adding drawings, presets, tests, and regenerating the manifest; README sections highlight the new structure and workflow.
