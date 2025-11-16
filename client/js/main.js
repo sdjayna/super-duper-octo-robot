@@ -529,6 +529,9 @@ async function refreshDrawingControlsUI() {
         }
         delete state.drawingControlValues[context.drawingKey];
         persistControlValues();
+        controls.forEach(control => {
+            setNestedValue(context.drawingConfig, control.target, control.default);
+        });
         await refreshDrawingControlsUI();
         await draw();
         populateLayerSelect();
