@@ -36,6 +36,7 @@ JavaScript files are ES modules with 4-space indentation, `camelCase` functions 
 - The “Drawing Settings” and “Paper & Margin” sections in `client/templates/plotter.html` are collapsible; keep them wrapped in the existing `collapsible` markup + toggle pattern so the control stack doesn’t push other dialogs off-screen. Use `registerSectionToggle` in `client/js/main.js` when wiring new collapsible panels.
 - The Medium section is also collapsible and now exposes a multi-select (`#mediumColorSelect`) for disabling pens on the fly; keep the helper text + `aria-describedby` wiring intact so users know selected entries are disabled.
 - The stroke-width block was removed from the UI because stroke width purely follows the selected medium. Don’t reintroduce a dedicated panel; reflect the width through logging/state only.
+- Drawing selections and per-drawing control values persist in `localStorage` (see `drawingControlValues`). When adding new controls, ensure they serialize cleanly, have a reset affordance, and don’t break older stored data.
 
 ### Adding a New Drawing
 1. Create `drawings/<core|community>/<name>.js` exporting a `defineDrawing` plus optional `attachControls` setup. Use existing modules (e.g., `drawings/core/calibration.js`) as templates.
@@ -59,4 +60,5 @@ Follow the Conventional Commit-style prefixes already in history (`feat:`, `fix:
 - Favor fill strategies that provide continuous, serpentine-style travel and avoid re-tracing strokes; wet media lifts when the pen travels over the same line twice.
 - Minimize pen-up/pen-down events in hatching routines. Continuous fills (offset waves, spirals, snakes, space-filling curves) are preferred over discrete segment sets.
 - When experimenting with new hatch algorithms, prioritize high coverage with a single continuous toolpath: e.g., evolving spirals, offset contour snakes, or Hilbert/Peano fills with run-length smoothing.
-- Hatching utilities live under `drawings/shared/utils/hatchingUtils.js` (scanline fill, rectangle helpers). Prefer adding new algorithms there so all drawings can reuse them; expose user-facing choices through controls (`line.hatchStyle`) so plots stay configurable.
+- Hatching utilities live under `drawings/shared/utils/hatchingUtils.js` (scanline fill, rectangle helpers). Prefer adding new algorithms there so all drawings can reuse them; expose user-facing choices through controls (`line.hatchStyle`) so plots stay configurable. Ensure hatch paths rub up against, but do not overlap, a final boundary outline, so the last pass "cleans" the edge without re-tracing wet ink.
+- Any hatch strategy should minimize pen travel distance between segments (clamp to nearest edge, avoid long diagonals). When joining runs (serpentine or scanline), link to the closest perimeter point before the final outline pass so the pen never cuts across the entire polygon.

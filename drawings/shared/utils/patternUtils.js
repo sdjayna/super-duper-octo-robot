@@ -16,7 +16,8 @@ export function generateSingleSerpentineLine(rect, lineSpacing, lineWidth) {
     if (!points.length) {
         return generateMinimalRectanglePath(adjustedRect);
     }
-    return [...points, ...generateClosingPath(points[points.length - 1], adjustedRect)];
+    const closingPath = generateClosingPath(points[points.length - 1], adjustedRect);
+    return [...points, ...closingPath];
 }
 
 function adjustRectForLineWidth(rect, lineWidth) {
@@ -44,23 +45,40 @@ function generateSerpentinePoints(rect, spacing) {
 }
 
 function generateClosingPath(lastPoint, rect) {
-    const corners = [
-        { x: rect.x + rect.width, y: rect.y + rect.height },
-        { x: rect.x + rect.width, y: rect.y },
-        { x: rect.x, y: rect.y },
-        { x: rect.x, y: rect.y + rect.height }
+    const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+    const boundaryCandidates = [
+        { x: rect.x, y: clamp(lastPoint.y, rect.y, rect.y + rect.height), distance: Math.abs(lastPoint.x - rect.x) },
+        { x: rect.x + rect.width, y: clamp(lastPoint.y, rect.y, rect.y + rect.height), distance: Math.abs(lastPoint.x - (rect.x + rect.width)) },
+        { x: clamp(lastPoint.x, rect.x, rect.x + rect.width), y: rect.y, distance: Math.abs(lastPoint.y - rect.y) },
+        { x: clamp(lastPoint.x, rect.x, rect.x + rect.width), y: rect.y + rect.height, distance: Math.abs(lastPoint.y - (rect.y + rect.height)) }
     ];
-    
-    const closestCornerIndex = corners.reduce((closest, corner, index) => {
+    const nearestBoundary = boundaryCandidates.reduce((a, b) => (b.distance < a.distance ? b : a));
+    const corners = [
+        { x: rect.x, y: rect.y },
+        { x: rect.x + rect.width, y: rect.y },
+        { x: rect.x + rect.width, y: rect.y + rect.height },
+        { x: rect.x, y: rect.y + rect.height },
+        { x: rect.x, y: rect.y }
+    ];
+    const closestIndex = corners.reduce((closest, corner, index) => {
         const distance = Math.hypot(corner.x - lastPoint.x, corner.y - lastPoint.y);
         return distance < closest.distance ? { index, distance } : closest;
     }, { index: 0, distance: Infinity }).index;
 
-    return [
-        ...corners.slice(closestCornerIndex),
-        ...corners.slice(0, closestCornerIndex),
-        corners[closestCornerIndex]
+    const orderedCorners = [
+        ...corners.slice(closestIndex),
+        ...corners.slice(0, closestIndex),
+        corners[closestIndex]
     ];
+    const path = [];
+    if (nearestBoundary.distance > 0) {
+        path.push({ x: lastPoint.x, y: lastPoint.y });
+        path.push({ x: nearestBoundary.x, y: nearestBoundary.y });
+    } else {
+        path.push({ x: lastPoint.x, y: lastPoint.y });
+    }
+    path.push(...orderedCorners);
+    return path;
 }
 
 function generateMinimalRectanglePath(rect) {

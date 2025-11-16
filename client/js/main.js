@@ -37,6 +37,8 @@ function beginProgressListener() {
 const marginUtils = await import('./utils/marginUtils.js?v=' + Date.now());
 const { DEFAULT_MARGIN } = marginUtils;
 const DEFAULT_PAPER_COLOR = '#ffffff';
+const CONTROL_STORAGE_KEY = 'drawingControlValues';
+const DRAWING_STORAGE_KEY = 'selectedDrawingKey';
 
 const select = document.getElementById('drawingSelect');
 const container = document.getElementById('svgContainer');
@@ -71,7 +73,7 @@ const state = {
     currentLineCap: 'round',
     currentLineJoin: 'round',
     rulersVisible: false,
-    drawingControlValues: {},
+    drawingControlValues: loadControlValuesFromStorage(),
     previewProfile: null,
     plotterSpecs: null,
     warnIfPaperExceedsPlotter: null,
@@ -150,6 +152,51 @@ registerSectionToggle({
     content: mediumSettingsContent,
     label: 'Toggle medium panel'
 });
+
+function loadControlValuesFromStorage() {
+    if (typeof window === 'undefined' || !window.localStorage) {
+        return {};
+    }
+    try {
+        const raw = window.localStorage.getItem(CONTROL_STORAGE_KEY);
+        return raw ? JSON.parse(raw) : {};
+    } catch {
+        return {};
+    }
+}
+
+function persistControlValues() {
+    if (typeof window === 'undefined' || !window.localStorage) {
+        return;
+    }
+    try {
+        window.localStorage.setItem(CONTROL_STORAGE_KEY, JSON.stringify(state.drawingControlValues));
+    } catch {
+        // ignore
+    }
+}
+
+function loadSavedDrawingKey() {
+    if (typeof window === 'undefined' || !window.localStorage) {
+        return null;
+    }
+    try {
+        return window.localStorage.getItem(DRAWING_STORAGE_KEY);
+    } catch {
+        return null;
+    }
+}
+
+function persistSelectedDrawing(key) {
+    if (typeof window === 'undefined' || !window.localStorage) {
+        return;
+    }
+    try {
+        window.localStorage.setItem(DRAWING_STORAGE_KEY, key);
+    } catch {
+        // ignore
+    }
+}
 
 function populateMediumColorSelect(mediumId, mediumMetadata = {}) {
     if (!mediumColorSelect) {
@@ -472,6 +519,22 @@ async function refreshDrawingControlsUI() {
         });
         drawingControlsContainer.appendChild(controlElement);
     });
+    const resetButton = document.createElement('button');
+    resetButton.type = 'button';
+    resetButton.className = 'drawing-controls-reset';
+    resetButton.textContent = 'Reset drawing settings';
+    resetButton.addEventListener('click', async () => {
+        if (!context?.drawingKey) {
+            return;
+        }
+        delete state.drawingControlValues[context.drawingKey];
+        persistControlValues();
+        await refreshDrawingControlsUI();
+        await draw();
+        populateLayerSelect();
+        updatePlotterStatus();
+    });
+    drawingControlsContainer.appendChild(resetButton);
 }
 
 function createControlElement(control, value, onChange) {
@@ -541,6 +604,7 @@ async function handleDrawingControlChange(context, control, rawValue) {
     setNestedValue(context.drawingConfig, control.target, normalized);
     const storedValues = ensureControlState(context.drawingKey);
     storedValues[control.id] = normalized;
+    persistControlValues();
     await draw();
     populateLayerSelect();
     updatePlotterStatus();
@@ -784,6 +848,18 @@ async function initialize() {
         await applyDrawingControlsState();
         await draw();
         await refreshDrawingControlsUI();
+        const savedDrawingKey = loadSavedDrawingKey();
+        if (savedDrawingKey && select?.querySelector(`option[value="${savedDrawingKey}"]`)) {
+            select.value = savedDrawingKey;
+            persistSelectedDrawing(savedDrawingKey);
+            await applyDrawingControlsState();
+            await draw();
+            await refreshDrawingControlsUI();
+            populateLayerSelect();
+            document.getElementById('layerSelect').value = 'all';
+            updateLayerVisibility();
+            updatePlotterStatus();
+        }
         logDebug('Initial draw complete. Auto-refresh is off.');
     } catch (error) {
         console.error('Initialization error:', error);
@@ -803,6 +879,7 @@ select.addEventListener('change', async () => {
     document.getElementById('layerSelect').value = 'all';
     updateLayerVisibility();
     updatePlotterStatus();
+    persistSelectedDrawing(select.value);
 });
 
 // Handle layer select interactions

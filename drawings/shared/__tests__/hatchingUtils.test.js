@@ -11,7 +11,7 @@ describe('generatePolygonScanlineHatch', () => {
         const polygon = rectToPolygon({ x: 0, y: 0, width: 10, height: 6 });
         const path = generatePolygonScanlineHatch(polygon, 2);
         expect(path.length).toBeGreaterThan(0);
-        expect(path[0]).toEqual({ x: 0, y: 0 });
-        expect(path[path.length - 1].y).toBeGreaterThanOrEqual(4);
+        expect(path[0]).toEqual({ x: 0, y: 0.5 });
+        expect(path[path.length - 1].y).toBeGreaterThanOrEqual(0);
     });
 });

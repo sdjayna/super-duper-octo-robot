@@ -38,7 +38,40 @@ function computeScanlineIntersections(polygon, y) {
     return intersections;
 }
 
-export function generatePolygonScanlineHatch(polygonPoints, spacing = 2.5) {
+function computeCentroid(polygon) {
+    const length = polygon.length;
+    let sumX = 0;
+    let sumY = 0;
+    for (let i = 0; i < length - 1; i++) {
+        sumX += polygon[i].x;
+        sumY += polygon[i].y;
+    }
+    const count = length - 1;
+    return {
+        x: sumX / count,
+        y: sumY / count
+    };
+}
+
+function nearestPointOnPolygon(point, polygon) {
+    let closest = { point: polygon[0], segmentIndex: 0, distance: Infinity };
+    for (let i = 0; i < polygon.length - 1; i++) {
+        const a = polygon[i];
+        const b = polygon[i + 1];
+        const abx = b.x - a.x;
+        const aby = b.y - a.y;
+        const denom = abx * abx + aby * aby || 1;
+        const t = Math.min(1, Math.max(0, ((point.x - a.x) * abx + (point.y - a.y) * aby) / denom));
+        const proj = { x: a.x + abx * t, y: a.y + aby * t };
+        const distance = Math.hypot(proj.x - point.x, proj.y - point.y);
+        if (distance < closest.distance) {
+            closest = { point: proj, segmentIndex: i, distance };
+        }
+    }
+    return closest;
+}
+
+export function generatePolygonScanlineHatch(polygonPoints, spacing = 2.5, options = {}) {
     const polygon = normalizePolygon(polygonPoints);
     if (polygon.length < 4) {
         return [];
@@ -61,7 +94,8 @@ export function generatePolygonScanlineHatch(polygonPoints, spacing = 2.5) {
         }
     };
     let direction = 1;
-    let y = minY;
+    const insetAmount = Math.max(0, options.inset ?? spacing * 0.25);
+    let y = minY + insetAmount;
     while (y <= maxY + 1e-6) {
         const intersections = computeScanlineIntersections(polygon, y);
         if (intersections.length >= 2) {
@@ -86,7 +120,23 @@ export function generatePolygonScanlineHatch(polygonPoints, spacing = 2.5) {
         }
         y += step;
     }
-    return path;
+    const boundary = polygon.map(point => ({ x: point.x, y: point.y }));
+    const result = [...path];
+    const lastPoint = result[result.length - 1];
+    const connection = lastPoint || boundary[0];
+    const nearest = nearestPointOnPolygon(connection, boundary);
+    if (!lastPoint || nearest.distance > 0) {
+        result.push({ x: nearest.point.x, y: nearest.point.y });
+    }
+    const expanded = boundary.slice(0, -1);
+    expanded.splice(nearest.segmentIndex + 1, 0, nearest.point);
+    const cycleLength = expanded.length;
+    for (let i = 0; i <= cycleLength; i++) {
+        const idx = (nearest.segmentIndex + 1 + i) % cycleLength;
+        result.push({ x: expanded[idx].x, y: expanded[idx].y });
+    }
+    result.push({ x: nearest.point.x, y: nearest.point.y });
+    return result;
 }
 
 export function rectToPolygon(rect) {

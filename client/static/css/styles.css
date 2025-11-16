@@ -396,6 +396,19 @@ rect.plotter-limit {
     margin: 0;
 }
 
+.drawing-controls-reset {
+    margin-top: 6px;
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+}
+
+.drawing-controls-reset:hover {
+    background: #f5f5f5;
+}
+
 /* Make icon buttons bigger and fill width */
 .control-section-content .plotter-button {
     flex: 1;
