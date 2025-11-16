@@ -16,7 +16,10 @@ const SUPERFORMULA_LIMITS = {
     b: { min: 0.2, max: 1.5, default: 1 },
     scale: { min: 0.3, max: 1.2, default: 0.5 },
     rotation: { min: 0, max: Math.PI * 2, default: 0 },
-    samples: { min: 2000, max: 5000, default: 3200 }
+    samples: { min: 2000, max: 5000, default: 3200 },
+    layerCount: { min: 1, max: 4, default: 2 },
+    layerRotation: { min: 0, max: 0.35, default: 0.08 },
+    exponentDrift: { min: 0, max: 1, default: 0.3 }
 };
 
 class SuperformulaConfig extends SizedDrawingConfig {
@@ -31,6 +34,9 @@ class SuperformulaConfig extends SizedDrawingConfig {
         this.rotation = clampNumber(params.rotation, SUPERFORMULA_LIMITS.rotation.min, SUPERFORMULA_LIMITS.rotation.max, SUPERFORMULA_LIMITS.rotation.default);
         this.samples = clampInteger(params.samples, SUPERFORMULA_LIMITS.samples.min, SUPERFORMULA_LIMITS.samples.max, SUPERFORMULA_LIMITS.samples.default);
         this.scale = clampNumber(params.scale, SUPERFORMULA_LIMITS.scale.min, SUPERFORMULA_LIMITS.scale.max, SUPERFORMULA_LIMITS.scale.default);
+        this.layerCount = clampInteger(params.layerCount, SUPERFORMULA_LIMITS.layerCount.min, SUPERFORMULA_LIMITS.layerCount.max, SUPERFORMULA_LIMITS.layerCount.default);
+        this.layerRotation = clampNumber(params.layerRotation, SUPERFORMULA_LIMITS.layerRotation.min, SUPERFORMULA_LIMITS.layerRotation.max, SUPERFORMULA_LIMITS.layerRotation.default);
+        this.exponentDrift = clampNumber(params.exponentDrift, SUPERFORMULA_LIMITS.exponentDrift.min, SUPERFORMULA_LIMITS.exponentDrift.max, SUPERFORMULA_LIMITS.exponentDrift.default);
     }
 }
 
@@ -47,31 +53,47 @@ function superformulaRadius(phi, params) {
 
 export function drawSuperformula(drawingConfig, renderContext) {
     const { svg, builder } = createDrawingRuntime({ drawingConfig, renderContext });
-    const params = drawingConfig.drawingData;
     const width = renderContext.drawingWidth;
     const height = renderContext.drawingHeight;
     const centerX = width / 2;
     const centerY = height / 2;
-    const scale = Math.min(width, height) / 2 * params.scale;
-    const points = [];
+    const drawingData = drawingConfig.drawingData;
+    const layerCount = drawingData.layerCount ?? SUPERFORMULA_LIMITS.layerCount.default;
+    const layerRotation = drawingData.layerRotation ?? SUPERFORMULA_LIMITS.layerRotation.default;
+    const exponentDrift = drawingData.exponentDrift ?? SUPERFORMULA_LIMITS.exponentDrift.default;
+    const baseScale = Math.min(width, height) / 2 * drawingData.scale;
 
-    for (let i = 0; i <= params.samples; i++) {
-        const phi = (i / params.samples) * Math.PI * 2;
-        const r = superformulaRadius(phi, params);
-        const angle = phi + params.rotation;
-        const x = centerX + Math.cos(angle) * r * scale;
-        const y = centerY + Math.sin(angle) * r * scale;
-        points.push({ x, y });
-    }
+    for (let layer = 0; layer < layerCount; layer++) {
+        const exponentOffset = layer * exponentDrift;
+        const layerParams = {
+            ...drawingData,
+            rotation: drawingData.rotation + layer * layerRotation,
+            n1: clampNumber(drawingData.n1 + exponentOffset, SUPERFORMULA_LIMITS.n1.min, SUPERFORMULA_LIMITS.n1.max),
+            n2: clampNumber(drawingData.n2 - exponentOffset * 0.5, SUPERFORMULA_LIMITS.n2.min, SUPERFORMULA_LIMITS.n2.max),
+            n3: clampNumber(drawingData.n3 + exponentOffset * 0.5, SUPERFORMULA_LIMITS.n3.min, SUPERFORMULA_LIMITS.n3.max),
+            m: clampNumber(drawingData.m + layer * exponentDrift * 0.5, SUPERFORMULA_LIMITS.m.min, SUPERFORMULA_LIMITS.m.max)
+        };
+        const scale = baseScale * (1 - layer * 0.05);
+        const points = [];
 
-    builder.appendPath(builder.projectPoints(points), {
-        geometry: {
-            x: 0,
-            y: 0,
-            width,
-            height
+        for (let i = 0; i <= drawingData.samples; i++) {
+            const phi = (i / drawingData.samples) * Math.PI * 2;
+            const r = superformulaRadius(phi, layerParams);
+            const angle = phi + layerParams.rotation;
+            const x = centerX + Math.cos(angle) * r * scale;
+            const y = centerY + Math.sin(angle) * r * scale;
+            points.push({ x, y });
         }
-    });
+
+        builder.appendPath(builder.projectPoints(points), {
+            geometry: {
+                x: 0,
+                y: 0,
+                width,
+                height
+            }
+        });
+    }
     return svg;
 }
 
@@ -152,6 +174,39 @@ const superformulaControls = [
         step: 100,
         default: SUPERFORMULA_LIMITS.samples.default,
         description: 'Number of segments used to trace the shape'
+    },
+    {
+        id: 'layerCount',
+        label: 'Layer Count',
+        target: 'drawingData.layerCount',
+        inputType: 'range',
+        min: SUPERFORMULA_LIMITS.layerCount.min,
+        max: SUPERFORMULA_LIMITS.layerCount.max,
+        step: 1,
+        default: SUPERFORMULA_LIMITS.layerCount.default,
+        description: 'How many rotated layers to emit'
+    },
+    {
+        id: 'layerRotation',
+        label: 'Layer Rotation',
+        target: 'drawingData.layerRotation',
+        inputType: 'range',
+        min: SUPERFORMULA_LIMITS.layerRotation.min,
+        max: SUPERFORMULA_LIMITS.layerRotation.max,
+        step: 0.005,
+        default: SUPERFORMULA_LIMITS.layerRotation.default,
+        description: 'Rotation offset applied between layers'
+    },
+    {
+        id: 'exponentDrift',
+        label: 'Exponent Drift',
+        target: 'drawingData.exponentDrift',
+        inputType: 'range',
+        min: SUPERFORMULA_LIMITS.exponentDrift.min,
+        max: SUPERFORMULA_LIMITS.exponentDrift.max,
+        step: 0.05,
+        default: SUPERFORMULA_LIMITS.exponentDrift.default,
+        description: 'Increment applied to exponents per layer'
     }
 ];
 
@@ -175,6 +230,9 @@ const superformulaDefinition = attachControls(defineDrawing({
                 scale: 0.55,
                 rotation: 0,
                 samples: 3200,
+                layerCount: 2,
+                layerRotation: 0.1,
+                exponentDrift: 0.2,
                 line: {
                     strokeWidth: 0.35
                 },

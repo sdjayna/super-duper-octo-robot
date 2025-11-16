@@ -1,5 +1,5 @@
 {
-  "version": "89102aad91de",
+  "version": "f6108f21f0fb",
   "drawings": [
     {
       "group": "community",
@@ -39,7 +39,23 @@
     },
     {
       "group": "core",
+      "path": "/drawings/core/fourierKnots.js"
+    },
+    {
+      "group": "core",
+      "path": "/drawings/core/fractalCirclePacking.js"
+    },
+    {
+      "group": "core",
+      "path": "/drawings/core/fractalInversionLace.js"
+    },
+    {
+      "group": "core",
       "path": "/drawings/core/ikeda.js"
+    },
+    {
+      "group": "core",
+      "path": "/drawings/core/implicitLineWalkers.js"
     },
     {
       "group": "core",
@@ -55,11 +71,23 @@
     },
     {
       "group": "core",
+      "path": "/drawings/core/reactionDiffusionIsosurfaces.js"
+    },
+    {
+      "group": "core",
       "path": "/drawings/core/sortingArcs.js"
     },
     {
       "group": "core",
       "path": "/drawings/core/spirograph.js"
+    },
+    {
+      "group": "core",
+      "path": "/drawings/core/stratifiedOrbitalFields.js"
+    },
+    {
+      "group": "core",
+      "path": "/drawings/core/subdivisionFiligree.js"
     },
     {
       "group": "core",
@@ -79,8 +107,12 @@
     },
     {
       "group": "core",
+      "path": "/drawings/core/wavefrontExtrusion.js"
+    },
+    {
+      "group": "core",
       "path": "/drawings/core/waveInterference.js"
     }
   ],
-  "generatedAt": "2025-11-16T01:03:25.675Z"
+  "generatedAt": "2025-11-16T01:36:56.757Z"
 }

@@ -10,8 +10,8 @@ import { clampInteger, clampNumber } from '../shared/utils/paramMath.js';
 const DLA_LIMITS = {
     stickiness: { min: 0.5, max: 0.9, default: 0.7 },
     bias: { min: 0.01, max: 0.05, default: 0.02 },
-    particleCount: { min: 150, max: 1200, default: 600 },
-    maxRadius: { min: 100, max: 150, default: 130 },
+    particleCount: { min: 150, max: 3500, default: 600 },
+    maxRadius: { min: 120, max: 150, default: 130 },
     seed: { min: 1, max: 9999, default: 55 }
 };
 

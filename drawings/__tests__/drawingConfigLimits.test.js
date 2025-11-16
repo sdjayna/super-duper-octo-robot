@@ -44,9 +44,9 @@ const drawingCases = [
         loadConfigClass: async () => (await import('../core/lissajous.js')).lissajousDrawing.configClass,
         params: { freqA: 30, freqB: -5, phase: -1, amplitude: 2, samples: 100 },
         assertions: (config) => {
-            expect(config.freqA).toBe(9);
-            expect(config.freqB).toBe(3);
-            expect(config.phase).toBeCloseTo(0.05);
+            expect(config.freqA).toBe(15);
+            expect(config.freqB).toBe(2);
+            expect(config.phase).toBeCloseTo(0);
             expect(config.amplitude).toBe(1);
             expect(config.samples).toBe(2000);
         }
