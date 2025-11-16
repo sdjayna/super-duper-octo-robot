@@ -3,7 +3,7 @@ import { playCompletionSiren, toggleMute } from './modules/audio.js';
 import { startProgressListener, stopProgressListener } from './modules/progress.js';
 import { createPreviewController } from './modules/preview.js';
 import { initPlotterControls } from './modules/plotterControls.js';
-import { initializeHatchControls, applyHatchSettingsToConfig } from './modules/hatchSettings.js';
+import { initializeHatchControls, applyHatchSettingsToConfig, getHatchSettings } from './modules/hatchSettings.js';
 import { resolvePreviewProfile, evaluatePreviewWarnings, resolvePlotterDefaults } from './utils/paperProfile.js';
 import { normalizePaperColor, getPaperColor, getPaperTextureClass, computePlotterWarning, getOrientedDimensions } from './utils/paperUtils.js';
 import { filterPaletteByDisabledColors, loadDisabledColorPrefs, saveDisabledColorPrefs } from './utils/paletteUtils.js';
@@ -863,14 +863,27 @@ async function exportSvg() {
         const svgData = new XMLSerializer().serializeToString(exportSvgElement);
 
         const paperForExport = state.lastRenderedPaper || state.currentPaper || currentConfig.paper;
+        const hatchSettings = typeof getHatchSettings === 'function' ? getHatchSettings() : null;
+        const colorUtilsModule = await loadColorUtilsModule();
+        const mediumMetadata = colorUtilsModule?.mediumMetadata || {};
+        const mediumInfo = state.currentMediumId ? mediumMetadata[state.currentMediumId] : null;
+        const disabledColors = state.disabledColorsByMedium.get(state.currentMediumId);
         const exportConfig = {
             name: currentConfig.name,
             type: currentConfig.type,
             line: currentConfig.line,
             colorPalette: currentConfig.colorPalette,
             drawingData: currentConfig.drawingData,
+            drawingControls: state.drawingControlValues[select.value] || {},
+            hatch: hatchSettings,
+            paperId: state.currentPaperId,
+            paperMargin: state.currentMargin,
             paper: paperForExport ? { ...paperForExport, orientation: state.currentOrientation } : null,
-            medium: state.currentMediumId
+            medium: {
+                id: state.currentMediumId,
+                metadata: mediumInfo || null,
+                disabledColors: disabledColors ? Array.from(disabledColors) : []
+            }
         };
 
         const response = await fetch('http://localhost:8000/save-svg', {

@@ -8,7 +8,7 @@
     "lib": "lib"
   },
   "scripts": {
-    "test": "vitest",
+    "test": "vitest && python3 -m unittest discover -s tests",
     "test:watch": "vitest watch",
     "build:drawings": "node scripts/build-drawings-manifest.mjs",
     "watch:drawings": "node scripts/watch-drawings-manifest.mjs"

@@ -93,18 +93,23 @@ body, html {
     padding: 10px;
 }
 
+.control-panel {
+    display: none !important;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+}
+
 .preview-section,
 .plotter-section {
-    flex: 0 0 auto;
+    flex: 1 1 auto;
     display: flex;
     flex-direction: column;
     padding: 15px;
     border-bottom: 1px solid #ccc;
-}
-
-.control-panel {
-    display: none !important;
-    flex-direction: column;
+    min-height: 0;
+    overflow-y: auto;
 }
 
 .control-panel.active {
@@ -112,12 +117,14 @@ body, html {
 }
 
 .debug-section {
-    flex: 1 1 auto;
+    flex: 0 0 30%;
+    max-height: 30%;
     display: flex;
     flex-direction: column;
     padding: 15px;
     border-bottom: none;
     min-height: 0;
+    overflow-y: auto;
 }
 
 .preview-controls,
