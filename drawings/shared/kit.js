@@ -10,7 +10,8 @@ export {
 export {
     createSVG,
     createDrawingBuilder,
-    colorPalettes
+    colorPalettes,
+    maxMediumColorCount
 } from './clientAdapters.js';
 
 export {
@@ -30,3 +31,8 @@ export {
 export {
     attachControls
 } from './controlsUtils.js';
+
+export {
+    useAvailableColorCountOr,
+    ensureColorReachableLimit
+} from './utils/colorLimitUtils.js';

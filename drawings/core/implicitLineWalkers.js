@@ -2,11 +2,14 @@ import {
     defineDrawing,
     SizedDrawingConfig,
     createDrawingRuntime,
-    colorPalettes
+    colorPalettes,
+    ensureColorReachableLimit
 } from '../shared/kit.js';
 import { attachControls } from '../shared/controlsUtils.js';
 import { clampInteger, clampNumber } from '../shared/utils/paramMath.js';
 import { createSeededRandom, fractalValueNoise2D } from '../shared/utils/noiseUtils.js';
+
+const derivedLayerCountMax = ensureColorReachableLimit(4);
 
 const WALKER_LIMITS = {
     walkerCount: { min: 600, max: 2500, default: 1400 },
@@ -16,7 +19,7 @@ const WALKER_LIMITS = {
     fieldFrequency: { min: 0.004, max: 0.018, default: 0.01 },
     thresholdDrift: { min: 0, max: 0.5, default: 0.15 },
     jitter: { min: 0, max: 0.4, default: 0.08 },
-    layerCount: { min: 1, max: 4, default: 3 },
+    layerCount: { min: 1, max: derivedLayerCountMax, default: 3 },
     seed: { min: 1, max: 9999, default: 602 }
 };
 

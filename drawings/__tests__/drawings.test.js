@@ -60,7 +60,13 @@ beforeAll(async () => {
                 mediums: {
                     stub: {
                         name: 'Stub Medium',
-                        colors: { placeholder: { hex: '#000000', name: 'Placeholder' } }
+                        colors: {
+                            placeholder: { hex: '#000000', name: 'Placeholder' },
+                            accent: { hex: '#ff0000', name: 'Accent' },
+                            highlight: { hex: '#00ff00', name: 'Highlight' },
+                            shadow: { hex: '#0000ff', name: 'Shadow' },
+                            outline: { hex: '#888888', name: 'Outline' }
+                        }
                     }
                 },
                 default: 'stub'

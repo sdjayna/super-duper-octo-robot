@@ -2,11 +2,14 @@ import {
     defineDrawing,
     SizedDrawingConfig,
     createDrawingRuntime,
-    colorPalettes
+    colorPalettes,
+    ensureColorReachableLimit
 } from '../shared/kit.js';
 import { attachControls } from '../shared/controlsUtils.js';
 import { clampInteger, clampNumber } from '../shared/utils/paramMath.js';
 import { createSeededRandom, fractalValueNoise2D } from '../shared/utils/noiseUtils.js';
+
+const derivedLayerCountMax = ensureColorReachableLimit(3);
 
 const FDCP_LIMITS = {
     minRadius: { min: 3, max: 20, default: 5 },
@@ -16,7 +19,7 @@ const FDCP_LIMITS = {
     thresholdStep: { min: 0, max: 0.2, default: 0.05 },
     fieldFrequency: { min: 0.004, max: 0.02, default: 0.01 },
     attemptMultiplier: { min: 2, max: 6, default: 4 },
-    layerCount: { min: 1, max: 3, default: 2 },
+    layerCount: { min: 1, max: derivedLayerCountMax, default: 2 },
     seed: { min: 1, max: 9999, default: 515 }
 };
 

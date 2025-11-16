@@ -46,6 +46,9 @@ const drawingControlsContainer = document.getElementById('drawingControlsContain
 const controlTabs = document.querySelectorAll('.control-tab');
 const controlPanels = document.querySelectorAll('.control-panel');
 const paperDescription = document.getElementById('paperDescription');
+const drawingSettingsToggle = document.getElementById('drawingSettingsToggle');
+const drawingSettingsContent = document.getElementById('drawingSettingsContent');
+const drawingSettingsSection = document.querySelector('[data-role="drawing-settings-section"]');
 
 const state = {
     paperConfig: null,
@@ -92,6 +95,24 @@ let colorUtilsModulePromise = null;
 let drawingsModulePromise = null;
 let plotterSpecsPromise = null;
 const PAPER_TEXTURE_CLASSES = ['texture-smooth', 'texture-grain', 'texture-vellum', 'texture-gesso'];
+
+function setDrawingSettingsCollapsed(collapsed) {
+    if (!drawingSettingsSection || !drawingSettingsToggle || !drawingSettingsContent) {
+        return;
+    }
+    drawingSettingsSection.classList.toggle('collapsed', collapsed);
+    drawingSettingsContent.hidden = collapsed;
+    drawingSettingsToggle.setAttribute('aria-expanded', String(!collapsed));
+}
+
+if (drawingSettingsToggle) {
+    drawingSettingsToggle.addEventListener('click', () => {
+        const currentlyCollapsed = drawingSettingsSection?.classList.contains('collapsed');
+        setDrawingSettingsCollapsed(!currentlyCollapsed);
+    });
+    drawingSettingsToggle.setAttribute('aria-label', 'Toggle drawing settings panel');
+    setDrawingSettingsCollapsed(false);
+}
 
 function loadColorUtilsModule() {
     if (!colorUtilsModulePromise) {

@@ -2,11 +2,14 @@ import {
     defineDrawing,
     SizedDrawingConfig,
     createDrawingRuntime,
-    colorPalettes
+    colorPalettes,
+    ensureColorReachableLimit
 } from '../shared/kit.js';
 import { attachControls } from '../shared/controlsUtils.js';
 import { clampInteger, clampNumber } from '../shared/utils/paramMath.js';
 import { generateContourPaths } from '../shared/utils/contourUtils.js';
+
+const derivedLayerCountMax = ensureColorReachableLimit(4);
 
 const RDI_LIMITS = {
     feed: { min: 0.015, max: 0.06, default: 0.035 },
@@ -17,7 +20,7 @@ const RDI_LIMITS = {
     resolution: { min: 180, max: 360, default: 260 },
     thresholdBase: { min: 0.1, max: 0.6, default: 0.22 },
     thresholdStep: { min: 0.02, max: 0.18, default: 0.07 },
-    layerCount: { min: 1, max: 4, default: 3 },
+    layerCount: { min: 1, max: derivedLayerCountMax, default: 3 },
     layerRotation: { min: 0, max: 0.6, default: 0.18 },
     seed: { min: 1, max: 9999, default: 404 }
 };

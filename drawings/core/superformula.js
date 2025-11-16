@@ -2,10 +2,13 @@ import {
     defineDrawing,
     SizedDrawingConfig,
     createDrawingRuntime,
-    colorPalettes
+    colorPalettes,
+    ensureColorReachableLimit
 } from '../shared/kit.js';
 import { attachControls } from '../shared/controlsUtils.js';
 import { clampInteger, clampNumber } from '../shared/utils/paramMath.js';
+
+const derivedLayerCountMax = ensureColorReachableLimit(4);
 
 const SUPERFORMULA_LIMITS = {
     m: { min: 3, max: 12, default: 8 },
@@ -17,7 +20,7 @@ const SUPERFORMULA_LIMITS = {
     scale: { min: 0.3, max: 1.2, default: 0.5 },
     rotation: { min: 0, max: Math.PI * 2, default: 0 },
     samples: { min: 2000, max: 5000, default: 3200 },
-    layerCount: { min: 1, max: 4, default: 2 },
+    layerCount: { min: 1, max: derivedLayerCountMax, default: 2 },
     layerRotation: { min: 0, max: 0.35, default: 0.08 },
     exponentDrift: { min: 0, max: 1, default: 0.3 }
 };

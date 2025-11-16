@@ -2,21 +2,24 @@ import {
     defineDrawing,
     SizedDrawingConfig,
     createDrawingRuntime,
-    colorPalettes
+    colorPalettes,
+    ensureColorReachableLimit
 } from '../shared/kit.js';
 import { attachControls } from '../shared/controlsUtils.js';
 import { clampInteger, clampNumber } from '../shared/utils/paramMath.js';
 import { angleFromNoise, createSeededRandom, fractalValueNoise2D } from '../shared/utils/noiseUtils.js';
 
+const derivedLayerCountMax = ensureColorReachableLimit(4);
+
 const ORBIT_LIMITS = {
-    particleCount: { min: 300, max: 2000, default: 900 },
+    particleCount: { min: 1, max: 500, default: 250 },
     orbitRadius: { min: 1, max: 10, default: 4.5 },
     orbitVariance: { min: 0, max: 0.6, default: 0.2 },
     stepsPerOrbit: { min: 40, max: 140, default: 80 },
     noiseScale: { min: 0.002, max: 0.015, default: 0.0065 },
     decay: { min: 0.9, max: 1.05, default: 0.97 },
     revolutions: { min: 1, max: 4, default: 2 },
-    layerCount: { min: 1, max: 4, default: 3 },
+    layerCount: { min: 1, max: derivedLayerCountMax, default: 3 },
     layerRadiusDrift: { min: -0.3, max: 0.4, default: 0.12 },
     jitter: { min: 0, max: 1.2, default: 0.35 },
     seed: { min: 1, max: 9999, default: 707 }
@@ -131,7 +134,7 @@ const stratifiedOrbitalControls = [
         inputType: 'range',
         min: ORBIT_LIMITS.particleCount.min,
         max: ORBIT_LIMITS.particleCount.max,
-        step: 50,
+        step: 1,
         default: ORBIT_LIMITS.particleCount.default,
         description: 'Number of orbital strands to emit each layer'
     },

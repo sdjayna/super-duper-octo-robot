@@ -2,11 +2,14 @@ import {
     defineDrawing,
     SizedDrawingConfig,
     createDrawingRuntime,
-    colorPalettes
+    colorPalettes,
+    ensureColorReachableLimit
 } from '../shared/kit.js';
 import { attachControls } from '../shared/controlsUtils.js';
 import { clampInteger, clampNumber } from '../shared/utils/paramMath.js';
 import { createSeededRandom } from '../shared/utils/noiseUtils.js';
+
+const derivedLayerCountMax = ensureColorReachableLimit(4);
 
 const FOURIER_LIMITS = {
     harmonics: { min: 2, max: 5, default: 3 },
@@ -14,7 +17,7 @@ const FOURIER_LIMITS = {
     phaseSkew: { min: 0, max: Math.PI * 2, default: 0.3 },
     projectionAngle: { min: 0, max: Math.PI / 3, default: Math.PI / 8 },
     samples: { min: 1500, max: 6000, default: 3600 },
-    layerCount: { min: 1, max: 4, default: 3 },
+    layerCount: { min: 1, max: derivedLayerCountMax, default: 3 },
     layerRotation: { min: 0, max: 0.5, default: 0.15 },
     seed: { min: 1, max: 9999, default: 1201 }
 };

@@ -2,17 +2,20 @@ import {
     defineDrawing,
     SizedDrawingConfig,
     createDrawingRuntime,
-    colorPalettes
+    colorPalettes,
+    ensureColorReachableLimit
 } from '../shared/kit.js';
 import { attachControls } from '../shared/controlsUtils.js';
 import { clampInteger, clampNumber } from '../shared/utils/paramMath.js';
+
+const derivedLayerCountMax = ensureColorReachableLimit(5);
 
 const SPIRO_LIMITS = {
     R: { min: 80, max: 140, default: 110 },
     r: { min: 20, max: 70, default: 45 },
     d: { min: 10, max: 50, default: 30 },
     samples: { min: 4000, max: 12000, default: 8000 },
-    layers: { min: 1, max: 5, default: 3 },
+    layers: { min: 1, max: derivedLayerCountMax, default: 3 },
     layerOffset: { min: (2 * Math.PI) / 180, max: (12 * Math.PI) / 180, default: (5 * Math.PI) / 180 },
     phase: { min: 0, max: Math.PI * 2, default: 0 }
 };

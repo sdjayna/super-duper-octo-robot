@@ -2,18 +2,21 @@ import {
     defineDrawing,
     SizedDrawingConfig,
     createDrawingRuntime,
-    colorPalettes
+    colorPalettes,
+    ensureColorReachableLimit
 } from '../shared/kit.js';
 import { attachControls } from '../shared/controlsUtils.js';
 import { clampInteger, clampNumber } from '../shared/utils/paramMath.js';
 import { createSeededRandom } from '../shared/utils/noiseUtils.js';
+
+const derivedLayerCountMax = ensureColorReachableLimit(3);
 
 const LACE_LIMITS = {
     gridDensity: { min: 10, max: 40, default: 22 },
     inversionRadius: { min: 20, max: 150, default: 70 },
     iterations: { min: 2, max: 7, default: 4 },
     jitter: { min: 0, max: 1.5, default: 0.35 },
-    layerCount: { min: 1, max: 3, default: 2 },
+    layerCount: { min: 1, max: derivedLayerCountMax, default: 2 },
     layerRadiusShift: { min: -0.3, max: 0.3, default: 0.08 },
     seed: { min: 1, max: 9999, default: 333 }
 };

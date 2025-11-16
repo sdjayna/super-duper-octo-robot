@@ -2,19 +2,24 @@ import {
     defineDrawing,
     SizedDrawingConfig,
     createDrawingRuntime,
-    colorPalettes
+    colorPalettes,
+    useAvailableColorCountOr,
+    ensureColorReachableLimit
 } from '../shared/kit.js';
 import { attachControls } from '../shared/controlsUtils.js';
 import { clampInteger, clampNumber } from '../shared/utils/paramMath.js';
 import { createSeededRandom } from '../shared/utils/noiseUtils.js';
 
+const derivedOffsetCountMax = useAvailableColorCountOr(6);
+const derivedLayerCountMax = ensureColorReachableLimit(4);
+
 const FILIGREE_LIMITS = {
     depth: { min: 2, max: 7, default: 4 },
     offsetStep: { min: 1, max: 6, default: 2.5 },
-    offsetCount: { min: 2, max: 6, default: 4 },
+    offsetCount: { min: 2, max: derivedOffsetCountMax, default: 4 },
     noise: { min: 0, max: 0.6, default: 0.2 },
     twist: { min: 0, max: 0.4, default: 0.12 },
-    layerCount: { min: 1, max: 4, default: 2 },
+    layerCount: { min: 1, max: derivedLayerCountMax, default: 2 },
     seed: { min: 1, max: 9999, default: 211 }
 };
 

@@ -2,10 +2,13 @@ import {
     defineDrawing,
     SizedDrawingConfig,
     createDrawingRuntime,
-    colorPalettes
+    colorPalettes,
+    ensureColorReachableLimit
 } from '../shared/kit.js';
 import { attachControls } from '../shared/controlsUtils.js';
 import { clampInteger, clampNumber } from '../shared/utils/paramMath.js';
+
+const derivedLayerCountMax = ensureColorReachableLimit(4);
 
 const LISSAJOUS_LIMITS = {
     freqA: { min: 2, max: 15, default: 5 },
@@ -13,7 +16,7 @@ const LISSAJOUS_LIMITS = {
     phase: { min: 0, max: Math.PI, default: 0.25 },
     amplitude: { min: 0.3, max: 1, default: 0.85 },
     samples: { min: 2000, max: 5000, default: 3200 },
-    layerCount: { min: 1, max: 4, default: 2 },
+    layerCount: { min: 1, max: derivedLayerCountMax, default: 2 },
     phaseDrift: { min: 0, max: 0.6, default: 0.15 },
     frequencyDrift: { min: 0, max: 2, default: 0.5 }
 };

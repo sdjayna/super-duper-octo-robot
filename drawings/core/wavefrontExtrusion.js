@@ -2,11 +2,14 @@ import {
     defineDrawing,
     SizedDrawingConfig,
     createDrawingRuntime,
-    colorPalettes
+    colorPalettes,
+    ensureColorReachableLimit
 } from '../shared/kit.js';
 import { attachControls } from '../shared/controlsUtils.js';
 import { clampInteger, clampNumber } from '../shared/utils/paramMath.js';
 import { fractalValueNoise2D } from '../shared/utils/noiseUtils.js';
+
+const derivedLayerCountMax = ensureColorReachableLimit(3);
 
 const WAVEFRONT_LIMITS = {
     baseFrequency: { min: 0.003, max: 0.012, default: 0.006 },
@@ -15,7 +18,7 @@ const WAVEFRONT_LIMITS = {
     offsetCount: { min: 2, max: 7, default: 4 },
     noise: { min: 0, max: 0.5, default: 0.18 },
     curvature: { min: 0.2, max: 1, default: 0.6 },
-    layerCount: { min: 1, max: 3, default: 2 },
+    layerCount: { min: 1, max: derivedLayerCountMax, default: 2 },
     layerNoiseShift: { min: 0, max: 0.3, default: 0.1 },
     seed: { min: 1, max: 9999, default: 918 }
 };

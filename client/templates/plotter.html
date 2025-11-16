@@ -37,9 +37,13 @@
                             </div>
                         </div>
                     </div>
-                    <div class="control-section">
-                        <h4>Drawing Settings</h4>
-                        <div class="control-section-content drawing-settings">
+                    <div class="control-section collapsible" data-role="drawing-settings-section">
+                        <button id="drawingSettingsToggle" class="collapsible-toggle" type="button"
+                            aria-expanded="true" aria-controls="drawingSettingsContent">
+                            <span class="collapsible-title">Drawing Settings</span>
+                            <span class="collapsible-icon" aria-hidden="true"></span>
+                        </button>
+                        <div id="drawingSettingsContent" class="control-section-content drawing-settings">
                             <div id="drawingControlsContainer" class="drawing-controls-container">
                                 <p class="drawing-controls-empty">No adjustable settings for this drawing.</p>
                             </div>

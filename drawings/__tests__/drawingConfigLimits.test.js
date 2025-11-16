@@ -25,7 +25,13 @@ beforeAll(() => {
                 mediums: {
                     stub: {
                         name: 'Stub Medium',
-                        colors: { placeholder: { hex: '#000000', name: 'Placeholder' } }
+                        colors: {
+                            placeholder: { hex: '#000000', name: 'Placeholder' },
+                            accent: { hex: '#ff0000', name: 'Accent' },
+                            highlight: { hex: '#00ff00', name: 'Highlight' },
+                            shadow: { hex: '#0000ff', name: 'Shadow' },
+                            outline: { hex: '#888888', name: 'Outline' }
+                        }
                     }
                 },
                 default: 'stub'
@@ -268,6 +274,30 @@ const drawingCases = [
             expect(config.arcHeight).toBe(70);
             expect(config.lineWidth).toBeCloseTo(0.3);
             expect(config.seed).toBe(1);
+        }
+    },
+    {
+        name: 'Subdivision Filigree offset count',
+        loadConfigClass: async () => (await import('../core/subdivisionFiligree.js')).subdivisionFiligreeDrawing.configClass,
+        params: { offsetCount: 999 },
+        assertions: (config) => {
+            expect(config.offsetCount).toBe(5);
+        }
+    },
+    {
+        name: 'Spirograph layers reach palette size',
+        loadConfigClass: async () => (await import('../core/spirograph.js')).spirographDrawing.configClass,
+        params: { layers: 999 },
+        assertions: (config) => {
+            expect(config.layers).toBe(5);
+        }
+    },
+    {
+        name: 'Orbital Fields particle count clamps to 500',
+        loadConfigClass: async () => (await import('../core/stratifiedOrbitalFields.js')).stratifiedOrbitalFieldsDrawing.configClass,
+        params: { particleCount: 5000 },
+        assertions: (config) => {
+            expect(config.particleCount).toBe(500);
         }
     }
 ];

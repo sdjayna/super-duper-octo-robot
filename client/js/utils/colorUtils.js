@@ -8,6 +8,7 @@ let colorPalettes = {};
 let colorPalette = {};
 let mediumMetadata = {};
 let defaultMediumId = 'sakura';
+let maxMediumColorCount = 0;
 
 async function loadColorPalettes() {
     try {
@@ -16,6 +17,8 @@ async function loadColorPalettes() {
         Object.entries(config.mediums).forEach(([id, medium]) => {
             const paletteName = `${id}Palette`;
             colorPalettes[paletteName] = convertMediumColors(medium);
+            const colorCount = Object.keys(medium.colors || {}).length;
+            maxMediumColorCount = Math.max(maxMediumColorCount, colorCount);
             mediumMetadata[id] = {
                 ...medium,
                 paletteName
@@ -92,4 +95,4 @@ class ColorManager {
 
 await loadColorPalettes();
 
-export { ColorManager, colorPalettes, colorPalette, mediumMetadata, defaultMediumId };
+export { ColorManager, colorPalettes, colorPalette, mediumMetadata, defaultMediumId, maxMediumColorCount };
