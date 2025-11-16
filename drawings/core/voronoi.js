@@ -12,7 +12,7 @@ import { attachControls } from '../shared/controlsUtils.js';
 import { clampInteger, clampNumber } from '../shared/utils/paramMath.js';
 
 const VORONOI_LIMITS = {
-    pointCount: { min: 150, max: 450, default: 280 },
+    pointCount: { min: 150, max: 1000, default: 560 },
     relaxationPasses: { min: 0, max: 3, default: 2 },
     neighbors: { min: 2, max: 5, default: 4 },
     jitter: { min: 0, max: 1, default: 0.25 },
