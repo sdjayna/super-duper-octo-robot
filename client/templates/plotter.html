@@ -49,6 +49,35 @@
                             </div>
                         </div>
                     </div>
+                    <div class="control-section collapsible" data-role="hatch-settings-section">
+                        <button id="hatchSettingsToggle" class="collapsible-toggle" type="button"
+                            aria-expanded="true" aria-controls="hatchSettingsContent">
+                            <span class="collapsible-title">Hatching</span>
+                            <span class="collapsible-icon" aria-hidden="true"></span>
+                        </button>
+                        <div id="hatchSettingsContent" class="control-section-content hatch-controls">
+                            <label for="hatchStyleControl">Hatch Style</label>
+                            <select id="hatchStyleControl" class="plotter-button">
+                                <option value="serpentine">Serpentine</option>
+                                <option value="scanline">Scanline</option>
+                                <option value="none">None</option>
+                            </select>
+                            <label class="hatch-slider-label" for="hatchSpacingControl">
+                                <span>Hatch Spacing</span>
+                                <span id="hatchSpacingValue" class="drawing-control-value">2.0 mm</span>
+                            </label>
+                            <input type="range" id="hatchSpacingControl" min="0.1" max="10" step="0.1">
+                            <label class="hatch-slider-label" for="hatchInsetControl">
+                                <span>Hatch Offset</span>
+                                <span id="hatchInsetValue" class="drawing-control-value">1.0 mm</span>
+                            </label>
+                            <input type="range" id="hatchInsetControl" min="0" max="5" step="0.1">
+                            <label class="hatch-boundary-toggle">
+                                <input type="checkbox" id="hatchBoundaryControl">
+                                <span>Draw boundary outline</span>
+                            </label>
+                        </div>
+                    </div>
                     <div class="control-section collapsible" data-role="paper-settings-section">
                         <button id="paperSettingsToggle" class="collapsible-toggle" type="button"
                             aria-expanded="true" aria-controls="paperSettingsContent">

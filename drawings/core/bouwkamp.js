@@ -102,53 +102,6 @@ export const bouwkampControls = [
         default: 0.2,
         valueType: 'number',
         description: 'Inset distance from each square edge before the hatch starts (creates a clean border)'
-    },
-    {
-        id: 'hatchSpacing',
-        label: 'Hatch Spacing',
-        target: 'line.spacing',
-        inputType: 'range',
-        min: 0,
-        max: 10,
-        step: 0.25,
-        default: 2,
-        valueType: 'number',
-        description: 'Distance between each serpentine hatch pass (higher values leave larger gaps)'
-    },
-    {
-        id: 'hatchInset',
-        label: 'Hatch Offset',
-        target: 'line.hatchInset',
-        inputType: 'range',
-        min: 0,
-        max: 5,
-        step: 0.1,
-        default: 1,
-        valueType: 'number',
-        description: 'How far to pull hatching away from the boundary before the final outline pass'
-    },
-    {
-        id: 'includeBoundary',
-        label: 'Draw Boundary Outline',
-        target: 'line.includeBoundary',
-        inputType: 'checkbox',
-        default: true,
-        valueType: 'boolean',
-        description: 'Toggle the final perimeter pass (useful when testing hatch offsets)'
-    },
-    {
-        id: 'hatchStyle',
-        label: 'Hatch Style',
-        target: 'line.hatchStyle',
-        inputType: 'select',
-        options: [
-            { label: 'Serpentine', value: 'serpentine' },
-            { label: 'Scanline Fill', value: 'scanline' },
-            { label: 'No Hatch', value: 'none' }
-        ],
-        default: 'serpentine',
-        valueType: 'string',
-        description: 'Choose the hatching algorithm for each rectangle'
     }
 ];
 

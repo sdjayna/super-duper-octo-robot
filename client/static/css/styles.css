@@ -289,6 +289,27 @@ rect.plotter-limit {
     margin: 0;
 }
 
+.hatch-controls {
+    flex-direction: column;
+    gap: 8px;
+}
+
+.hatch-slider-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #555;
+    align-items: center;
+}
+
+.hatch-boundary-toggle {
+    display: flex;
+    gap: 6px;
+    font-size: 12px;
+    color: #555;
+    align-items: center;
+}
+
 .control-section.collapsible {
     padding-bottom: 12px;
 }
