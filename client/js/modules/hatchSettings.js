@@ -159,7 +159,7 @@ export function initializeHatchControls(elements = {}, onChange = () => {}) {
     if (spacingSlider) {
         spacingSlider.min = 0;
         spacingSlider.max = 10;
-        spacingSlider.step = 0.1;
+        spacingSlider.step = 0.05;
         spacingSlider.addEventListener('input', async (event) => {
             await handleSpacingChange(Number(event.target.value));
         });
@@ -168,7 +168,7 @@ export function initializeHatchControls(elements = {}, onChange = () => {}) {
     if (insetSlider) {
         insetSlider.min = 0;
         insetSlider.max = 10;
-        insetSlider.step = 0.1;
+        insetSlider.step = 0.05;
         insetSlider.addEventListener('input', async (event) => {
             await handleInsetChange(Number(event.target.value));
         });
