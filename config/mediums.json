@@ -101,7 +101,16 @@
                 "bleedRadius": 0.15
             },
             "plotterDefaults": {
-                "penRateLower": 45
+                "penRateLower": 20
+            },
+            "hatchDefaults": {
+                "spacing": 0.85,
+                "inset": 0.85
+            },
+            "penDefaults": {
+                "penPosDown": 40,
+                "penPosUp": 90,
+                "penRateLower": 20
             },
             "colors": {
                 "amazonasLight": {

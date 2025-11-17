@@ -84,7 +84,8 @@ export function applyHatchSettingsToConfig(drawingConfig) {
 }
 
 function formatMm(value) {
-    return `${value.toFixed(1)} mm`;
+    const fixed = Number(value).toFixed(2);
+    return `${fixed.replace(/\.?0+$/, '')} mm`;
 }
 
 export function initializeHatchControls(elements = {}, onChange = () => {}) {

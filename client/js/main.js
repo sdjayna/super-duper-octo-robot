@@ -965,7 +965,7 @@ async function initialize() {
         if (defaultMediumId && mediumSelect) {
             mediumSelect.value = defaultMediumId;
             state.currentMediumId = defaultMediumId;
-            await applyMediumSettings(defaultMediumId, colorUtilsModule);
+            await applyMediumSettings(defaultMediumId, colorUtilsModule, { applyHatchDefaults: true });
             populateMediumColorSelect(defaultMediumId, colorUtilsModule.mediumMetadata);
         } else if (!defaultMediumId) {
             logDebug('No mediums available from configuration', 'error');
@@ -1230,7 +1230,7 @@ if (mediumSelect) {
         state.currentMediumId = medium;
         logDebug(`Changing medium to ${medium}`);
         const colorUtilsModule = await loadColorUtilsModule();
-        await applyMediumSettings(medium, colorUtilsModule);
+        await applyMediumSettings(medium, colorUtilsModule, { applyHatchDefaults: true });
         populateMediumColorSelect(medium, colorUtilsModule.mediumMetadata);
         await draw();
         populateLayerSelect();
@@ -1259,14 +1259,83 @@ if (mediumColorSelect) {
             state.disabledColorsByMedium.delete(mediumId);
         }
         persistDisabledColorsToStorage();
-        await applyMediumSettings(mediumId, colorUtilsModule);
+        await applyMediumSettings(mediumId, colorUtilsModule, { applyHatchDefaults: false });
         await draw();
         populateLayerSelect();
         logDebug(`Updated disabled colors for ${mediumInfo?.name || mediumId}`);
     });
 }
 
-async function applyMediumSettings(mediumId, colorUtilsModule) {
+function applyHatchDefaults(defaults = {}) {
+    if (!defaults) {
+        return;
+    }
+    if (typeof defaults.spacing === 'number' && hatchSpacingControl) {
+        const min = Number(hatchSpacingControl.min) || 0;
+        const max = Number(hatchSpacingControl.max) || 10;
+        const clamped = Math.min(max, Math.max(min, defaults.spacing));
+        hatchSpacingControl.value = String(clamped);
+        hatchSpacingControl.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    if (typeof defaults.inset === 'number' && hatchInsetControl) {
+        const min = Number(hatchInsetControl.min) || 0;
+        const max = Number(hatchInsetControl.max) || 10;
+        const clamped = Math.min(max, Math.max(min, defaults.inset));
+        hatchInsetControl.value = String(clamped);
+        hatchInsetControl.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    if (typeof defaults.includeBoundary === 'boolean' && hatchBoundaryControl) {
+        hatchBoundaryControl.checked = defaults.includeBoundary;
+        hatchBoundaryControl.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+}
+
+function clampPenValue(value) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) {
+        return null;
+    }
+    return Math.min(100, Math.max(0, Math.round(numeric)));
+}
+
+function applyPenDefaults(defaults = {}) {
+    const downInput = document.getElementById('penPosDown');
+    const upInput = document.getElementById('penPosUp');
+    const downLabel = document.getElementById('penPosDownValue');
+    const upLabel = document.getElementById('penPosUpValue');
+    const penRateInput = document.getElementById('penRateLower');
+    const penRateLabel = document.getElementById('penRateLowerValue');
+
+    if (downInput && downLabel && typeof defaults.penPosDown === 'number') {
+        const downValue = clampPenValue(defaults.penPosDown);
+        if (downValue !== null) {
+            downInput.value = String(downValue);
+            downLabel.textContent = downValue;
+        }
+    }
+
+    if (upInput && upLabel && typeof defaults.penPosUp === 'number') {
+        let upValue = clampPenValue(defaults.penPosUp);
+        const currentDown = clampPenValue(document.getElementById('penPosDown')?.value) ?? 0;
+        if (upValue !== null) {
+            if (upValue <= currentDown) {
+                upValue = Math.min(100, currentDown + 1);
+            }
+            upInput.value = String(upValue);
+            upLabel.textContent = upValue;
+        }
+    }
+
+    if (penRateInput && penRateLabel && typeof defaults.penRateLower === 'number') {
+        const rateValue = clampPenValue(defaults.penRateLower);
+        if (rateValue !== null) {
+            penRateInput.value = String(rateValue);
+            penRateLabel.textContent = rateValue;
+        }
+    }
+}
+
+async function applyMediumSettings(mediumId, colorUtilsModule, options = {}) {
     if (!mediumId) {
         return;
     }
@@ -1292,4 +1361,10 @@ async function applyMediumSettings(mediumId, colorUtilsModule) {
     state.currentMediumId = mediumId;
     updatePreviewProfile();
     updatePlotterDefaults();
+    if (options.applyHatchDefaults && mediumInfo?.hatchDefaults) {
+        applyHatchDefaults(mediumInfo.hatchDefaults);
+    }
+    if (options.applyPenDefaults && mediumInfo?.penDefaults) {
+        applyPenDefaults(mediumInfo.penDefaults);
+    }
 }
