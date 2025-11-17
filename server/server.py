@@ -2,6 +2,8 @@ from http.server import HTTPServer, SimpleHTTPRequestHandler
 import glob
 import json
 import os
+import shutil
+import sys
 from datetime import datetime
 import xml.dom.minidom
 import pprint
@@ -18,6 +20,17 @@ try:
     import psutil
 except ImportError:
     psutil = None
+
+
+def wrap_command_with_sleep_blocker(cmd):
+    try:
+        if sys.platform == 'darwin' and shutil.which('caffeinate'):
+            return ['caffeinate', '-dimsu', *cmd]
+        if sys.platform.startswith('linux') and shutil.which('systemd-inhibit'):
+            return ['systemd-inhibit', '--what=sleep', '--why', 'Plotting job', '--mode=block', *cmd]
+    except Exception:
+        pass
+    return cmd
 
 
 def sanitize_for_comment(value, max_length=240, depth=0):
@@ -268,7 +281,9 @@ class PlotterHandler(SimpleHTTPRequestHandler):
                         '--penlift', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['penlift']),
                         '--progress'
                     ])
-                    
+
+                    cmd = wrap_command_with_sleep_blocker(cmd)
+
                     print(f"Executing command for layer number: {params.get('layer', '1')}")
                     print(f"Executing command for layer label: {params.get('layerLabel', 'unknown')}")
                     print(f"Executing: {' '.join(cmd)}")
