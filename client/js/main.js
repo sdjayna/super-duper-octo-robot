@@ -1,4 +1,4 @@
-import { logDebug, initLogTabs } from './modules/logger.js';
+import { logDebug, initLogTabs, logProgress, resetProgressLog } from './modules/logger.js';
 import { playCompletionSiren, toggleMute } from './modules/audio.js';
 import { startProgressListener, stopProgressListener } from './modules/progress.js';
 import { createPreviewController } from './modules/preview.js';
@@ -30,8 +30,10 @@ function handlePlotReady(result) {
 
 function beginProgressListener() {
     setPreviewControlsDisabled(true);
+    resetProgressLog();
     startProgressListener({
         logDebug,
+        logProgress,
         onPlotReady: handlePlotReady,
         playCompletionSiren
     });

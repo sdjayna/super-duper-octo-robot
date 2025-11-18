@@ -1,7 +1,11 @@
 let progressEventSource = null;
+let lastProgressBar = '';
+let jsonProgressActive = false;
 
-export function startProgressListener({ logDebug, onPlotReady, playCompletionSiren }) {
+export function startProgressListener({ logDebug, logProgress, onPlotReady, playCompletionSiren }) {
     stopProgressListener();
+    lastProgressBar = '';
+    jsonProgressActive = false;
 
     logDebug?.('Starting progress listener...');
     progressEventSource = new EventSource('http://localhost:8000/plot-progress');
@@ -10,6 +14,7 @@ export function startProgressListener({ logDebug, onPlotReady, playCompletionSir
         try {
             const data = JSON.parse(event.data);
             if (!data.progress) return;
+            const payload = data.payload;
 
             switch (data.progress) {
                 case 'PLOT_COMPLETE':
@@ -21,8 +26,43 @@ export function startProgressListener({ logDebug, onPlotReady, playCompletionSir
                     onPlotReady?.('error');
                     stopProgressListener();
                     break;
+                case 'CLI_PROGRESS': {
+                    jsonProgressActive = true;
+                    const status = payload && typeof payload === 'object'
+                        ? (payload.status || payload.message || 'Plotting')
+                        : 'Plotting';
+                    const percent = payload && typeof payload.progress === 'number'
+                        ? payload.progress
+                        : null;
+                    const pctLabel = typeof percent === 'number'
+                        ? ` ${(percent * 100).toFixed(1)}%`
+                        : '';
+                    const eta = payload && typeof payload.eta_seconds === 'number'
+                        ? `, ETA ${Math.max(0, Math.round(payload.eta_seconds))}s`
+                        : '';
+                    const message = `[AxiDraw] ${status}${pctLabel}${eta}`;
+                    if (typeof logProgress === 'function') {
+                        logProgress(message, percent);
+                    } else {
+                        logDebug?.(message, 'info');
+                    }
+                    break;
+                }
+                case 'CLI_PROGRESS_BAR': {
+                    if (!jsonProgressActive && payload && payload.status && payload.status !== lastProgressBar) {
+                        lastProgressBar = payload.status;
+                        const sourceLabel = payload.source ? ` (${payload.source})` : '';
+                        const message = `[AxiDraw] ${payload.status}${sourceLabel}`;
+                        if (typeof logProgress === 'function') {
+                            logProgress(message, null);
+                        } else {
+                            logDebug?.(message, 'info');
+                        }
+                    }
+                    break;
+                }
                 default:
-                    if (data.progress.toLowerCase().includes('error')) {
+                    if (typeof data.progress === 'string' && data.progress.toLowerCase().includes('error')) {
                         logDebug?.(data.progress, 'error');
                     } else {
                         logDebug?.(data.progress, 'info');

@@ -12,6 +12,7 @@ import shlex
 import threading
 import time
 import signal
+import re
 try:
     from plotter_config import PLOTTER_CONFIGS, CURRENT_PLOTTER
 except ImportError:
@@ -143,6 +144,7 @@ class PlotterHandler(SimpleHTTPRequestHandler):
     }
     _RESUME_SENTINEL = object()
     plot_interrupted = False
+    last_progress_bar = None
 
     @classmethod
     def _resolve_resume_path(cls, requested_path=None):
@@ -353,6 +355,78 @@ class PlotterHandler(SimpleHTTPRequestHandler):
         # Handle all other GET requests as normal
         return SimpleHTTPRequestHandler.do_GET(self)
 
+    PROGRESS_BAR_REGEX = re.compile(r'Plot Progress:\s*(?P<bar>.+)$')
+
+    @classmethod
+    def emit_progress_bar(cls, handler, bar_text):
+        if bar_text == cls.last_progress_bar:
+            return
+        cls.last_progress_bar = bar_text
+        payload = {'status': bar_text}
+        handler.send_progress_update('CLI_PROGRESS_BAR', payload)
+
+    def _handle_plot_stdout_line(self, line):
+        stripped = line.strip()
+        if not stripped:
+            return
+        bar_match = self.PROGRESS_BAR_REGEX.search(stripped)
+        if bar_match:
+            bar_text = bar_match.group('bar').strip()
+            self.emit_progress_bar(self, bar_text)
+            print(f"Plot progress bar: {stripped}")
+            return
+        try:
+            parsed = json.loads(stripped)
+        except (json.JSONDecodeError, TypeError):
+            parsed = None
+        if isinstance(parsed, dict) and 'progress_event' in parsed:
+            event = parsed['progress_event']
+            self.send_progress_update('CLI_PROGRESS', event)
+            status = event.get('status') if isinstance(event, dict) else None
+            progress_pct = event.get('progress') if isinstance(event, dict) else None
+            if status:
+                pct_display = f" ({progress_pct * 100:.1f}%)" if isinstance(progress_pct, (int, float)) else ""
+                print(f"Plot progress: {status}{pct_display}")
+            else:
+                print(f"Plot progress event: {parsed['progress_event']}")
+            return
+        print(f"Plot output: {stripped}")
+        self.send_progress_update(stripped)
+
+    def _handle_plot_stderr_line(self, line):
+        stripped = line.strip()
+        if not stripped:
+            return
+        lower = stripped.lower()
+        if stripped.startswith('Plot Progress:'):
+            bar_text = stripped[len('Plot Progress:'):].strip()
+            self.emit_progress_bar(self, bar_text)
+            print(f"Plot progress bar (stderr): {stripped}")
+            return
+        elif "estimated print time" in lower:
+            print(f"Plot info: {stripped}")
+            self.send_progress_update(stripped)
+        elif "error" in lower:
+            print(f"Plot error: {stripped}")
+            self.send_progress_update(f"Error: {stripped}")
+        else:
+            print(f"Plot info: {stripped}")
+            self.send_progress_update(stripped)
+
+    def _stream_pipe(self, pipe, handler):
+        try:
+            for raw_line in iter(pipe.readline, ''):
+                if not raw_line:
+                    break
+                handler(raw_line)
+        except Exception as stream_error:
+            print(f"Error reading plot stream: {stream_error}")
+        finally:
+            try:
+                pipe.close()
+            except Exception:
+                pass
+
     def _run_axidraw_process(self, cmd):
         process = subprocess.Popen(
             cmd,
@@ -363,27 +437,25 @@ class PlotterHandler(SimpleHTTPRequestHandler):
             universal_newlines=True
         )
         PlotterHandler.current_plot_process = process
+
+        stdout_thread = threading.Thread(
+            target=self._stream_pipe,
+            args=(process.stdout, self._handle_plot_stdout_line),
+            daemon=True
+        )
+        stderr_thread = threading.Thread(
+            target=self._stream_pipe,
+            args=(process.stderr, self._handle_plot_stderr_line),
+            daemon=True
+        )
+        stdout_thread.start()
+        stderr_thread.start()
+
         try:
-            while True:
-                output = process.stdout.readline()
-                if output:
-                    output = output.strip()
-                    print(f"Plot output: {output}")
-                    self.send_progress_update(output)
-
-                error = process.stderr.readline()
-                if error:
-                    error = error.strip()
-                    if "estimated print time" in error.lower():
-                        print(f"Plot info: {error}")
-                        self.send_progress_update(error)
-                    else:
-                        print(f"Plot error: {error}")
-                        self.send_progress_update(f"Error: {error}")
-
-                if process.poll() is not None:
-                    break
-            return process.returncode
+            returncode = process.wait()
+            stdout_thread.join(timeout=1)
+            stderr_thread.join(timeout=1)
+            return returncode
         finally:
             PlotterHandler.current_plot_process = None
 
@@ -435,6 +507,7 @@ class PlotterHandler(SimpleHTTPRequestHandler):
             # Create temp file for SVG if present
             temp_svg_path = None
             resume_path = None
+            PlotterHandler.last_progress_bar = None
             try:
                 if 'svg' in params:
                     temp_svg_path = f'temp_{datetime.now().strftime("%Y%m%d_%H%M%S")}.svg'
@@ -785,8 +858,11 @@ class PlotterHandler(SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(str(e).encode())
     
-    def send_progress_update(self, message):
-        data = f"data: {json.dumps({'progress': message})}\n\n".encode('utf-8')
+    def send_progress_update(self, message, payload=None):
+        envelope = {'progress': message}
+        if payload is not None:
+            envelope['payload'] = payload
+        data = f"data: {json.dumps(envelope)}\n\n".encode('utf-8')
         # Send to all active connections
         disconnected = set()
         for connection in PlotterHandler.sse_connections:
