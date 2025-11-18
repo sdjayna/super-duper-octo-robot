@@ -40,6 +40,7 @@ JavaScript files are ES modules with 4-space indentation, `camelCase` functions 
 - Hatch settings live in their own collapsible panel with controls wired to global state (`state.hatchSettings`). Any drawing-specific hatch logic should still respect `line.hatchStyle`, `line.hatchInset`, and `line.includeBoundary`, since the panel overwrites those values before each draw.
 - The stroke-width block was removed from the UI because stroke width purely follows the selected medium. Don’t reintroduce a dedicated panel; reflect the width through logging/state only.
 - Drawing selections and per-drawing control values persist in `localStorage` (see `drawingControlValues`). When adding new controls, ensure they serialize cleanly, have a reset affordance, and don’t break older stored data.
+- Axidraw `--progress` output is streamed over SSE and rendered through `logProgress` as a single color-coded entry with an inline progress bar inside the Messages panel. When modifying progress plumbing, reuse the existing `CLI_PROGRESS`/`CLI_PROGRESS_BAR` messages so the log doesn’t grow with every tick.
 
 ### Adding a New Drawing
 1. Create `drawings/<core|community>/<name>.js` exporting a `defineDrawing` plus optional `attachControls` setup. Use existing modules (e.g., `drawings/core/calibration.js`) as templates.

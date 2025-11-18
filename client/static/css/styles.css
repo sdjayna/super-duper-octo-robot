@@ -562,6 +562,39 @@ input[type="range"] {
     font-family: monospace;
 }
 
+.debug-entry.debug-progress {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.debug-entry.debug-progress .progress-label {
+    font-family: monospace;
+}
+
+.progress-bar {
+    position: relative;
+    width: 100%;
+    height: 6px;
+    background: #e0e0e0;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-bar.hidden {
+    display: none;
+}
+
+.progress-bar-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #ef5350, #4caf50);
+    transition: width 0.2s ease;
+}
+
 .debug-info { 
     color: #666; 
 }

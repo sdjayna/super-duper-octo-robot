@@ -1,6 +1,18 @@
 let progressEventSource = null;
 let lastProgressBar = '';
 let jsonProgressActive = false;
+const PROGRESS_PERCENT_REGEX = /^(\d+(?:\.\d+)?)%/;
+
+function parsePercentFromStatus(status) {
+    if (typeof status !== 'string') {
+        return null;
+    }
+    const match = status.match(PROGRESS_PERCENT_REGEX);
+    if (!match) return null;
+    const value = parseFloat(match[1]);
+    if (Number.isNaN(value)) return null;
+    return Math.min(1, Math.max(0, value / 100));
+}
 
 export function startProgressListener({ logDebug, logProgress, onPlotReady, playCompletionSiren }) {
     stopProgressListener();
@@ -52,9 +64,10 @@ export function startProgressListener({ logDebug, logProgress, onPlotReady, play
                     if (!jsonProgressActive && payload && payload.status && payload.status !== lastProgressBar) {
                         lastProgressBar = payload.status;
                         const sourceLabel = payload.source ? ` (${payload.source})` : '';
+                        const derivedPercent = parsePercentFromStatus(payload.status);
                         const message = `[AxiDraw] ${payload.status}${sourceLabel}`;
                         if (typeof logProgress === 'function') {
-                            logProgress(message, null);
+                            logProgress(message, derivedPercent);
                         } else {
                             logDebug?.(message, 'info');
                         }

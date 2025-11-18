@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Real-time Axidraw telemetry: the server now streams `--progress` JSON/tqdm output over SSE, and the client renders it as a single color-coded log entry with a live progress bar that updates without growing the message list.
 - Resume-aware plotting workflow: server now writes a deterministic `output/plot_resume.log`, exposes `/resume-status`, and runs `axicli --mode res_plot` so the new Resume Plot button can pick up any interrupted layer; includes Python unit tests for the resume helpers.
 - Photo Triangles drawing: upload a reference image, sample it at configurable resolution, run a Delaunay triangulation, and map each triangle to the nearest palette color so photo mosaics can be plotted layer-by-layer.
 - Drawing builder/context now accept `strokeColor` overrides so modules can explicitly target medium palette entries when assigning geometry to layers.

@@ -58,11 +58,47 @@ export function logProgress(message, percent = null) {
         lastProgressEntry = document.createElement('div');
         lastProgressEntry.className = 'debug-entry debug-progress';
         lastProgressEntry.dataset.isPlot = 'true';
+
+        const label = document.createElement('div');
+        label.className = 'progress-label';
+        const bar = document.createElement('div');
+        bar.className = 'progress-bar';
+        const barFill = document.createElement('div');
+        barFill.className = 'progress-bar-fill';
+        bar.appendChild(barFill);
+
+        lastProgressEntry.appendChild(label);
+        lastProgressEntry.appendChild(bar);
     }
 
-    lastProgressEntry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+    const timestamp = `[${new Date().toLocaleTimeString()}]`;
+    const labelNode = lastProgressEntry.querySelector('.progress-label');
+    if (labelNode) {
+        labelNode.textContent = `${timestamp} ${message}`;
+    } else {
+        lastProgressEntry.textContent = `${timestamp} ${message}`;
+    }
+
+    const barNode = lastProgressEntry.querySelector('.progress-bar');
+    const barFill = lastProgressEntry.querySelector('.progress-bar-fill');
+    const hasPercent = typeof percent === 'number' && !Number.isNaN(percent);
+    if (barNode) {
+        barNode.classList.toggle('hidden', !hasPercent);
+    }
+    if (hasPercent && barFill) {
+        const clamped = Math.min(1, Math.max(0, percent));
+        barFill.style.width = `${(clamped * 100).toFixed(1)}%`;
+    } else if (barFill) {
+        barFill.style.width = '0%';
+    }
+
     lastProgressEntry.style.fontWeight = 'bold';
-    lastProgressEntry.style.color = getProgressColor(percent);
+    lastProgressEntry.style.color = '#000';
+    if (barFill) {
+        const clampedColor = getProgressColor(percent);
+        barFill.style.backgroundImage = 'none';
+        barFill.style.backgroundColor = clampedColor;
+    }
     appendEntry(lastProgressEntry);
 }
 
