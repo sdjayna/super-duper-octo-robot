@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { generatePolygonScanlineHatch, generatePolygonSerpentineHatch, rectToPolygon } from '../utils/hatchingUtils.js';
+import { generatePolygonScanlineHatch, generatePolygonSerpentineHatch, generatePolygonSkeletonHatch, rectToPolygon } from '../utils/hatchingUtils.js';
 
 describe('generatePolygonScanlineHatch', () => {
     it('returns empty for invalid polygons', () => {
@@ -22,5 +22,44 @@ describe('generatePolygonScanlineHatch', () => {
         expect(serpentinePath.length).toBeGreaterThan(0);
         expect(scanlinePath.length).toBeGreaterThan(0);
         expect(serpentinePath).not.toEqual(scanlinePath);
+    });
+});
+
+describe('generatePolygonSkeletonHatch', () => {
+    it('creates a continuous path through the centroid', () => {
+        const polygon = [
+            { x: 0, y: 0 },
+            { x: 6, y: 0 },
+            { x: 1, y: 4 },
+            { x: 0, y: 0 }
+        ];
+        const path = generatePolygonSkeletonHatch(polygon, { spacing: 1.5 });
+        expect(path.length).toBeGreaterThan(4);
+        expect(path[0]).toEqual(path[path.length - 1]);
+        const centroidHit = path.some(point => Math.abs(point.x - 7 / 3) < 0.25 && Math.abs(point.y - 4 / 3) < 0.25);
+        expect(centroidHit).toBe(true);
+    });
+
+    it('drives spokes deep into acute angles', () => {
+        const polygon = [
+            { x: 0, y: 0 },
+            { x: 8, y: 0 },
+            { x: 0.5, y: 7 },
+            { x: 0, y: 0 }
+        ];
+        const path = generatePolygonSkeletonHatch(polygon, { spacing: 0.5 });
+        expect(path.length).toBeGreaterThan(6);
+        const apex = polygon[2];
+        const apexCoverage = path.some(point => point.y > apex.y - 1 && Math.abs(point.x - apex.x) < 1);
+        expect(apexCoverage).toBe(true);
+    });
+
+    it('optionally appends the polygon boundary', () => {
+        const polygon = rectToPolygon({ x: 0, y: 0, width: 5, height: 3 });
+        const withoutBoundary = generatePolygonSkeletonHatch(polygon, { spacing: 1 });
+        const withBoundary = generatePolygonSkeletonHatch(polygon, { spacing: 1, includeBoundary: true });
+        expect(withBoundary.length).toBeGreaterThan(withoutBoundary.length);
+        const boundaryCorner = withBoundary.some(point => Math.abs(point.x) < 1e-6 && Math.abs(point.y) < 1e-6);
+        expect(boundaryCorner).toBe(true);
     });
 });

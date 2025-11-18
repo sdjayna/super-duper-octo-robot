@@ -166,6 +166,7 @@ describe('drawing functions', () => {
         };
         const scanlineConfig = new PhotoTriangleConfig(baseParams);
         const outlineConfig = new PhotoTriangleConfig(baseParams);
+        const skeletonConfig = new PhotoTriangleConfig(baseParams);
         const renderContext = createTestRenderContext({ drawingWidth: 160, drawingHeight: 120 });
         const scanlineDrawing = createTestDrawingConfig({
             drawingData: scanlineConfig,
@@ -177,15 +178,25 @@ describe('drawing functions', () => {
             colorPalette: palette,
             line: { strokeWidth: 0.25, hatchStyle: 'none' }
         });
+        const skeletonDrawing = createTestDrawingConfig({
+            drawingData: skeletonConfig,
+            colorPalette: palette,
+            line: { strokeWidth: 0.25, hatchStyle: 'skeleton' }
+        });
         const scanlineSvg = await drawPhotoTriangleMosaic(scanlineDrawing, renderContext);
         const outlineSvg = await drawPhotoTriangleMosaic(outlineDrawing, renderContext);
+        const skeletonSvg = await drawPhotoTriangleMosaic(skeletonDrawing, renderContext);
         expect(scanlineSvg.querySelectorAll('path').length).toBeGreaterThan(0);
         expect(outlineSvg.querySelectorAll('path').length).toBeGreaterThan(0);
         const scanlinePathData = scanlineSvg.querySelector('path')?.getAttribute('d');
         const outlinePathData = outlineSvg.querySelector('path')?.getAttribute('d');
+        const skeletonPathData = skeletonSvg.querySelector('path')?.getAttribute('d');
         expect(scanlinePathData).toBeTruthy();
         expect(outlinePathData).toBeTruthy();
+        expect(skeletonPathData).toBeTruthy();
         expect(scanlinePathData).not.toBe(outlinePathData);
+        expect(skeletonPathData).not.toBe(scanlinePathData);
+        expect(skeletonSvg.querySelectorAll('path').length).toBeGreaterThan(0);
         photoTriangleTestUtils.resetImageSamplerFactory();
     });
 

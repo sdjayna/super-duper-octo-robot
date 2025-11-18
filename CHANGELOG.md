@@ -8,8 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Photo Triangles gained a "Polygon Margin" slider (0–3 mm in 0.1 mm steps) so each triangle insets before hatching, creating gutters like Simple Perfect Rectangle.
--  Photo Triangles gained a Polygon Margin slider (0–3 mm in 0.1 mm steps) that insets each triangle before hatching so adjacent colors leave a clean gutter like Simple Perfect Rectangle.
+- Shared straight-skeleton hatching helper that drives bisector spokes from every polygon apex, keeps the toolpath continuous, and ships as the new global “Skeleton” hatch-style option (Photo Triangles, Voronoi, and Bouwkamp already use it for rich corner coverage).
+- Photo Triangles gained a Polygon Margin slider (0–3 mm in 0.1 mm steps) that insets each triangle before hatching so adjacent colors leave a clean gutter like Simple Perfect Rectangle.
 - Photo Triangles drawing: upload a reference image, sample it at configurable resolution, run a Delaunay triangulation, and map each triangle to the nearest palette color so photo mosaics can be plotted layer-by-layer.
 - Drawing builder/context now accept `strokeColor` overrides so modules can explicitly target medium palette entries when assigning geometry to layers.
 - Drawing controls gained a `file` input type with base64 persistence so image-driven modules can keep their source data inside the standard control/state flow.
@@ -60,4 +60,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Preview tests run offline by mocking medium metadata, preventing accidental network fetches during Vitest runs.
 
 ## [1.4.8] - 2025-02-16
-

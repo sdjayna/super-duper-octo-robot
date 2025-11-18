@@ -4,7 +4,8 @@ import {
     createDrawingRuntime,
     colorPalettes,
     generatePolygonScanlineHatch,
-    generatePolygonSerpentineHatch
+    generatePolygonSerpentineHatch,
+    generatePolygonSkeletonHatch
 } from '../shared/kit.js';
 import { attachControls } from '../shared/controlsUtils.js';
 import { clampInteger, clampNumber } from '../shared/utils/paramMath.js';
@@ -130,6 +131,12 @@ export async function drawPhotoTriangleMosaic(drawingConfig, renderContext) {
             pathPoints = generatePolygonSerpentineHatch(insetPolygon, hatchSpacing, {
                 inset: hatchInset,
                 includeBoundary
+            });
+        } else if (hatchStyle === 'skeleton') {
+            pathPoints = generatePolygonSkeletonHatch(insetPolygon, {
+                spacing: hatchSpacing,
+                includeBoundary,
+                apexInset: hatchInset
             });
         } else {
             pathPoints = generatePolygonScanlineHatch(insetPolygon, hatchSpacing, {

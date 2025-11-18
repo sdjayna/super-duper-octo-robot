@@ -314,6 +314,22 @@ class PlotterHandler(SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(body)
             return
+
+        if request_path.startswith('/drawings/'):
+            local_path = os.path.join(os.getcwd(), request_path.lstrip('/'))
+            if os.path.isfile(local_path):
+                self.send_response(200)
+                if local_path.endswith('.js'):
+                    self.send_header('Content-Type', 'application/javascript')
+                elif local_path.endswith('.json'):
+                    self.send_header('Content-Type', 'application/json')
+                else:
+                    self.send_header('Content-Type', 'application/octet-stream')
+                self.send_header('Cache-Control', 'no-cache')
+                self.end_headers()
+                with open(local_path, 'rb') as source_file:
+                    shutil.copyfileobj(source_file, self.wfile)
+                return
             
         # Handle CSS file requests
         if self.path.startswith('/css/'):

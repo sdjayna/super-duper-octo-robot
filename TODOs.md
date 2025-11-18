@@ -19,6 +19,7 @@
 
 3. Enhance hatching algorithms  
    - [ ] Acute-angle cleanup pass for serpentine (emit corner “spoke” stitches”): detect polygons/triangles with interior angles below ~30° and, after the serpentine pass, inject a supplemental line aligned to the angle bisector so ink reaches the apex. Should reuse existing path builders so color assignments stay consistent.
+   - [x] Skeleton-field hatching: compute a straight-skeleton/medial axis for each polygon, trace a single continuous path that enters/exits via the nearest apex, walks every skeleton branch without lifting the pen, and reorders polygons so the closest apex jump is next. Requires: skeleton library or custom wavefront solver, nearest-apex entry planning, “one toolpath per polygon” guarantee, and UI hook (`hatchStyle: 'skeleton'` + options for spacing/tension).
    - [x] Add parallel line hatching  
    - [ ] Add cross-hatching  
    - [ ] Add contour hatching  

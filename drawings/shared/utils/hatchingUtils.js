@@ -1,3 +1,5 @@
+const EPSILON = 1e-6;
+
 function normalizePolygon(polygon = []) {
     if (!Array.isArray(polygon) || polygon.length < 3) {
         return [];
@@ -54,6 +56,167 @@ function nearestPointOnPolygon(point, polygon) {
         }
     }
     return closest;
+}
+
+function pushUniquePoint(path, point) {
+    if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) {
+        return;
+    }
+    const last = path[path.length - 1];
+    if (last && Math.abs(last.x - point.x) < EPSILON && Math.abs(last.y - point.y) < EPSILON) {
+        return;
+    }
+    path.push({ x: point.x, y: point.y });
+}
+
+function isPointInsidePolygon(point, polygon) {
+    if (!polygon?.length) {
+        return false;
+    }
+    let inside = false;
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+        const pi = polygon[i];
+        const pj = polygon[j];
+        const intersects = ((pi.y > point.y) !== (pj.y > point.y))
+            && (point.x < (pj.x - pi.x) * (point.y - pi.y) / ((pj.y - pi.y) || 1) + pi.x);
+        if (intersects) {
+            inside = !inside;
+        }
+    }
+    return inside;
+}
+
+function normalizeVector(vector) {
+    if (!vector) {
+        return null;
+    }
+    const length = Math.hypot(vector.x, vector.y);
+    if (length < EPSILON) {
+        return null;
+    }
+    return { x: vector.x / length, y: vector.y / length };
+}
+
+function computeBisectorDirection(prev, current, next, centroid, polygon) {
+    if (!prev || !current || !next) {
+        return null;
+    }
+    const toPrev = normalizeVector({ x: prev.x - current.x, y: prev.y - current.y });
+    const toNext = normalizeVector({ x: next.x - current.x, y: next.y - current.y });
+    let direction = null;
+    if (toPrev && toNext) {
+        direction = normalizeVector({ x: toPrev.x + toNext.x, y: toPrev.y + toNext.y });
+    }
+    if (!direction) {
+        direction = normalizeVector({ x: centroid.x - current.x, y: centroid.y - current.y });
+    }
+    if (!direction) {
+        return null;
+    }
+    let testPoint = {
+        x: current.x + direction.x * 0.5,
+        y: current.y + direction.y * 0.5
+    };
+    if (!isPointInsidePolygon(testPoint, polygon)) {
+        direction = { x: -direction.x, y: -direction.y };
+    }
+    testPoint = {
+        x: current.x + direction.x * 0.5,
+        y: current.y + direction.y * 0.5
+    };
+    if (!isPointInsidePolygon(testPoint, polygon)) {
+        return null;
+    }
+    return direction;
+}
+
+function intersectRayWithSegment(origin, direction, a, b) {
+    const segment = { x: b.x - a.x, y: b.y - a.y };
+    const denom = direction.x * segment.y - direction.y * segment.x;
+    if (Math.abs(denom) < EPSILON) {
+        return null;
+    }
+    const diff = { x: a.x - origin.x, y: a.y - origin.y };
+    const t = (diff.x * segment.y - diff.y * segment.x) / denom;
+    const u = (diff.x * direction.y - diff.y * direction.x) / denom;
+    if (t <= EPSILON || u < -EPSILON || u > 1 + EPSILON) {
+        return null;
+    }
+    return {
+        distance: t,
+        point: {
+            x: origin.x + direction.x * t,
+            y: origin.y + direction.y * t
+        }
+    };
+}
+
+function findRayIntersection(origin, direction, polygon, vertexIndex, vertexCount) {
+    let closest = null;
+    const prevIndex = (vertexIndex - 1 + vertexCount) % vertexCount;
+    for (let i = 0; i < polygon.length - 1; i++) {
+        if (i === vertexIndex || i === prevIndex) {
+            continue;
+        }
+        const hit = intersectRayWithSegment(origin, direction, polygon[i], polygon[i + 1]);
+        if (!hit) {
+            continue;
+        }
+        if (!closest || hit.distance < closest.distance) {
+            closest = hit;
+        }
+    }
+    return closest;
+}
+
+function projectInteriorBisector({ prev, vertex, next, centroid, polygon, vertexIndex, minInterior, apexInset, entryRatio }) {
+    const direction = computeBisectorDirection(prev, vertex, next, centroid, polygon);
+    if (!direction) {
+        return null;
+    }
+    const intersection = findRayIntersection(vertex, direction, polygon, vertexIndex, polygon.length - 1);
+    const minDistance = Math.max(minInterior, 0.1);
+    if (!intersection) {
+        return {
+            x: vertex.x + direction.x * minDistance,
+            y: vertex.y + direction.y * minDistance
+        };
+    }
+    const safeDistance = Math.max(
+        minDistance,
+        Math.min(intersection.distance * (1 - entryRatio), intersection.distance - apexInset)
+    );
+    if (!Number.isFinite(safeDistance) || safeDistance <= EPSILON) {
+        return null;
+    }
+    return {
+        x: vertex.x + direction.x * safeDistance,
+        y: vertex.y + direction.y * safeDistance
+    };
+}
+
+function rotateArray(items, startIndex) {
+    if (!items?.length) {
+        return [];
+    }
+    const index = Math.max(0, Math.min(startIndex, items.length - 1));
+    return [...items.slice(index), ...items.slice(0, index)];
+}
+
+function findClosestVertexToCentroid(entries, centroid) {
+    if (!entries?.length) {
+        return 0;
+    }
+    let idx = 0;
+    let distance = Infinity;
+    entries.forEach((entry, entryIndex) => {
+        const d = Math.hypot(entry.vertex.x - centroid.x, entry.vertex.y - centroid.y);
+        if (d < distance) {
+            distance = d;
+            idx = entryIndex;
+        }
+    });
+    return idx;
 }
 
 function appendBoundaryLoop(path, boundary, connection) {
@@ -178,6 +341,80 @@ export function generatePolygonSerpentineHatch(polygonPoints, spacing = 2.5, opt
     return rotatedPath.map(point => ({ x: point.y, y: point.x }));
 }
 
+export function generatePolygonSkeletonHatch(polygonPoints, options = {}) {
+    const polygon = normalizePolygon(polygonPoints);
+    if (polygon.length < 4) {
+        return [];
+    }
+    const open = polygon.slice(0, -1);
+    if (open.length < 3) {
+        return [];
+    }
+    const centroid = polygonCentroid(open);
+    if (!Number.isFinite(centroid.x) || !Number.isFinite(centroid.y)) {
+        return [];
+    }
+    const spacing = Number.isFinite(options.spacing) ? Math.max(options.spacing, 0.1) : 2.5;
+    const minInteriorDistance = Number.isFinite(options.minInteriorDistance)
+        ? Math.max(options.minInteriorDistance, 0.1)
+        : Math.max(spacing * 0.5, 0.75);
+    const apexInset = Number.isFinite(options.apexInset) ? Math.max(options.apexInset, 0) : 0.35;
+    const entryRatio = Number.isFinite(options.entryRatio)
+        ? Math.min(Math.max(options.entryRatio, 0.05), 0.45)
+        : 0.2;
+
+    const bisectorEntries = open.map((vertex, index) => {
+        const prev = open[(index - 1 + open.length) % open.length];
+        const next = open[(index + 1) % open.length];
+        const target = projectInteriorBisector({
+            prev,
+            vertex,
+            next,
+            centroid,
+            polygon,
+            vertexIndex: index,
+            minInterior: minInteriorDistance,
+            apexInset,
+            entryRatio
+        });
+        return {
+            vertex,
+            target: target || centroid,
+            index
+        };
+    });
+
+    if (!bisectorEntries.length) {
+        return [];
+    }
+
+    const startIndex = findClosestVertexToCentroid(bisectorEntries, centroid);
+    const ordered = rotateArray(bisectorEntries, startIndex);
+    const path = [];
+
+    pushUniquePoint(path, ordered[0].vertex);
+    for (let i = 0; i < ordered.length; i++) {
+        const entry = ordered[i];
+        if (entry.target) {
+            pushUniquePoint(path, entry.target);
+        }
+        pushUniquePoint(path, centroid);
+        const nextEntry = ordered[(i + 1) % ordered.length];
+        pushUniquePoint(path, nextEntry.vertex);
+    }
+    if (path.length && (Math.abs(path[0].x - path[path.length - 1].x) > EPSILON
+        || Math.abs(path[0].y - path[path.length - 1].y) > EPSILON)) {
+        pushUniquePoint(path, path[0]);
+    }
+
+    if (options.includeBoundary) {
+        const anchor = path[path.length - 1] || ordered[0].vertex;
+        const nearest = nearestPointOnPolygon(anchor, polygon);
+        appendBoundaryLoop(path, polygon, nearest);
+    }
+    return path;
+}
+
 export function rectToPolygon(rect) {
     return [
         { x: rect.x, y: rect.y },
@@ -186,4 +423,38 @@ export function rectToPolygon(rect) {
         { x: rect.x, y: rect.y + rect.height },
         { x: rect.x, y: rect.y }
     ];
+}
+
+function polygonCentroid(points) {
+    let area = 0;
+    let cx = 0;
+    let cy = 0;
+    for (let i = 0; i < points.length; i++) {
+        const current = points[i];
+        const next = points[(i + 1) % points.length];
+        const cross = current.x * next.y - next.x * current.y;
+        area += cross;
+        cx += (current.x + next.x) * cross;
+        cy += (current.y + next.y) * cross;
+    }
+    area *= 0.5;
+    if (Math.abs(area) < 1e-6) {
+        const average = points.reduce(
+            (acc, point) => {
+                acc.x += point.x;
+                acc.y += point.y;
+                return acc;
+            },
+            { x: 0, y: 0 }
+        );
+        return {
+            x: average.x / points.length,
+            y: average.y / points.length
+        };
+    }
+    const factor = 1 / (6 * area);
+    return {
+        x: cx * factor,
+        y: cy * factor
+    };
 }

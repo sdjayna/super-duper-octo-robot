@@ -16,11 +16,10 @@ If you have an AxiDraw (or any plotter that can digest SVG layers) and love algo
 - **Transparency-first** - no cloud, no hidden binaries; everything from the Makefile to the SSE heartbeat loop is readable and hackable.
 
 ### Feature Highlights
-- **Photo Triangles** – Polygon Margin slider (0–3 mm, 0.1 mm steps) keeps adjacent mosaic triangles from overlapping, mirroring the Simple Perfect Rectangle gutters.
+- **Skeleton hatching everywhere** – The shared hatching helpers now expose a straight-skeleton/medial-axis mode (next to Serpentine/Scanline/None) so any drawing can trace a single continuous path per polygon, diving bisector spokes deep into acute corners before optionally outlining the boundary. Photo Triangles, Voronoi, and Bouwkamp already default to it for rich, corner-to-corner coverage.
 
 - **Tabbed control console** – switch between Drawing settings and Plotter controls without scrolling. Each panel keeps its state, so you can tweak a control, hop over to the plotter, and return without losing context.
 - **Paper-aware preview** – the merged “Paper & Margin” panel now blends the selected paper + medium metadata to set background color, simulate bleed/jitter via SVG filters, apply paper-specific texture overlays, surface warnings when a combo risks embossing or over-saturation, and (when rulers are on) outline the plotter’s maximum travel area.
-- **Photo Triangles** – Polygon Margin slider (0–3 mm, 0.1 mm steps) keeps adjacent mosaic triangles from overlapping, mirroring the Simple Perfect Rectangle gutters.
 - **Adaptive plotter defaults** – the Plotter Control tab auto-tunes `Pen Rate Lower` for each paper + medium combination so acrylic markers keep moving fast while delicate stocks slow the carriage to stay safe.
 - **Layer travel caps** – the Plotter Control Medium panel now exposes a “Max Travel Per Layer” slider (1 m–100 m with an ∞ stop) that splits long paths/layers into multiple reload-friendly passes so ink never runs dry mid-color.
 - **Calibration drawing** – ship a dedicated “Calibration Patterns” preset that lays out parallel lines, rings, multi-wave bundles, arc sweeps, Bezier ribbons, radial fans, touching polygons, and serpentine-filled shapes across adjustable spacing bands (including an SE/A3 micro-spacing stress row) so you can map slider values to real AxiDraw mechanics before committing a hero plot.

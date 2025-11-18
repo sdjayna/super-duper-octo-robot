@@ -3,8 +3,8 @@ export function deriveResumeButtonState({ resumeStatus, plotterIsRunning, layerS
     const label = safeStatus.layerLabel || (safeStatus.layer ? `Layer ${safeStatus.layer}` : null);
     const buttonText = label ? `Resume ${label}` : 'Resume Plot';
     const noLayerSelected = layerSelectValue === 'all';
-    const disabled = Boolean(plotterIsRunning) ||
-        !Boolean(safeStatus.available) ||
+    const disabled = !!plotterIsRunning ||
+        !safeStatus.available ||
         noLayerSelected;
     return {
         text: buttonText,

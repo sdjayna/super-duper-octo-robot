@@ -5,6 +5,7 @@ import {
     colorPalettes,
     generatePolygonScanlineHatch,
     generatePolygonSerpentineHatch,
+    generatePolygonSkeletonHatch,
     rectToPolygon,
     computeBoundsFromPoints
 } from '../shared/kit.js';
@@ -335,6 +336,12 @@ export function drawVoronoiSketch(drawingConfig, renderContext) {
             pathPoints = generatePolygonSerpentineHatch(polygonForFill, spacing, {
                 inset: hatchInset,
                 includeBoundary
+            });
+        } else if (hatchStyle === 'skeleton') {
+            pathPoints = generatePolygonSkeletonHatch(polygonForFill, {
+                spacing,
+                includeBoundary,
+                apexInset: hatchInset
             });
         } else {
             pathPoints = generatePolygonScanlineHatch(polygonForFill, spacing, {
