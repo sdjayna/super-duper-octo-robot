@@ -8,7 +8,7 @@
     "lib": "lib"
   },
   "scripts": {
-    "test": "vitest && python3 -m unittest discover -s tests",
+    "test": "vitest && npm run test:py",
     "test:py": "python3 -m unittest discover -s tests",
     "lint": "node --check client/js/modules/preview.js && npx eslint client/js",
     "test:watch": "vitest watch",

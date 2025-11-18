@@ -480,11 +480,15 @@ function layerDistance(a, b) {
 
 function orderLayersByDistance(layers) {
     const entries = layers.slice();
+    entries.forEach((entry, idx) => {
+        entry.__orderId = idx;
+    });
     const canOptimize = entries.length > 2 && entries.every(entry => (entry.points?.length || entry.rects?.length));
     if (!canOptimize) {
         return entries.sort((a, b) => Number(a.index) - Number(b.index));
     }
 
+    const distanceMatrix = buildDistanceMatrix(entries);
     const average = entries.reduce(
         (acc, entry) => {
             acc.x += entry.centroid.x;
@@ -505,21 +509,112 @@ function orderLayersByDistance(layers) {
 
     const remaining = entries.filter(entry => entry !== start);
     const ordered = start ? [start] : [];
+    const plottedPoints = start ? getRepresentativePoints(start) : [];
 
     while (remaining.length) {
-        const last = ordered[ordered.length - 1];
-        let farthestIndex = 0;
-        let farthestDistance = -Infinity;
+        let bestScore = -Infinity;
+        let bestIndex = 0;
         remaining.forEach((entry, idx) => {
-            const dist = layerDistance(entry, last);
-            if (dist > farthestDistance) {
-                farthestDistance = dist;
-                farthestIndex = idx;
+            const candidatePoints = getRepresentativePoints(entry);
+            if (!candidatePoints.length) {
+                return;
+            }
+            let total = 0;
+            candidatePoints.forEach(point => {
+                let nearest = Infinity;
+                plottedPoints.forEach(existing => {
+                    const dist = pointDistance(point, existing);
+                    if (dist < nearest) {
+                        nearest = dist;
+                    }
+                });
+                total += nearest;
+            });
+            const averageDistance = total / candidatePoints.length;
+            if (averageDistance > bestScore) {
+                bestScore = averageDistance;
+                bestIndex = idx;
             }
         });
-        ordered.push(remaining.splice(farthestIndex, 1)[0]);
+        const [selected] = remaining.splice(bestIndex, 1);
+        ordered.push(selected);
+        plottedPoints.push(...getRepresentativePoints(selected));
     }
 
+    optimizeLayerOrder(ordered, distanceMatrix);
     ordered.optimized = true;
     return ordered;
+}
+
+function getRepresentativePoints(entry) {
+    if (entry.points?.length) {
+        return entry.points;
+    }
+    if (!entry.rects?.length) {
+        return [];
+    }
+    const samples = [];
+    entry.rects.forEach(rect => {
+        samples.push(
+            { x: rect.x, y: rect.y },
+            { x: rect.x + rect.width, y: rect.y },
+            { x: rect.x, y: rect.y + rect.height },
+            { x: rect.x + rect.width, y: rect.y + rect.height },
+            { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 }
+        );
+    });
+    return samples;
+}
+
+function buildDistanceMatrix(entries) {
+    const matrix = Array.from({ length: entries.length }, () => Array(entries.length).fill(0));
+    for (let i = 0; i < entries.length; i += 1) {
+        for (let j = i + 1; j < entries.length; j += 1) {
+            const dist = layerDistance(entries[i], entries[j]);
+            matrix[entries[i].__orderId][entries[j].__orderId] = dist;
+            matrix[entries[j].__orderId][entries[i].__orderId] = dist;
+        }
+    }
+    return matrix;
+}
+
+function computeAdjacencyScore(order, matrix) {
+    if (order.length < 2) return Infinity;
+    let minDistance = Infinity;
+    for (let i = 0; i < order.length - 1; i += 1) {
+        const idA = order[i].__orderId;
+        const idB = order[i + 1].__orderId;
+        const dist = matrix[idA]?.[idB] ?? 0;
+        if (dist < minDistance) {
+            minDistance = dist;
+        }
+    }
+    return minDistance;
+}
+
+function optimizeLayerOrder(order, matrix) {
+    if (order.length < 3) return;
+    let improved = true;
+    let iterations = 0;
+    const maxIterations = order.length * order.length;
+    while (improved && iterations < maxIterations) {
+        improved = false;
+        iterations += 1;
+        let bestSwap = null;
+        const baseline = computeAdjacencyScore(order, matrix);
+        for (let i = 0; i < order.length - 1; i += 1) {
+            for (let j = i + 1; j < order.length; j += 1) {
+                [order[i], order[j]] = [order[j], order[i]];
+                const score = computeAdjacencyScore(order, matrix);
+                if (score > baseline && (!bestSwap || score > bestSwap.score)) {
+                    bestSwap = { i, j, score };
+                }
+                [order[i], order[j]] = [order[j], order[i]];
+            }
+        }
+        if (bestSwap) {
+            [order[bestSwap.i], order[bestSwap.j]] = [order[bestSwap.j], order[bestSwap.i]];
+            improved = true;
+        }
+    }
 }

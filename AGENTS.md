@@ -9,6 +9,8 @@ Source for the browser UI lives in `client/js` with templates under `client/temp
 - `make dev`: Runs the manifest watcher (`npm run watch:drawings`) and the server together for hot reload workflows.
 - `npm run build:drawings`: Rebuilds `drawings/manifest.json` manually after touching presets.
 - `npm test` / `make test`: Executes the Vitest suite in `client/js/__tests__`.
+- `npm run test:py`: Runs only the Python unittest suite. `npm test -- --runInBand` now works because the script shells are forced to `/bin/bash`, but use `npm run test:py` directly if you need just the Python half.
+- `npm run lint`: Runs `node --check` on key modules and ESLint (configured via `eslint.config.js`). Use `node --check path/to/file.js` after editing shared modules to catch syntax errors before reloading the UI.
 - Tests must run offline. Mock `colorUtils.mediumMetadata` (via `vi.hoisted`) in any spec that exercises paper/medium logic so Vitest never attempts to `fetch` JSON at test time. Use jsdom when working with DOM helpers such as `previewEffects`.
 
 ## Coding Style & Naming Conventions
@@ -41,6 +43,7 @@ JavaScript files are ES modules with 4-space indentation, `camelCase` functions 
 - The stroke-width block was removed from the UI because stroke width purely follows the selected medium. Don’t reintroduce a dedicated panel; reflect the width through logging/state only.
 - Drawing selections and per-drawing control values persist in `localStorage` (see `drawingControlValues`). When adding new controls, ensure they serialize cleanly, have a reset affordance, and don’t break older stored data.
 - Axidraw `--progress` output is streamed over SSE and rendered through `logProgress` as a single color-coded entry with an inline progress bar inside the Messages panel. When modifying progress plumbing, reuse the existing `CLI_PROGRESS`/`CLI_PROGRESS_BAR` messages so the log doesn’t grow with every tick.
+- All npm scripts run under `/bin/bash` (see repo `.npmrc`), so any future shell snippets should assume bash semantics. Git commands can now run from scripts safely.
 
 ### Adding a New Drawing
 1. Create `drawings/<core|community>/<name>.js` exporting a `defineDrawing` plus optional `attachControls` setup. Use existing modules (e.g., `drawings/core/calibration.js`) as templates.
