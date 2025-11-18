@@ -16,8 +16,9 @@
    - [x] Centralize paper configuration management  
    - [ ] Add paper size validation  
    - [x] Improve margin handling consistency  
-   - [ ] Add paper size preview/overlay  
-   - [x] Standardize paper size changes across drawing types  
+- [ ] Add paper size preview/overlay  
+- [x] Standardize paper size changes across drawing types  
+ - [ ] Surface estimated per-layer travel so the new cap slider is less guesswork  
 
 2. Lower the barrier for new drawings  
    - [x] Autoload drawing modules (manifest-driven)  

@@ -80,3 +80,9 @@ Follow the Conventional Commit-style prefixes already in history (`feat:`, `fix:
 - Resuming shells `axicli output/plot_resume.log --mode res_plot --progress` and must still be wrapped with the sleep inhibitors (`caffeinate` on macOS, `systemd-inhibit` on Linux) so the host never suspends mid-plot.
 - Resume bookkeeping lives inside `PlotterHandler` (`prepare_resume_file`, `mark_resume_available`, `clear_resume_state`). Any change there needs matching updates to the unit tests in `tests/test_resume_tracking.py`.
 - The server runs a full home sequence (raise pen, walk_home, clear resume state) automatically before every `plot` command so a paused carriage never starts a fresh layer from the middle of the bed. The manual **Home** button uses the same helper.
+
+## Layer Travel Limits
+- The Plotter Control tab has a dedicated Medium panel that surfaces a “Max Travel Per Layer” slider. It runs from 1 m to 100 m in 1 m increments, and the final stop (value `101`) represents ∞/no splitting. Keep the inline copy short (“Cap pen travel per layer.”) and show the current value in meters unless ∞ is selected.
+- Travel caps derive from the current paper/medium combo via `resolvePlotterDefaults`, but user overrides should stick for the session/export payload. When writing tests or configs, treat the slider value as meters unless ∞ is explicitly chosen.
+- Split work happens **after** the layer-order optimizer so all passes of a given color remain consecutive. Individual paths/segments must obey the cap as well; chunk them before appending to new layer buckets.
+- Disabling the cap (selecting ∞) should be obvious in logs/UI so users understand no automatic reloading safeguard is in place.
