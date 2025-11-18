@@ -1,24 +1,15 @@
 # TODOs
 
-## Known Issues
-
-- [ ] Add visual regression to ensure preview/export parity stays intact.
-- [ ] `/plot-progress` SSE responses run inside the single-threaded `HTTPServer`, so the long-lived heartbeat loop blocks every other request. Switch to `ThreadingHTTPServer` or push SSE streaming into its own worker thread.
-- [x] Plot thread streams both stdout and stderr with blocking `readline()` calls that deadlock when stderr is quiet. Use non-blocking reads (e.g., `select`, `asyncio`, or reader threads). ✓
-- [ ] Static asset serving and SVG export trust user-supplied paths/names; `../` segments allow access outside `output/`. Normalize and validate paths.
-- [ ] Auto-refresh in `plotter.html` spawns overlapping `draw()` calls. Gate refreshes with an "in-flight" flag so only one render runs at a time.
-- [ ] `/resume-status` is polled manually after commands. Push resume availability over SSE (or another async channel) so the UI reflects pause/resume state even when the plotter tab isn’t active.
-- [x] Persist per-medium disabled color selections so the new multi-select survives reloads (localStorage or config override). ✓
-
 ## High Priority
 
 1. Finalize paper/medium handling  
    - [x] Centralize paper configuration management  
    - [ ] Add paper size validation  
    - [x] Improve margin handling consistency  
-- [ ] Add paper size preview/overlay  
-- [x] Standardize paper size changes across drawing types  
- - [ ] Surface estimated per-layer travel so the new cap slider is less guesswork  
+   - [ ] Add paper size preview/overlay  
+   - [x] Standardize paper size changes across drawing types  
+   - [ ] Order-safe fill clipping for overlapping polygons: before layer optimization/splitting, compute the visible portion of each polygon (subtract union of those above in the original render order) so color reordering never puts paint on top of paint. Needs robust polygon boolean ops and a fast path for non-overlapping cases.
+   - [ ] Minimize pen-up travel within each layer: build a centroid/endpoint graph per color layer, visit shapes in nearest-neighbor order (with optional segment reversals) and run a quick 2-opt pass so the pen makes the shortest tour possible before lifting, reducing wasted pen-up moves between polygons.
 
 2. Lower the barrier for new drawings  
    - [x] Autoload drawing modules (manifest-driven)  
@@ -26,7 +17,8 @@
    - [x] Surface per-drawing settings in UI (spacing, vertex gap, etc.)  
    - [x] Document registry/helpers in README/CONTRIBUTING  
 
-3. Enhance hatching algorithms for Simple Perfect Rectangle  
+3. Enhance hatching algorithms  
+   - [ ] Acute-angle cleanup pass for serpentine (emit corner “spoke” stitches”): detect polygons/triangles with interior angles below ~30° and, after the serpentine pass, inject a supplemental line aligned to the angle bisector so ink reaches the apex. Should reuse existing path builders so color assignments stay consistent.
    - [x] Add parallel line hatching  
    - [ ] Add cross-hatching  
    - [ ] Add contour hatching  
