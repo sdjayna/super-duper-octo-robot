@@ -23,6 +23,7 @@ If you have an AxiDraw (or any plotter that can digest SVG layers) and love algo
 - **Calibration drawing** – ship a dedicated “Calibration Patterns” preset that lays out parallel lines, rings, multi-wave bundles, arc sweeps, Bezier ribbons, radial fans, touching polygons, and serpentine-filled shapes across adjustable spacing bands (including an SE/A3 micro-spacing stress row) so you can map slider values to real AxiDraw mechanics before committing a hero plot.
 - **Per-drawing UI controls** – every drawing can declare sliders/selects (stroke spacing, Hilbert recursion level, etc.) via metadata, and the UI renders them automatically with persisted values.
 - **Shared hatching library** – fill routines (serpentine, scanline, or none) can now be selected per drawing, and the helpers accept arbitrary polygons so future drawings inherit the same ink-friendly toolpaths.
+- **Resume-safe plotting** – each layer plot writes `output/plot_resume.log` and the Plotter panel exposes a Resume button whenever that log points to an interrupted job, so a Stop/Ctrl‑C doesn’t force you to rebuild the SVG. Starting a new layer automatically overwrites the log so “resume” always maps to the most recent plot.
 - **Photo Triangles** – upload any reference image and the new mosaic drawing samples it, runs a point-weighted Delaunay triangulation, then hatches each triangle (serpentine/scanline/none via the global controls) with the nearest palette color so multi-pen plots can echo real photos.
 - **Log-scale sliders** – controls like Hilbert’s segment size use logarithmic scaling under the hood to give fine-grained precision near zero while still allowing very large values.
 - **Optimised Hilbert generator** – the curve now uses an iterative, bitwise implementation that handles high recursion levels gracefully.
@@ -280,6 +281,8 @@ Add your own stock by copying one of the entries, tweaking the dimensions, and f
 - Supported commands include `plot`, `stop_plot`, `raise_pen`, `toggle`, `align`, `cycle`, `home`, and `disable_motors` (see `docs/server_commands.md` for payloads).
 - `/plot-progress` streams Server-Sent Events with heartbeats plus `PLOT_COMPLETE` / `PLOT_ERROR` markers so the UI can recover automatically.
 - `config/plotters.json` defines model numbers, servo behavior, and specs for each supported device; the server loads it via `plotter_config.py`, so switching models is as simple as changing the `"default"` entry.
+- **Resume flow** – every plot now passes `--output_file output/plot_resume.log`. If you stop a job (UI Stop button or Ctrl‑C) the log sticks around, `/resume-status` reports that a resume is available, and the Plotter panel enables a **Resume Plot** button. Clicking it shells `axicli output/plot_resume.log --mode res_plot --progress` (still wrapped with `caffeinate`/`systemd-inhibit`) so you can continue without re-rendering the drawing. Launching a new plot overwrites the log so the button always targets the most recent attempt.
+- **Auto-home safeguard** – clicking **Plot Layer** automatically raises the pen and walks home before spawning `axicli --mode layers`, so a previously paused plot can’t restart from a mid-sheet position and stress the hardware. The manual **Home** button runs the same sequence and clears any resume file.
 
 ## Development & Testing
 

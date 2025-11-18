@@ -22,6 +22,7 @@ function handlePlotReady(result) {
     stopProgressListener();
     updatePlotterStatus('Ready', true);
     setPreviewControlsDisabled(false);
+    refreshResumeStatus({ silent: true });
     if (result === 'error') {
         logDebug('Plot reported an error', 'error');
     }
@@ -69,6 +70,7 @@ const hatchInsetControl = document.getElementById('hatchInsetControl');
 const hatchInsetValueLabel = document.getElementById('hatchInsetValue');
 const hatchBoundaryControl = document.getElementById('hatchBoundaryControl');
 const hatchLinkControl = document.getElementById('hatchLinkControl');
+const resumeButton = document.getElementById('plotterResumePlot');
 
 const state = {
     paperConfig: null,
@@ -92,6 +94,46 @@ const state = {
 };
 
 state.warnIfPaperExceedsPlotter = () => warnIfPaperExceedsPlotter(state, state.currentPaper);
+let resumeStatus = { available: false, layer: null, layerLabel: null };
+let plotterIsRunning = false;
+
+function updateResumeButtonState() {
+    if (!resumeButton) {
+        return;
+    }
+    const label = resumeStatus.layerLabel || (resumeStatus.layer ? `Layer ${resumeStatus.layer}` : null);
+    resumeButton.textContent = label ? `Resume ${label}` : 'Resume Plot';
+    const shouldDisable = plotterIsRunning || !resumeStatus.available;
+    resumeButton.disabled = shouldDisable;
+}
+
+function applyResumeStatus(status = {}) {
+    resumeStatus = {
+        available: Boolean(status.available),
+        layer: status.layer ?? null,
+        layerLabel: status.layerLabel ?? null
+    };
+    updateResumeButtonState();
+}
+
+async function refreshResumeStatus(options = {}) {
+    if (typeof fetch === 'undefined') {
+        return;
+    }
+    try {
+        const response = await fetch('http://localhost:8000/resume-status');
+        if (!response.ok) {
+            throw new Error(`Resume status request failed (${response.status})`);
+        }
+        const status = await response.json();
+        applyResumeStatus(status);
+    } catch (error) {
+        if (!options.silent) {
+            logDebug(`Failed to refresh resume status: ${error.message}`, 'error');
+        }
+        applyResumeStatus({ available: false });
+    }
+}
 
 const previewController = createPreviewController({
     container,
@@ -1113,6 +1155,7 @@ function updatePlotterStatus(status, isConnected = false) {
     const plotLayerButton = document.getElementById('plotterPlotLayer');
     const layerSelect = document.getElementById('layerSelect');
     const previewControls = document.querySelectorAll('.preview-section button, .preview-section select');
+    plotterIsRunning = status === 'Plotting';
     
     if (status === 'Plotting') {
         // During plotting, disable all controls except Stop Plot button
@@ -1146,6 +1189,7 @@ function updatePlotterStatus(status, isConnected = false) {
             control.disabled = false;
         });
     }
+    updateResumeButtonState();
 }
 
 initPlotterControls({
@@ -1155,8 +1199,11 @@ initPlotterControls({
     beginProgressListener,
     handlePlotReady,
     updatePlotterStatus,
-    setPreviewControlsDisabled
+    setPreviewControlsDisabled,
+    refreshResumeStatus
 });
+
+refreshResumeStatus({ silent: true });
 
 // Mute button handler
 document.getElementById('toggleMute').addEventListener('click', () => {

@@ -11,6 +11,7 @@ import subprocess
 import shlex
 import threading
 import time
+import signal
 try:
     from plotter_config import PLOTTER_CONFIGS, CURRENT_PLOTTER
 except ImportError:
@@ -132,6 +133,133 @@ class PlotterHandler(SimpleHTTPRequestHandler):
         'mtime': None,
         'data': None
     }
+    RESUME_LOG_PATH = os.path.join('output', 'plot_resume.log')
+    resume_state_lock = threading.Lock()
+    resume_state = {
+        'path': None,
+        'layer': None,
+        'layer_label': None,
+        'available': False
+    }
+    _RESUME_SENTINEL = object()
+    plot_interrupted = False
+
+    @classmethod
+    def _resolve_resume_path(cls, requested_path=None):
+        return requested_path or cls.RESUME_LOG_PATH
+
+    @classmethod
+    def _prepare_resume_file(cls, resume_path):
+        if not resume_path:
+            return None
+        directory = os.path.dirname(resume_path)
+        if directory and not os.path.exists(directory):
+            os.makedirs(directory, exist_ok=True)
+        if os.path.exists(resume_path):
+            os.remove(resume_path)
+        return resume_path
+
+    @classmethod
+    def update_resume_state(cls, *, path=_RESUME_SENTINEL, layer=_RESUME_SENTINEL,
+                            layer_label=_RESUME_SENTINEL, available=_RESUME_SENTINEL):
+        with cls.resume_state_lock:
+            if path is not cls._RESUME_SENTINEL:
+                cls.resume_state['path'] = path
+            if layer is not cls._RESUME_SENTINEL:
+                cls.resume_state['layer'] = layer
+            if layer_label is not cls._RESUME_SENTINEL:
+                cls.resume_state['layer_label'] = layer_label
+            if available is not cls._RESUME_SENTINEL:
+                cls.resume_state['available'] = bool(available)
+
+    @classmethod
+    def register_resume_tracking(cls, resume_path, layer=None, layer_label=None):
+        cls.update_resume_state(
+            path=resume_path,
+            layer=layer,
+            layer_label=layer_label,
+            available=False
+        )
+
+    @classmethod
+    def mark_resume_available(cls, resume_path=None, layer=None, layer_label=None):
+        path = resume_path or cls.resume_state.get('path')
+        exists = bool(path) and os.path.exists(path)
+        updates = {
+            'available': exists
+        }
+        if path is not None:
+            updates['path'] = path
+        if layer is not None:
+            updates['layer'] = layer
+        if layer_label is not None:
+            updates['layer_label'] = layer_label
+        cls.update_resume_state(**updates)
+
+    @classmethod
+    def clear_resume_state(cls, remove_file=True):
+        with cls.resume_state_lock:
+            path = cls.resume_state.get('path')
+        if remove_file and path and os.path.exists(path):
+            try:
+                os.remove(path)
+            except OSError as e:
+                print(f"Warning: failed to remove resume log {path}: {e}")
+        cls.update_resume_state(path=None, layer=None, layer_label=None, available=False)
+
+    @classmethod
+    def get_resume_status(cls, include_path=False):
+        with cls.resume_state_lock:
+            state = dict(cls.resume_state)
+        path = state.get('path')
+        exists = bool(path) and os.path.exists(path)
+        available = bool(state.get('available')) and exists
+        payload = {
+            'available': available,
+            'layer': state.get('layer'),
+            'layerLabel': state.get('layer_label')
+        }
+        if include_path:
+            payload['path'] = path if exists else None
+        return payload
+
+    @classmethod
+    def prepare_resume_file(cls, requested_path=None):
+        resume_path = cls._resolve_resume_path(requested_path)
+        return cls._prepare_resume_file(resume_path)
+
+    @classmethod
+    def execute_home_sequence(cls, pen_pos_up):
+        if pen_pos_up is None:
+            raise ValueError("pen_pos_up is required to home the plotter")
+        pen_up_value = str(pen_pos_up)
+        raise_pen_cmd = [
+            cls.AXIDRAW_PATH,
+            '--mode', 'manual',
+            '--manual_cmd', 'raise_pen',
+            '--model', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['model']),
+            '--pen_pos_up', pen_up_value,
+            '--penlift', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['penlift'])
+        ]
+        walk_home_cmd = [
+            cls.AXIDRAW_PATH,
+            '--mode', 'manual',
+            '--manual_cmd', 'walk_home',
+            '--model', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['model']),
+            '--pen_pos_up', pen_up_value,
+            '--penlift', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['penlift'])
+        ]
+        subprocess.run(raise_pen_cmd, capture_output=True, text=True, check=True)
+        subprocess.run(walk_home_cmd, capture_output=True, text=True, check=True)
+        cls.clear_resume_state()
+
+    @classmethod
+    def bootstrap_resume_state(cls):
+        resume_path = cls._resolve_resume_path()
+        if resume_path and os.path.exists(resume_path):
+            cls.update_resume_state(path=resume_path, available=True)
+        else:
+            cls.update_resume_state(path=None, layer=None, layer_label=None, available=False)
 
     def do_GET(self):
         # Redirect root to plotter.html
@@ -174,6 +302,16 @@ class PlotterHandler(SimpleHTTPRequestHandler):
                 # Remove connection when client disconnects
                 PlotterHandler.sse_connections.remove(self)
             return
+        if self.path == '/resume-status':
+            status = self.get_resume_status()
+            body = json.dumps(status).encode('utf-8')
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json')
+            self.send_header('Cache-Control', 'no-cache')
+            self.send_header('Content-Length', str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
             
         # Handle CSS file requests
         if self.path.startswith('/css/'):
@@ -215,6 +353,40 @@ class PlotterHandler(SimpleHTTPRequestHandler):
         # Handle all other GET requests as normal
         return SimpleHTTPRequestHandler.do_GET(self)
 
+    def _run_axidraw_process(self, cmd):
+        process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            bufsize=1,
+            universal_newlines=True
+        )
+        PlotterHandler.current_plot_process = process
+        try:
+            while True:
+                output = process.stdout.readline()
+                if output:
+                    output = output.strip()
+                    print(f"Plot output: {output}")
+                    self.send_progress_update(output)
+
+                error = process.stderr.readline()
+                if error:
+                    error = error.strip()
+                    if "estimated print time" in error.lower():
+                        print(f"Plot info: {error}")
+                        self.send_progress_update(error)
+                    else:
+                        print(f"Plot error: {error}")
+                        self.send_progress_update(f"Error: {error}")
+
+                if process.poll() is not None:
+                    break
+            return process.returncode
+        finally:
+            PlotterHandler.current_plot_process = None
+
     @classmethod
     def load_drawings_manifest(cls):
         manifest_path = os.path.join(os.getcwd(), 'drawings', 'manifest.json')
@@ -247,17 +419,33 @@ class PlotterHandler(SimpleHTTPRequestHandler):
         # Dictionary mapping commands to their CLI parameters
         def plot_command(params):
             PlotterHandler.keep_sse_alive = True  # Reset SSE state for new plot
+            PlotterHandler.plot_interrupted = False
             if 'layer' not in params:
                 print("Error: No layer specified in plot command")
                 raise ValueError("No layer specified in plot command")
-        
+            try:
+                PlotterHandler.execute_home_sequence(params.get('pen_pos_up'))
+            except Exception as home_error:
+                print(f"Error homing before plot: {home_error}")
+                return {
+                    'status': 'error',
+                    'message': f'Failed to home plotter before plotting: {home_error}'
+                }
+
             # Create temp file for SVG if present
             temp_svg_path = None
+            resume_path = None
             try:
                 if 'svg' in params:
                     temp_svg_path = f'temp_{datetime.now().strftime("%Y%m%d_%H%M%S")}.svg'
                     with open(temp_svg_path, 'w', encoding='utf-8') as f:
                         f.write(params['svg'])
+                    resume_path = PlotterHandler.prepare_resume_file(params.get('resume_path'))
+                    PlotterHandler.register_resume_tracking(
+                        resume_path,
+                        layer=params.get('layer'),
+                        layer_label=params.get('layerLabel')
+                    )
             except IOError as e:
                 print(f"Error writing temporary SVG file: {e}")
                 return {
@@ -281,64 +469,30 @@ class PlotterHandler(SimpleHTTPRequestHandler):
                         '--penlift', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['penlift']),
                         '--progress'
                     ])
-
+                    if resume_path:
+                        cmd.extend(['--output_file', resume_path])
                     cmd = wrap_command_with_sleep_blocker(cmd)
 
                     print(f"Executing command for layer number: {params.get('layer', '1')}")
                     print(f"Executing command for layer label: {params.get('layerLabel', 'unknown')}")
                     print(f"Executing: {' '.join(cmd)}")
-                    
-                    # Use Popen instead of run to get real-time output
-                    process = subprocess.Popen(
-                        cmd,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE,
-                        text=True,
-                        bufsize=1,
-                        universal_newlines=True
-                    )
-
-                    # Store the process
-                    PlotterHandler.current_plot_process = process
-
-                    # Stream output in real-time
-                    while True:
-                        output = process.stdout.readline()
-                        if output:
-                            output = output.strip()
-                            print(f"Plot output: {output}")  # Debug log
-                            # Send progress update via SSE
-                            self.send_progress_update(output)
-                        
-                        # Also check stderr for any errors
-                        error = process.stderr.readline()
-                        if error:
-                            error = error.strip()
-                            if "estimated print time" in error.lower():
-                                print(f"Plot info: {error}")  # Debug log
-                                self.send_progress_update(error)
-                            else:
-                                print(f"Plot error: {error}")  # Debug log
-                                self.send_progress_update(f"Error: {error}")
-
-                        # Check if process has finished
-                        if process.poll() is not None:
-                            break
-            
-                    # Get final return code
-                    if process.returncode != 0:
-                        raise subprocess.CalledProcessError(process.returncode, cmd)
-                    else:
-                        # Send completion message via SSE
-                        self.send_progress_update("Plot completed successfully")
-                        self.send_progress_update("PLOT_COMPLETE")  # Special message for client
+                    returncode = self._run_axidraw_process(cmd)
+                    if PlotterHandler.plot_interrupted:
+                        interrupt_code = returncode if returncode not in (None, 0) else 1
+                        PlotterHandler.plot_interrupted = False
+                        raise subprocess.CalledProcessError(interrupt_code, cmd)
+                    if returncode != 0:
+                        raise subprocess.CalledProcessError(returncode, cmd)
+                    PlotterHandler.clear_resume_state()
+                    self.send_progress_update("Plot completed successfully")
+                    self.send_progress_update("PLOT_COMPLETE")  # Special message for client
                 except Exception as e:
+                    PlotterHandler.mark_resume_available(resume_path, params.get('layer'), params.get('layerLabel'))
+                    PlotterHandler.plot_interrupted = False
                     print(f"Error in plot thread: {e}")
                     self.send_progress_update(f"Error: {str(e)}")
                     self.send_progress_update("PLOT_ERROR")  # New special message for client
                 finally:
-                    # Clear the process reference
-                    PlotterHandler.current_plot_process = None
                     # Clean up temp file if it was created
                     if temp_svg_path:
                         try:
@@ -356,9 +510,57 @@ class PlotterHandler(SimpleHTTPRequestHandler):
                 'status': 'success',
                 'message': 'Plot command started'
             }
+        def resume_plot_command(_):
+            PlotterHandler.keep_sse_alive = True
+            PlotterHandler.plot_interrupted = False
+            status = self.get_resume_status(include_path=True)
+            resume_path = status.get('path')
+            if not resume_path or not os.path.exists(resume_path):
+                return {
+                    'status': 'error',
+                    'message': 'No resume file available'
+                }
+            PlotterHandler.update_resume_state(available=False)
+
+            def run_resume():
+                try:
+                    cmd = [
+                        self.AXIDRAW_PATH,
+                        resume_path,
+                        '--mode', 'res_plot',
+                        '--model', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['model']),
+                        '--penlift', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['penlift']),
+                        '--progress'
+                    ]
+                    cmd.extend(['--output_file', resume_path])
+                    cmd = wrap_command_with_sleep_blocker(cmd)
+
+                    print("Resuming plot from resume log")
+                    print(f"Executing: {' '.join(cmd)}")
+
+                    returncode = self._run_axidraw_process(cmd)
+                    if returncode != 0:
+                        raise subprocess.CalledProcessError(returncode, cmd)
+                    PlotterHandler.clear_resume_state()
+                    self.send_progress_update("Plot resumed successfully")
+                    self.send_progress_update("PLOT_COMPLETE")
+                except Exception as e:
+                    PlotterHandler.mark_resume_available(resume_path, status.get('layer'), status.get('layerLabel'))
+                    print(f"Error resuming plot: {e}")
+                    self.send_progress_update(f"Error: {str(e)}")
+                    self.send_progress_update("PLOT_ERROR")
+
+            resume_thread = threading.Thread(target=run_resume)
+            resume_thread.daemon = True
+            resume_thread.start()
+            return {
+                'status': 'success',
+                'message': 'Resume command started'
+            }
 
         commands = {
             'plot': plot_command,
+            'resume_plot': resume_plot_command,
             'toggle': lambda params: [
                 self.AXIDRAW_PATH,
                 '--mode', 'toggle',
@@ -413,8 +615,14 @@ class PlotterHandler(SimpleHTTPRequestHandler):
                 PlotterHandler.keep_sse_alive = False  # Stop SSE connections
                 if PlotterHandler.current_plot_process:
                     print(f"Found current plot process (PID: {PlotterHandler.current_plot_process.pid})")
-                    # Terminate the current process
-                    PlotterHandler.current_plot_process.terminate()
+                    PlotterHandler.plot_interrupted = True
+                    # Politely interrupt the process so axicli can flush resume log
+                    try:
+                        PlotterHandler.current_plot_process.send_signal(signal.SIGINT)
+                        print("Sent SIGINT to plotting process")
+                    except Exception as sig_error:
+                        print(f"Failed to send SIGINT ({sig_error}), terminating instead")
+                        PlotterHandler.current_plot_process.terminate()
                     try:
                         print("Waiting for process to terminate...")
                         PlotterHandler.current_plot_process.wait(timeout=5)
@@ -424,6 +632,7 @@ class PlotterHandler(SimpleHTTPRequestHandler):
                         PlotterHandler.current_plot_process.kill()
                         print("Process killed")
                     PlotterHandler.current_plot_process = None
+                    PlotterHandler.mark_resume_available()
                     return {'status': 'success', 'message': 'Plot stopped'}
                 else:
                     print("No current plot process found, searching for stray processes...")
@@ -446,34 +655,15 @@ class PlotterHandler(SimpleHTTPRequestHandler):
                     else:
                         print("psutil not available; cannot inspect stray processes")
                     if found_stray:
+                        PlotterHandler.mark_resume_available()
+                    if found_stray:
                         return {'status': 'success', 'message': 'Stray plot process stopped'}
                     print("No axicli processes found")
                     return {'status': 'success', 'message': 'No active plot to stop'}
-            elif command == 'plot':
+            elif command in ('plot', 'resume_plot'):
                 return commands[command](params)
             elif command == 'home':
-                # Execute raise_pen command first with same pen_pos_up
-                raise_pen_cmd = [
-                    self.AXIDRAW_PATH,
-                    '--mode', 'manual',
-                    '--manual_cmd', 'raise_pen',
-                    '--model', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['model']),
-                    '--pen_pos_up', str(params['pen_pos_up']),
-                    '--penlift', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['penlift'])
-                ]
-                result = subprocess.run(raise_pen_cmd, capture_output=True, text=True, check=True)
-                
-                # Then execute walk_home command
-                walk_home_cmd = [
-                    self.AXIDRAW_PATH,
-                    '--mode', 'manual',
-                    '--manual_cmd', 'walk_home',
-                    '--model', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['model']),
-                    '--pen_pos_up', str(params['pen_pos_up']),
-                    '--penlift', str(PLOTTER_CONFIGS[CURRENT_PLOTTER]['penlift'])
-                ]
-                result = subprocess.run(walk_home_cmd, capture_output=True, text=True, check=True)
-                
+                PlotterHandler.execute_home_sequence(params.get('pen_pos_up'))
                 return {
                     'status': 'success',
                     'message': 'Home sequence completed successfully'
@@ -634,6 +824,7 @@ def cleanup_temp_files():
 def create_server():
     try:
         cleanup_temp_files()  # Add cleanup call
+        PlotterHandler.bootstrap_resume_state()
         server_address = ('', 8000)
         httpd = HTTPServer(server_address, PlotterHandler)
         print('🚀 Server running on http://localhost:8000')

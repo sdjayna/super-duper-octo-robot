@@ -5,9 +5,11 @@ export function initPlotterControls({
     beginProgressListener,
     handlePlotReady,
     updatePlotterStatus,
-    setPreviewControlsDisabled
+    setPreviewControlsDisabled,
+    refreshResumeStatus
 }) {
     let lastPlottedLayer = null;
+    const resumeButton = document.getElementById('plotterResumePlot');
 
     document.getElementById('plotterPlotLayer').addEventListener('click', async () => {
         const svg = container.querySelector('svg');
@@ -51,12 +53,18 @@ export function initPlotterControls({
             if (!success) {
                 throw new Error('Plot command failed to start');
             }
+            if (typeof refreshResumeStatus === 'function') {
+                await refreshResumeStatus({ silent: true });
+            }
             logDebug(`Layer ${layerLabel} plot command sent successfully`);
         } catch (error) {
             logDebug(`Plot failed: ${error.message}`, 'error');
             handlePlotReady('error');
             updatePlotterStatus('Ready', true);
             setPreviewControlsDisabled(false);
+            if (typeof refreshResumeStatus === 'function') {
+                await refreshResumeStatus();
+            }
         }
     });
 
@@ -103,6 +111,9 @@ export function initPlotterControls({
             }
             updatePlotterStatus('Ready', true);
             setPreviewControlsDisabled(false);
+            if (typeof refreshResumeStatus === 'function') {
+                await refreshResumeStatus();
+            }
         }
     });
 
@@ -113,6 +124,9 @@ export function initPlotterControls({
         if (await sendPlotterCommand('home', { pen_pos_up: penPosUp, pen_pos_down: penPosDown })) {
             logDebug('Home command completed');
             updatePlotterStatus('Ready', true);
+            if (typeof refreshResumeStatus === 'function') {
+                await refreshResumeStatus();
+            }
         }
     });
 
@@ -123,4 +137,31 @@ export function initPlotterControls({
             updatePlotterStatus('Ready', true);
         }
     });
+
+    if (resumeButton) {
+        resumeButton.addEventListener('click', async () => {
+            logDebug('Attempting to resume last plot...');
+            beginProgressListener();
+            updatePlotterStatus('Plotting', true);
+            setPreviewControlsDisabled(true);
+            try {
+                const success = await sendPlotterCommand('resume_plot');
+                if (!success) {
+                    throw new Error('Resume command failed to start');
+                }
+                if (typeof refreshResumeStatus === 'function') {
+                    await refreshResumeStatus({ silent: true });
+                }
+                logDebug('Resume plot command sent successfully');
+            } catch (error) {
+                logDebug(`Resume failed: ${error.message}`, 'error');
+                handlePlotReady('error');
+                updatePlotterStatus('Ready', true);
+                setPreviewControlsDisabled(false);
+                if (typeof refreshResumeStatus === 'function') {
+                    await refreshResumeStatus();
+                }
+            }
+        });
+    }
 }

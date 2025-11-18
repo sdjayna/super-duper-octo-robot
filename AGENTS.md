@@ -57,6 +57,7 @@ Follow the Conventional Commit-style prefixes already in history (`feat:`, `fix:
 - Assume every plot should maximize color usage. Prefer multi-layer treatments, dense fills, and rich palettes over minimalist strokes so the final SVG leaves little or no paper showing through.
 - When tuning defaults or adding controls/presets, bias toward higher coverage (e.g., tighter spacing, more offsets, broader hatch fills) unless the user explicitly asks for negative space.
 - When disabling colors temporarily (via the Medium multi-select), keep in mind the overall goal is still full-paper coverage—ensure the remaining palette can span many layers so the artwork feels saturated.
+- Break scenes into polygon families (triangles, rectangles, circles, convex/non-convex blobs) so every region can carry its own hatch pattern and colour; adjacent shapes should rarely share the same colour so the palette feels fully exploited.
 
 ### Hatching Guidance
 - Separate geometry into convex/non-convex polygons wherever possible so fill routines can treat each region independently; every patch should be covered.
@@ -66,3 +67,10 @@ Follow the Conventional Commit-style prefixes already in history (`feat:`, `fix:
 - Hatching utilities live under `drawings/shared/utils/hatchingUtils.js` (scanline fill, rectangle helpers). Prefer adding new algorithms there so all drawings can reuse them; expose user-facing choices through controls (`line.hatchStyle`, `line.hatchInset`) so plots stay configurable. Ensure hatch paths rub up against, but do not overlap, a final boundary outline, so the last pass "cleans" the edge without re-tracing wet ink.
 - Any hatch strategy should minimize pen travel distance between segments (clamp to nearest edge, avoid long diagonals). When joining runs (serpentine or scanline), link to the closest perimeter point before the final outline pass so the pen never cuts across the entire polygon.
 - Global hatch controls live in their own panel and overwrite `line.hatchStyle`, `line.hatchInset`, `line.hatchSpacing`, and `line.includeBoundary` before each draw. Make sure new drawings respect those fields rather than hard-coding their own values.
+
+## Plot Resume Workflow
+- Every plot invocation must set `--output_file output/plot_resume.log` so there is always exactly one resume log on disk. Starting a new layer overwrites this shared file on purpose.
+- The Python server exposes `/resume-status` to report `{ available, layer, layerLabel }`. The client polls that endpoint on load and after `plot`, `stop_plot`, or `resume_plot` to decide whether the **Resume Plot** button should be enabled. Keep the contract in sync with `client/js/main.js` and `client/js/modules/plotterControls.js`.
+- Resuming shells `axicli output/plot_resume.log --mode res_plot --progress` and must still be wrapped with the sleep inhibitors (`caffeinate` on macOS, `systemd-inhibit` on Linux) so the host never suspends mid-plot.
+- Resume bookkeeping lives inside `PlotterHandler` (`prepare_resume_file`, `mark_resume_available`, `clear_resume_state`). Any change there needs matching updates to the unit tests in `tests/test_resume_tracking.py`.
+- The server runs a full home sequence (raise pen, walk_home, clear resume state) automatically before every `plot` command so a paused carriage never starts a fresh layer from the middle of the bed. The manual **Home** button uses the same helper.

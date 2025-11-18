@@ -7,6 +7,7 @@
 - [ ] Plot thread streams both stdout and stderr with blocking `readline()` calls that deadlock when stderr is quiet. Use non-blocking reads (e.g., `select`, `asyncio`, or reader threads).
 - [ ] Static asset serving and SVG export trust user-supplied paths/names; `../` segments allow access outside `output/`. Normalize and validate paths.
 - [ ] Auto-refresh in `plotter.html` spawns overlapping `draw()` calls. Gate refreshes with an "in-flight" flag so only one render runs at a time.
+- [ ] `/resume-status` is polled manually after commands. Push resume availability over SSE (or another async channel) so the UI reflects pause/resume state even when the plotter tab isn’t active.
 - [x] Persist per-medium disabled color selections so the new multi-select survives reloads (localStorage or config override). ✓
 
 ## High Priority
