@@ -111,7 +111,9 @@ function updateResumeButtonState() {
     }
     const label = resumeStatus.layerLabel || (resumeStatus.layer ? `Layer ${resumeStatus.layer}` : null);
     resumeButton.textContent = label ? `Resume ${label}` : 'Resume Plot';
-    const shouldDisable = plotterIsRunning || !resumeStatus.available;
+    const layerSelect = document.getElementById('layerSelect');
+    const noLayerSelected = layerSelect?.value === 'all';
+    const shouldDisable = plotterIsRunning || !resumeStatus.available || noLayerSelected;
     resumeButton.disabled = shouldDisable;
 }
 
@@ -1132,6 +1134,7 @@ document.getElementById('layerSelect').addEventListener('blur', () => {
 document.getElementById('layerSelect').addEventListener('change', (e) => {
     updateLayerVisibility();
     updatePlotterStatus();  // Add this line to update plotter button states
+    updateResumeButtonState();
     e.target.blur();
 });
 exportButton.addEventListener('click', exportSvg);

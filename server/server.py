@@ -737,6 +737,7 @@ class PlotterHandler(SimpleHTTPRequestHandler):
                 return commands[command](params)
             elif command == 'home':
                 PlotterHandler.execute_home_sequence(params.get('pen_pos_up'))
+                PlotterHandler.clear_resume_state()
                 return {
                     'status': 'success',
                     'message': 'Home sequence completed successfully'

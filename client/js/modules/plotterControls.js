@@ -121,6 +121,10 @@ export function initPlotterControls({
         logDebug('Sending home command...');
         const penPosUp = parseInt(document.getElementById('penPosUp').value);
         const penPosDown = parseInt(document.getElementById('penPosDown').value);
+        if (resumeButton) {
+            resumeButton.disabled = true;
+            resumeButton.textContent = 'Resume Plot';
+        }
         if (await sendPlotterCommand('home', { pen_pos_up: penPosUp, pen_pos_down: penPosDown })) {
             logDebug('Home command completed');
             updatePlotterStatus('Ready');
