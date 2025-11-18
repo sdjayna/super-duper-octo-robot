@@ -10,6 +10,7 @@ const DEFAULT_PROFILE = {
 const DEFAULT_PLOTTER_DEFAULTS = {
     penRateLower: 10
 };
+const DEFAULT_TRAVEL_LIMIT_METERS = 5;
 
 const PAPER_MEDIUM_OVERRIDES = {
     sakura: {
@@ -45,6 +46,24 @@ const PAPER_MEDIUM_PLOTTER_OVERRIDES = {
         vangoghblacka3: { penRateLower: 10 },
         strathmorebristolvellum: { penRateLower: 6 },
         hahnemuhleskizze190: { penRateLower: -15 }
+    }
+};
+
+const PAPER_MEDIUM_TRAVEL_LIMIT_OVERRIDES = {
+    sakura: {
+        ampersandgessobord: 8.5
+    },
+    molotow: {
+        daleraquafinehpa3: 2.8,
+        vangoghblacka3: 2.2,
+        strathmorebristolvellum: 3.5,
+        hahnemuhleskizze190: 2.4
+    },
+    yono: {
+        daleraquafinehpa3: 2.1,
+        vangoghblacka3: 1.9,
+        strathmorebristolvellum: 2.6,
+        hahnemuhleskizze190: 2.2
     }
 };
 
@@ -137,6 +156,35 @@ function derivePenRateModifier(paper = {}) {
     return modifier;
 }
 
+function deriveTravelLimitModifier(paper = {}) {
+    let modifier = 0;
+    const absorbency = (paper.absorbency || '').toLowerCase();
+    if (absorbency.includes('high')) {
+        modifier -= 1.2;
+    } else if (absorbency.includes('medium-high')) {
+        modifier -= 0.8;
+    } else if (absorbency.includes('medium')) {
+        modifier -= 0.4;
+    } else if (absorbency.includes('low')) {
+        modifier += 0.5;
+    }
+
+    const finish = (paper.finish || '').toLowerCase();
+    if (finish.includes('vellum') || finish.includes('grain')) {
+        modifier -= 0.2;
+    } else if (finish.includes('smooth') || finish.includes('hot') || finish.includes('gesso')) {
+        modifier += 0.2;
+    }
+
+    const strength = (paper.surfaceStrength || '').toLowerCase();
+    if (strength.includes('excellent') || strength.includes('very-strong')) {
+        modifier += 0.3;
+    } else if (strength.includes('moderate') || strength.includes('delicate')) {
+        modifier -= 0.5;
+    }
+    return modifier;
+}
+
 export function resolvePlotterDefaults({ paper, mediumId }) {
     const medium = mediumMetadata[mediumId] || {};
     const base = typeof medium.plotterDefaults?.penRateLower === 'number'
@@ -145,5 +193,17 @@ export function resolvePlotterDefaults({ paper, mediumId }) {
     const overrides = PAPER_MEDIUM_PLOTTER_OVERRIDES[mediumId]?.[paper?.id]?.penRateLower ?? 0;
     const modifier = derivePenRateModifier(paper);
     const penRateLower = clamp(Math.round(base + modifier + overrides), 1, 100);
-    return { penRateLower };
+    const travelBase = typeof medium.plotterDefaults?.maxTravelPerLayerMeters === 'number'
+        ? medium.plotterDefaults.maxTravelPerLayerMeters
+        : DEFAULT_TRAVEL_LIMIT_METERS;
+    const travelOverride = PAPER_MEDIUM_TRAVEL_LIMIT_OVERRIDES[mediumId]?.[paper?.id];
+    const travelLimit = clamp(
+        travelOverride ?? (travelBase + deriveTravelLimitModifier(paper)),
+        1,
+        10
+    );
+    return {
+        penRateLower,
+        maxTravelPerLayerMeters: travelLimit
+    };
 }

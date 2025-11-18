@@ -43,6 +43,9 @@ const { DEFAULT_MARGIN } = marginUtils;
 const DEFAULT_PAPER_COLOR = '#ffffff';
 const CONTROL_STORAGE_KEY = 'drawingControlValues';
 const DRAWING_STORAGE_KEY = 'selectedDrawingKey';
+const TRAVEL_LIMIT_MIN_METERS = 1;
+const TRAVEL_LIMIT_MAX_METERS = 100;
+const TRAVEL_LIMIT_INFINITE_SLIDER_VALUE = TRAVEL_LIMIT_MAX_METERS + 1;
 
 const select = document.getElementById('drawingSelect');
 const container = document.getElementById('svgContainer');
@@ -73,6 +76,8 @@ const hatchInsetValueLabel = document.getElementById('hatchInsetValue');
 const hatchBoundaryControl = document.getElementById('hatchBoundaryControl');
 const hatchLinkControl = document.getElementById('hatchLinkControl');
 const resumeButton = document.getElementById('plotterResumePlot');
+const maxTravelSlider = document.getElementById('maxTravelPerLayer');
+const maxTravelValueLabel = document.getElementById('maxTravelPerLayerValue');
 
 const state = {
     paperConfig: null,
@@ -92,7 +97,8 @@ const state = {
     previewProfile: null,
     plotterSpecs: null,
     warnIfPaperExceedsPlotter: null,
-    disabledColorsByMedium: loadDisabledColorPrefs()
+    disabledColorsByMedium: loadDisabledColorPrefs(),
+    maxTravelPerLayerMeters: null
 };
 
 state.warnIfPaperExceedsPlotter = () => warnIfPaperExceedsPlotter(state, state.currentPaper);
@@ -819,6 +825,59 @@ function updatePaperDescription(paper) {
     paperDescription.classList.remove('hidden');
 }
 
+function formatTravelMeters(value) {
+    if (value === null || value === undefined || !Number.isFinite(value)) {
+        return '∞';
+    }
+    return `${Math.round(value)} m`;
+}
+
+function isInfiniteTravelValue(value) {
+    return String(value) === String(TRAVEL_LIMIT_INFINITE_SLIDER_VALUE);
+}
+
+function clampTravelLimitValue(value) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) {
+        return null;
+    }
+    return Math.min(
+        TRAVEL_LIMIT_MAX_METERS,
+        Math.max(TRAVEL_LIMIT_MIN_METERS, Math.round(numeric))
+    );
+}
+
+function applyMaxTravelLimit(value, options = {}) {
+    if (isInfiniteTravelValue(value)) {
+        if (maxTravelSlider) {
+            maxTravelSlider.value = String(TRAVEL_LIMIT_INFINITE_SLIDER_VALUE);
+        }
+        if (maxTravelValueLabel) {
+            maxTravelValueLabel.textContent = '∞';
+        }
+        state.maxTravelPerLayerMeters = null;
+        if (!options.silent) {
+            logDebug('Max travel per layer set to ∞ (no automatic splitting)');
+        }
+        return true;
+    }
+    const clamped = clampTravelLimitValue(value);
+    if (clamped === null) {
+        return false;
+    }
+    if (maxTravelSlider) {
+        maxTravelSlider.value = String(clamped);
+    }
+    if (maxTravelValueLabel) {
+        maxTravelValueLabel.textContent = formatTravelMeters(clamped);
+    }
+    state.maxTravelPerLayerMeters = clamped;
+    if (!options.silent) {
+        logDebug(`Max travel per layer set to ${formatTravelMeters(clamped)}`);
+    }
+    return true;
+}
+
 function updatePreviewProfile() {
     if (!state.currentMediumId) {
         return;
@@ -838,21 +897,23 @@ function updatePlotterDefaults() {
     if (!state.currentPaper || !state.currentMediumId) {
         return;
     }
-    const slider = document.getElementById('penRateLower');
-    const valueLabel = document.getElementById('penRateLowerValue');
-    if (!slider || !valueLabel) {
-        return;
-    }
-    const { penRateLower } = resolvePlotterDefaults({
+    const { penRateLower, maxTravelPerLayerMeters } = resolvePlotterDefaults({
         paper: state.currentPaper,
         mediumId: state.currentMediumId
     }) || {};
-    if (typeof penRateLower !== 'number') {
-        return;
+
+    const slider = document.getElementById('penRateLower');
+    const valueLabel = document.getElementById('penRateLowerValue');
+    if (slider && valueLabel && typeof penRateLower === 'number') {
+        slider.value = penRateLower;
+        valueLabel.textContent = penRateLower;
+        logDebug(`Pen Rate Lower auto-set to ${penRateLower} for ${state.currentPaper.name}`);
     }
-    slider.value = penRateLower;
-    valueLabel.textContent = penRateLower;
-    logDebug(`Pen Rate Lower auto-set to ${penRateLower} for ${state.currentPaper.name}`);
+
+    if (typeof maxTravelPerLayerMeters === 'number') {
+        applyMaxTravelLimit(maxTravelPerLayerMeters, { silent: true });
+        logDebug(`Max travel per layer auto-set to ${formatTravelMeters(state.maxTravelPerLayerMeters)} for ${state.currentPaper.name}`);
+    }
 }
 
 function startRefresh() {
@@ -925,7 +986,8 @@ async function exportSvg() {
                 id: state.currentMediumId,
                 metadata: mediumInfo || null,
                 disabledColors: disabledColors ? Array.from(disabledColors) : []
-            }
+            },
+            maxTravelPerLayerMeters: state.maxTravelPerLayerMeters
         };
 
         const response = await fetch('http://localhost:8000/save-svg', {
@@ -1241,6 +1303,25 @@ document.getElementById('penPosUp').addEventListener('input', (e) => {
         document.getElementById('penPosUpValue').textContent = upValue;
     }
 });
+
+if (maxTravelSlider) {
+    maxTravelSlider.addEventListener('input', (event) => {
+        applyMaxTravelLimit(event.target.value, { silent: true });
+    });
+    maxTravelSlider.addEventListener('change', async (event) => {
+        const updated = applyMaxTravelLimit(event.target.value);
+        if (!updated) {
+            return;
+        }
+        await draw();
+        populateLayerSelect();
+        if (state.maxTravelPerLayerMeters === null) {
+            logDebug('Layer travel limit disabled; layers will no longer auto-split.');
+        } else {
+            logDebug(`Layers will now split once travel exceeds ${formatTravelMeters(state.maxTravelPerLayerMeters)}`);
+        }
+    });
+}
 
 
 // Paper size selection handler

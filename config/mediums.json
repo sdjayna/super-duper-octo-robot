@@ -14,7 +14,8 @@
                 "bleedRadius": 0.05
             },
             "plotterDefaults": {
-                "penRateLower": 12
+                "penRateLower": 12,
+                "maxTravelPerLayerMeters": 7.5
             },
             "colors": {
                 "black": {
@@ -101,7 +102,8 @@
                 "bleedRadius": 0.15
             },
             "plotterDefaults": {
-                "penRateLower": 20
+                "penRateLower": 20,
+                "maxTravelPerLayerMeters": 3.2
             },
             "hatchDefaults": {
                 "spacing": 0.85,
@@ -297,7 +299,8 @@
                 "bleedRadius": 0.18
             },
             "plotterDefaults": {
-                "penRateLower": 50
+                "penRateLower": 50,
+                "maxTravelPerLayerMeters": 2.6
             },
             "colors": {
                 "neonGreen": {

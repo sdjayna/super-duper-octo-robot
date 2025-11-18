@@ -1,4 +1,5 @@
 import { applyPreviewEffects } from '../utils/previewEffects.js';
+import { applyLayerTravelLimit } from '../utils/layerTravelLimiter.js';
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 export function createPreviewController({
@@ -54,9 +55,19 @@ export function createPreviewController({
             svg.setAttribute('preserveAspectRatio', 'none');
             svg.style.backgroundColor = previewColor;
             applyPreviewEffects(svg, state.previewProfile);
+            const layerOrdering = collectLayerOrdering(svg, logDebug);
+            const travelSummary = applyLayerTravelLimit(svg, {
+                maxTravelPerLayerMeters: state.maxTravelPerLayerMeters,
+                orderedLayers: layerOrdering
+            });
+            if (travelSummary?.splitLayers) {
+                const suffix = travelSummary.splitLayers === 1 ? '' : 's';
+                const limitDisplay = Number(travelSummary.limitMeters ?? 0).toFixed(1);
+                logDebug(`Split ${travelSummary.splitLayers} layer${suffix} to stay under ${limitDisplay} m (now ${travelSummary.totalLayers} layers).`);
+            }
             updatePlotterLimitOverlay(svg, state, renderContext);
             container.appendChild(svg);
-            populateLayerSelect(container, logDebug);
+            populateLayerSelect(container, logDebug, { preserveDomOrder: Boolean(travelSummary) });
             document.getElementById('layerSelect').value = currentLayer;
             updateLayerVisibility(container, state.rulersVisible);
             state.warnIfPaperExceedsPlotter?.();
@@ -235,7 +246,7 @@ function populateDrawingSelect(drawings, select) {
     }
 }
 
-function populateLayerSelect(container, logDebug) {
+function populateLayerSelect(container, logDebug, options = {}) {
     const svg = container.querySelector('svg');
     if (!svg) return;
 
@@ -253,7 +264,25 @@ function populateLayerSelect(container, logDebug) {
         }
     });
 
-    const orderedLayers = orderLayersByDistance(layerInfo);
+    let orderedLayers;
+    const preserveDomOrder = Boolean(options.preserveDomOrder);
+    const hasLayerOrderHints = layerInfo.length > 0 && layerInfo.every(entry =>
+        entry.element?.hasAttribute('data-layer-order')
+    );
+    if (preserveDomOrder || hasLayerOrderHints) {
+        orderedLayers = layerInfo
+            .slice()
+            .sort((a, b) => {
+                const orderA = Number(a.element?.getAttribute('data-layer-order'));
+                const orderB = Number(b.element?.getAttribute('data-layer-order'));
+                if (Number.isFinite(orderA) && Number.isFinite(orderB) && orderA !== orderB) {
+                    return orderA - orderB;
+                }
+                return Number(a.index) - Number(b.index);
+            });
+    } else {
+        orderedLayers = orderLayersByDistance(layerInfo);
+    }
 
     const previousValue = layerSelect.value;
     layerSelect.innerHTML = '<option value="all">Show All Layers</option>';
@@ -264,16 +293,44 @@ function populateLayerSelect(container, logDebug) {
         layerSelect.appendChild(option);
     });
 
-    if (logDebug && orderedLayers.optimized && orderedLayers.length > 1) {
-        const orderSummary = orderedLayers.map(layer => layer.label).join(' → ');
-        logDebug(`Optimized layer sequence: ${orderSummary}`);
-    }
-
     if (![...layerSelect.options].some(option => option.value === previousValue)) {
         layerSelect.value = 'all';
     } else {
         layerSelect.value = previousValue;
     }
+}
+
+function collectLayerOrdering(svg, logDebug) {
+    if (!svg) {
+        return [];
+    }
+    const layers = Array.from(svg.querySelectorAll('g[inkscape\\:groupmode="layer"]'));
+    const layerInfo = [];
+    layers.forEach(layer => {
+        if (layer.children.length === 0) {
+            return;
+        }
+        const metadata = computeLayerMetadata(layer);
+        if (metadata) {
+            metadata.element = layer;
+            layerInfo.push(metadata);
+        }
+    });
+    if (!layerInfo.length) {
+        return [];
+    }
+    const orderedLayers = orderLayersByDistance(layerInfo);
+    if (logDebug && orderedLayers.optimized && orderedLayers.length > 1) {
+        const orderSummary = orderedLayers.map(layer => layer.label).join(' → ');
+        logDebug(`Optimized layer sequence: ${orderSummary}`);
+    }
+    orderedLayers.forEach((entry, idx) => {
+        if (entry.element) {
+            entry.element.setAttribute('data-layer-order', String(idx));
+            entry.element.setAttribute('data-layer-base', extractLayerBaseName(entry.element));
+        }
+    });
+    return orderedLayers;
 }
 
 function updateLayerVisibility(container, rulersVisible) {
@@ -356,8 +413,16 @@ function computeLayerMetadata(layer) {
         label,
         centroid,
         points,
-        rects
+        rects,
+        element: layer
     };
+}
+
+function extractLayerBaseName(layer) {
+    const label = layer?.getAttribute?.('inkscape:label') || '';
+    const dashIndex = label.indexOf('-');
+    const suffix = dashIndex >= 0 ? label.slice(dashIndex + 1).trim() : label.trim();
+    return suffix || 'Layer';
 }
 
 function extractSamplePoints(root) {

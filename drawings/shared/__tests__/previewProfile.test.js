@@ -8,7 +8,7 @@ const mockMediums = vi.hoisted(() => ({
             jitter: 0.01,
             bleedRadius: 0.05
         },
-        plotterDefaults: { penRateLower: 12 }
+        plotterDefaults: { penRateLower: 12, maxTravelPerLayerMeters: 7 }
     },
     molotow: {
         preview: {
@@ -17,7 +17,7 @@ const mockMediums = vi.hoisted(() => ({
             jitter: 0.02,
             bleedRadius: 0.12
         },
-        plotterDefaults: { penRateLower: 45 }
+        plotterDefaults: { penRateLower: 45, maxTravelPerLayerMeters: 3.5 }
     },
     speedy: {
         preview: {
@@ -26,7 +26,7 @@ const mockMediums = vi.hoisted(() => ({
             jitter: 0.01,
             bleedRadius: 0.04
         },
-        plotterDefaults: { penRateLower: 120 }
+        plotterDefaults: { penRateLower: 120, maxTravelPerLayerMeters: 15 }
     }
 }));
 
@@ -108,6 +108,7 @@ describe('resolvePlotterDefaults', () => {
         const defaults = resolvePlotterDefaults({ paper: BASE_PAPER, mediumId: 'sakura' });
         // base 12 + low absorbency (+5) + good surface (+2)
         expect(defaults.penRateLower).toBe(19);
+        expect(defaults.maxTravelPerLayerMeters).toBeGreaterThan(7);
     });
 
     it('applies combo overrides for acrylic markers on fragile sheets', () => {
@@ -118,6 +119,18 @@ describe('resolvePlotterDefaults', () => {
         };
         const defaults = resolvePlotterDefaults({ paper, mediumId: 'molotow' });
         expect(defaults.penRateLower).toBe(32); // 45 base +5 low absorb -6 surface -12 override
+        expect(defaults.maxTravelPerLayerMeters).toBeLessThanOrEqual(2.4);
+    });
+
+    it('clamps aggressive travel presets within the supported range', () => {
+        const paper = {
+            id: 'dalersmootha3',
+            absorbency: 'low',
+            finish: 'smooth',
+            surfaceStrength: 'excellent'
+        };
+        const defaults = resolvePlotterDefaults({ paper, mediumId: 'speedy' });
+        expect(defaults.maxTravelPerLayerMeters).toBe(10);
     });
 
     it('clamps aggressive presets inside slider bounds', () => {
