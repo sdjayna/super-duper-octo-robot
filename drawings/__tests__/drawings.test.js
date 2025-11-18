@@ -33,9 +33,6 @@ let drawWaveInterference;
 let drawCirclePacking;
 let drawTruchetTiles;
 let drawSortingArcs;
-let registerDrawing;
-let addDrawingPreset;
-let drawingRegistry;
 
 beforeAll(async () => {
     const originalFetch = global.fetch;
@@ -78,7 +75,7 @@ beforeAll(async () => {
         };
     };
 
-    drawingRegistry = await import('../../client/js/drawingRegistry.js');
+    await import('../../client/js/drawingRegistry.js');
     ({ drawBouwkampCode } = await import('../core/bouwkamp.js'));
     ({ drawHilbertCurve, HilbertConfig } = await import('../community/hilbert.js'));
     ({ drawCalibrationPatterns, CalibrationConfig } = await import('../core/calibration.js'));

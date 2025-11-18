@@ -10,7 +10,7 @@
   "scripts": {
     "test": "vitest && npm run test:py",
     "test:py": "python3 -m unittest discover -s tests",
-    "lint": "node --check client/js/modules/preview.js && npx eslint client/js",
+    "lint": "node --check client/js/modules/preview.js && npx eslint . --ext .js,.mjs",
     "test:watch": "vitest watch",
     "build:drawings": "node scripts/build-drawings-manifest.mjs",
     "watch:drawings": "node scripts/watch-drawings-manifest.mjs"

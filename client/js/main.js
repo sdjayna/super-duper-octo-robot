@@ -5,7 +5,7 @@ import { createPreviewController } from './modules/preview.js';
 import { initPlotterControls } from './modules/plotterControls.js';
 import { initializeHatchControls, applyHatchSettingsToConfig, getHatchSettings } from './modules/hatchSettings.js';
 import { resolvePreviewProfile, evaluatePreviewWarnings, resolvePlotterDefaults } from './utils/paperProfile.js';
-import { normalizePaperColor, getPaperColor, getPaperTextureClass, computePlotterWarning, getOrientedDimensions } from './utils/paperUtils.js';
+import { normalizePaperColor, getPaperColor, getPaperTextureClass, computePlotterWarning } from './utils/paperUtils.js';
 import { filterPaletteByDisabledColors, loadDisabledColorPrefs, saveDisabledColorPrefs } from './utils/paletteUtils.js';
 
 window.logDebug = logDebug;
@@ -20,7 +20,7 @@ function setPreviewControlsDisabled(disabled) {
 
 function handlePlotReady(result) {
     stopProgressListener();
-    updatePlotterStatus('Ready', true);
+    updatePlotterStatus('Ready');
     setPreviewControlsDisabled(false);
     refreshResumeStatus({ silent: true });
     if (result === 'error') {
@@ -418,8 +418,6 @@ function warnIfPaperExceedsPlotter(state, paper) {
     if (!paper || !state.plotterSpecs?.paper) {
         return;
     }
-    const orientation = state.currentOrientation;
-    const margin = Number(state.currentMargin) || 0;
     const warning = computePlotterWarning({
         paper,
         plotterSpecs: state.plotterSpecs,
@@ -1150,7 +1148,7 @@ async function sendPlotterCommand(command, data = {}) {
     }
 }
 
-function updatePlotterStatus(status, isConnected = false) {
+function updatePlotterStatus(status) {
     // Get all control elements
     const plotButtons = document.querySelectorAll('.plotter-button');
     const stopButton = document.getElementById('plotterStopPlot');

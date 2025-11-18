@@ -254,7 +254,6 @@ function drawArcSweeps(builder, cell, spacing, scale) {
 function drawBezierRibbons(builder, cell, spacing, scale) {
     const inner = innerCell(cell);
     const strokeGap = Math.max(spacing * 0.6, 0.2);
-    const ribbonCount = 3;
     const height = inner.height;
     const width = inner.width;
     const offsets = [-strokeGap, 0, strokeGap];
@@ -277,8 +276,9 @@ function drawRadialFan(builder, cell, spacing, scale) {
         x: inner.x + inner.width * 0.2,
         y: inner.y + inner.height / 2
     };
-    const radius = Math.min(inner.width * 0.75, inner.height / 1.1);
-    const safeSpacing = Math.max(spacing, 0.05);
+    const normalizedScale = Number.isFinite(scale) ? Math.max(0.5, Math.min(scale, 3)) : 1;
+    const radius = Math.min(inner.width * 0.75, inner.height / 1.1) * normalizedScale;
+    const safeSpacing = Math.max(spacing / normalizedScale, 0.05);
     const angleIncrement = Math.max(5, safeSpacing * 3);
     for (let angle = -60; angle <= 60; angle += angleIncrement) {
         const rad = (angle * Math.PI) / 180;

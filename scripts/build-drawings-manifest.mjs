@@ -54,9 +54,15 @@ async function buildManifest() {
         .update(drawings.map(d => d.hash).join('|'))
         .digest('hex')
         .slice(0, 12);
+    const sanitizedDrawings = drawings.map((drawing) => {
+        const rest = { ...drawing };
+        delete rest.hash;
+        delete rest.mtime;
+        return rest;
+    });
     return {
         version: versionHash || 'dev',
-        drawings: drawings.map(({ hash, mtime, ...rest }) => rest)
+        drawings: sanitizedDrawings
     };
 }
 

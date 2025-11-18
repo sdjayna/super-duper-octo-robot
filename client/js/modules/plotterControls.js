@@ -34,7 +34,7 @@ export function initPlotterControls({
         try {
             logDebug(`Plotting layer ${layerLabel}...`);
             beginProgressListener();
-            updatePlotterStatus('Plotting', true);
+            updatePlotterStatus('Plotting');
             setPreviewControlsDisabled(true);
 
             const svgData = new XMLSerializer().serializeToString(svg);
@@ -60,7 +60,7 @@ export function initPlotterControls({
         } catch (error) {
             logDebug(`Plot failed: ${error.message}`, 'error');
             handlePlotReady('error');
-            updatePlotterStatus('Ready', true);
+            updatePlotterStatus('Ready');
             setPreviewControlsDisabled(false);
             if (typeof refreshResumeStatus === 'function') {
                 await refreshResumeStatus();
@@ -75,7 +75,7 @@ export function initPlotterControls({
         const penRateLower = parseInt(document.getElementById('penRateLower').value);
         if (await sendPlotterCommand('cycle', { pen_pos_up: penPosUp, pen_pos_down: penPosDown, pen_rate_lower: penRateLower })) {
             logDebug('Cycle command completed');
-            updatePlotterStatus('Ready', true);
+            updatePlotterStatus('Ready');
         }
     });
 
@@ -86,7 +86,7 @@ export function initPlotterControls({
         const penRateLower = parseInt(document.getElementById('penRateLower').value);
         if (await sendPlotterCommand('toggle', { pen_pos_up: penPosUp, pen_pos_down: penPosDown, pen_rate_lower: penRateLower })) {
             logDebug('Toggle command completed');
-            updatePlotterStatus('Ready', true);
+            updatePlotterStatus('Ready');
         }
     });
 
@@ -96,7 +96,7 @@ export function initPlotterControls({
         const penPosDown = parseInt(document.getElementById('penPosDown').value);
         if (await sendPlotterCommand('align', { pen_pos_up: penPosUp, pen_pos_down: penPosDown })) {
             logDebug('Align command completed');
-            updatePlotterStatus('Ready', true);
+            updatePlotterStatus('Ready');
         }
     });
 
@@ -109,7 +109,7 @@ export function initPlotterControls({
             if (await sendPlotterCommand('raise_pen', { pen_pos_up: penPosUp })) {
                 logDebug('Pen raised after stop');
             }
-            updatePlotterStatus('Ready', true);
+            updatePlotterStatus('Ready');
             setPreviewControlsDisabled(false);
             if (typeof refreshResumeStatus === 'function') {
                 await refreshResumeStatus();
@@ -123,7 +123,7 @@ export function initPlotterControls({
         const penPosDown = parseInt(document.getElementById('penPosDown').value);
         if (await sendPlotterCommand('home', { pen_pos_up: penPosUp, pen_pos_down: penPosDown })) {
             logDebug('Home command completed');
-            updatePlotterStatus('Ready', true);
+            updatePlotterStatus('Ready');
             if (typeof refreshResumeStatus === 'function') {
                 await refreshResumeStatus();
             }
@@ -134,7 +134,7 @@ export function initPlotterControls({
         logDebug('Sending disable motors command...');
         if (await sendPlotterCommand('disable_motors')) {
             logDebug('Power off command completed');
-            updatePlotterStatus('Ready', true);
+            updatePlotterStatus('Ready');
         }
     });
 
@@ -142,7 +142,7 @@ export function initPlotterControls({
         resumeButton.addEventListener('click', async () => {
             logDebug('Attempting to resume last plot...');
             beginProgressListener();
-            updatePlotterStatus('Plotting', true);
+            updatePlotterStatus('Plotting');
             setPreviewControlsDisabled(true);
             try {
                 const success = await sendPlotterCommand('resume_plot');
@@ -156,7 +156,7 @@ export function initPlotterControls({
             } catch (error) {
                 logDebug(`Resume failed: ${error.message}`, 'error');
                 handlePlotReady('error');
-                updatePlotterStatus('Ready', true);
+                updatePlotterStatus('Ready');
                 setPreviewControlsDisabled(false);
                 if (typeof refreshResumeStatus === 'function') {
                     await refreshResumeStatus();

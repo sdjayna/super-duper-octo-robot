@@ -38,21 +38,6 @@ function computeScanlineIntersections(polygon, y) {
     return intersections;
 }
 
-function computeCentroid(polygon) {
-    const length = polygon.length;
-    let sumX = 0;
-    let sumY = 0;
-    for (let i = 0; i < length - 1; i++) {
-        sumX += polygon[i].x;
-        sumY += polygon[i].y;
-    }
-    const count = length - 1;
-    return {
-        x: sumX / count,
-        y: sumY / count
-    };
-}
-
 function nearestPointOnPolygon(point, polygon) {
     let closest = { point: polygon[0], segmentIndex: 0, distance: Infinity };
     for (let i = 0; i < polygon.length - 1; i++) {

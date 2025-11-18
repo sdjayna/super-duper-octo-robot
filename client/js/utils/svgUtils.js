@@ -38,7 +38,7 @@ export function createColorGroups(svg, colorPalette) {
     let index = 0;
     const drawingLayer = getDrawingLayer(svg);
 
-    for (const [key, color] of Object.entries(colorPalette)) {
+    for (const color of Object.values(colorPalette)) {
         const group = document.createElementNS(svgNS, "g");
         group.setAttribute("stroke", color.hex);
         group.setAttribute("inkscape:groupmode", "layer");

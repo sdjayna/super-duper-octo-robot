@@ -52,7 +52,6 @@ function generateSerpentinePoints(rect, spacing) {
     const bottomY = rect.y + rect.height;
     let direction = 1;
     for (let i = 0; i <= columns; i++) {
-        const x = rect.x + Math.min(i * actualSpacing, width);
         const limitedX = rect.x + Math.min(Math.max(i * actualSpacing, 0), width);
         points.push(
             { x: limitedX, y: direction === 1 ? topY : bottomY },
