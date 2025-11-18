@@ -1,6 +1,4 @@
 import { applyPreviewEffects } from '../utils/previewEffects.js';
-import { getOrientedDimensions } from '../utils/paperUtils.js';
-
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 export function createPreviewController({
@@ -58,7 +56,7 @@ export function createPreviewController({
             applyPreviewEffects(svg, state.previewProfile);
             updatePlotterLimitOverlay(svg, state, renderContext);
             container.appendChild(svg);
-            populateLayerSelect(container);
+            populateLayerSelect(container, logDebug);
             document.getElementById('layerSelect').value = currentLayer;
             updateLayerVisibility(container, state.rulersVisible);
             state.warnIfPaperExceedsPlotter?.();
@@ -98,7 +96,7 @@ export function createPreviewController({
         logDebug(`Switched to ${state.currentOrientation} orientation`);
         const previousLayer = document.getElementById('layerSelect').value;
         await draw();
-        populateLayerSelect(container);
+        populateLayerSelect(container, logDebug);
         restoreLayerSelection(previousLayer);
         updateLayerVisibility(container, state.rulersVisible);
     }
@@ -138,7 +136,7 @@ function applyMarginValue(value) {
         toggleRefresh,
         toggleOrientation,
         updateLayerVisibility: () => updateLayerVisibility(container, state.rulersVisible),
-        populateLayerSelect: () => populateLayerSelect(container),
+        populateLayerSelect: () => populateLayerSelect(container, logDebug),
         updateMarginControls,
         applyMarginValue
     };
@@ -237,32 +235,39 @@ function populateDrawingSelect(drawings, select) {
     }
 }
 
-function populateLayerSelect(container) {
+function populateLayerSelect(container, logDebug) {
     const svg = container.querySelector('svg');
     if (!svg) return;
 
     const layerSelect = document.getElementById('layerSelect');
     const layers = svg.querySelectorAll('g[inkscape\\:groupmode="layer"]');
-    const layerInfo = new Map();
+    const layerInfo = [];
 
     layers.forEach(layer => {
-        if (layer.children.length > 0) {
-            const label = layer.getAttribute('inkscape:label');
-            const index = label.split('-')[0];
-            layerInfo.set(index, label);
+        if (layer.children.length === 0) {
+            return;
+        }
+        const metadata = computeLayerMetadata(layer);
+        if (metadata) {
+            layerInfo.push(metadata);
         }
     });
 
+    const orderedLayers = orderLayersByDistance(layerInfo);
+
     const previousValue = layerSelect.value;
     layerSelect.innerHTML = '<option value="all">Show All Layers</option>';
-    Array.from(layerInfo.entries())
-        .sort(([a], [b]) => Number(a) - Number(b))
-        .forEach(([index, label]) => {
-            const option = document.createElement('option');
-            option.value = index;
-            option.textContent = label;
-            layerSelect.appendChild(option);
-        });
+    orderedLayers.forEach(({ index, label }) => {
+        const option = document.createElement('option');
+        option.value = index;
+        option.textContent = label;
+        layerSelect.appendChild(option);
+    });
+
+    if (logDebug && orderedLayers.optimized && orderedLayers.length > 1) {
+        const orderSummary = orderedLayers.map(layer => layer.label).join(' → ');
+        logDebug(`Optimized layer sequence: ${orderSummary}`);
+    }
 
     if (![...layerSelect.options].some(option => option.value === previousValue)) {
         layerSelect.value = 'all';
@@ -310,4 +315,211 @@ function setRefreshButtonState(isRefreshing) {
     if (!toggleButton) return;
     toggleButton.textContent = isRefreshing ? 'Pause Refresh' : 'Resume Refresh';
     toggleButton.classList.toggle('paused', !isRefreshing);
+}
+
+function computeLayerMetadata(layer) {
+    const label = layer.getAttribute('inkscape:label');
+    if (!label) {
+        return null;
+    }
+    const index = label.split('-')[0];
+    const points = extractSamplePoints(layer);
+    const rects = points.length ? [] : extractBoundingRects(layer);
+    let centroid = null;
+    if (points.length) {
+        const aggregate = points.reduce(
+            (acc, rect) => {
+                acc.x += rect.x;
+                acc.y += rect.y;
+                return acc;
+            },
+            { x: 0, y: 0 }
+        );
+        centroid = {
+            x: aggregate.x / points.length,
+            y: aggregate.y / points.length
+        };
+    } else if (rects.length) {
+        centroid = rects.reduce(
+            (acc, rect) => {
+                acc.x += rect.x + rect.width / 2;
+                acc.y += rect.y + rect.height / 2;
+                return acc;
+            },
+            { x: 0, y: 0 }
+        );
+        centroid.x /= rects.length;
+        centroid.y /= rects.length;
+    }
+    return {
+        index,
+        label,
+        centroid,
+        points,
+        rects
+    };
+}
+
+function extractSamplePoints(root) {
+    const points = [];
+    const queue = [root];
+    while (queue.length) {
+        const node = queue.pop();
+        if (!node) continue;
+        if (node.children && node.children.length) {
+            queue.push(...node.children);
+        }
+        if (typeof node.getTotalLength === 'function' && typeof node.getPointAtLength === 'function') {
+            try {
+                const length = node.getTotalLength();
+                if (!Number.isFinite(length) || length <= 0) {
+                    continue;
+                }
+                const sampleCount = Math.min(12, Math.max(3, Math.ceil(length / 80)));
+                for (let i = 0; i < sampleCount; i += 1) {
+                    const t = sampleCount === 1 ? 0 : (length * i) / (sampleCount - 1);
+                    const point = node.getPointAtLength(t);
+                    if (Number.isFinite(point.x) && Number.isFinite(point.y)) {
+                        points.push({ x: point.x, y: point.y });
+                    }
+                }
+            } catch {
+                // Ignore nodes that cannot provide path samples
+            }
+        }
+    }
+    return points;
+}
+
+function extractBoundingRects(root) {
+    const rects = [];
+    const queue = [root];
+    while (queue.length) {
+        const node = queue.pop();
+        if (!node) continue;
+        if (node.children && node.children.length) {
+            queue.push(...node.children);
+        }
+        if (typeof node.getBBox !== 'function') {
+            continue;
+        }
+        try {
+            const bbox = node.getBBox();
+            if (
+                bbox &&
+                Number.isFinite(bbox.x) &&
+                Number.isFinite(bbox.y) &&
+                Number.isFinite(bbox.width) &&
+                Number.isFinite(bbox.height) &&
+                bbox.width >= 0 &&
+                bbox.height >= 0
+            ) {
+                rects.push({
+                    x: bbox.x,
+                    y: bbox.y,
+                    width: bbox.width,
+                    height: bbox.height
+                });
+            }
+        } catch {
+            // Ignore nodes that cannot provide a bounding box
+        }
+    }
+    return rects;
+}
+
+function rectDistance(a, b) {
+    const ax2 = a.x + a.width;
+    const ay2 = a.y + a.height;
+    const bx2 = b.x + b.width;
+    const by2 = b.y + b.height;
+    const dx = Math.max(0, Math.max(a.x - bx2, b.x - ax2));
+    const dy = Math.max(0, Math.max(a.y - by2, b.y - ay2));
+    return Math.hypot(dx, dy);
+}
+
+function pointDistance(a, b) {
+    const dx = a.x - b.x;
+    const dy = a.y - b.y;
+    return Math.hypot(dx, dy);
+}
+
+function layerDistance(a, b) {
+    const aPoints = a?.points || [];
+    const bPoints = b?.points || [];
+    let minDistance = Infinity;
+    if (aPoints.length && bPoints.length) {
+        for (const pointA of aPoints) {
+            for (const pointB of bPoints) {
+                const distance = pointDistance(pointA, pointB);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    if (minDistance === 0) {
+                        return 0;
+                    }
+                }
+            }
+        }
+    } else if (a?.rects?.length && b?.rects?.length) {
+        for (const rectA of a.rects) {
+            for (const rectB of b.rects) {
+                const distance = rectDistance(rectA, rectB);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    if (minDistance === 0) {
+                        return 0;
+                    }
+                }
+            }
+        }
+    } else {
+        return 0;
+    }
+    return Number.isFinite(minDistance) ? minDistance : 0;
+}
+
+function orderLayersByDistance(layers) {
+    const entries = layers.slice();
+    const canOptimize = entries.length > 2 && entries.every(entry => (entry.points?.length || entry.rects?.length));
+    if (!canOptimize) {
+        return entries.sort((a, b) => Number(a.index) - Number(b.index));
+    }
+
+    const average = entries.reduce(
+        (acc, entry) => {
+            acc.x += entry.centroid.x;
+            acc.y += entry.centroid.y;
+            return acc;
+        },
+        { x: 0, y: 0 }
+    );
+    average.x /= entries.length;
+    average.y /= entries.length;
+
+    const start = entries.reduce((farthest, entry) => {
+        if (!farthest) return entry;
+        const entryDist = Math.hypot(entry.centroid.x - average.x, entry.centroid.y - average.y);
+        const farDist = Math.hypot(farthest.centroid.x - average.x, farthest.centroid.y - average.y);
+        return entryDist > farDist ? entry : farthest;
+    }, null);
+
+    const remaining = entries.filter(entry => entry !== start);
+    const ordered = start ? [start] : [];
+
+    while (remaining.length) {
+        const last = ordered[ordered.length - 1];
+        let farthestIndex = 0;
+        let farthestDistance = -Infinity;
+        remaining.forEach((entry, idx) => {
+            const dist = layerDistance(entry, last);
+            if (dist > farthestDistance) {
+                farthestDistance = dist;
+                farthestIndex = idx;
+            }
+        });
+        ordered.push(remaining.splice(farthestIndex, 1)[0]);
+    }
+
+    ordered.optimized = true;
+    return ordered;
 }
