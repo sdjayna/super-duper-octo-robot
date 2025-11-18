@@ -164,6 +164,22 @@ After dropping a new file in `drawings/core/` or `drawings/community/`, run `mak
 - **Constraint-aware helpers** - shared adapters expose color, geometry, and SVG utilities so modules don’t need deep client imports.
 - **Paper + medium presets** - drop in a new pen brand or sheet size via JSON and it immediately appears in the UI selectors. Papers can specify finish, weight, absorbency, and preview colour (see [Paper Presets](#paper-presets)) and you can override the colour live with the picker next to the Paper dropdown.
 
+### Adding a Drawing with Codex (AI Pair Programming)
+
+If you’re in the Codex CLI (this exact assistant), spinning up a new module is literally a prompt away:
+
+1. `make dev` in one terminal so the watcher/manifest/server are running.
+2. In another terminal, start Codex (`codex run` or the provided CLI).
+3. Paste a prompt like:
+
+```
+Add a new drawing called "polygonTapestry" under drawings/core/. Use createDrawingRuntime to tile 6×4 randomly jittered rectangles, then hatch each polygon serpentine-style via the shared controls (spacing slider 0.2–4 mm). Include controls for polygon count, jitter, and hatch spacing, register a preset that uses the Sakura palette, rebuild the manifest, mention the new drawing in CHANGELOG/README, and run npm test.
+```
+
+Codex already knows the repository layout and AGENTS.md rules, so it will scaffold the module, hook up controls, rebuild `drawings/manifest.json`, update docs/tests, and even run `npm test` automatically. You can iterate conversationally (“tighten the jitter range”, “add Vitest coverage”, “document the control copy”) and watch the CLI apply patches in real time. When you’re happy, run `git status` to review, then commit with the suggested Conventional Commit message.
+
+That’s it—new drawings are effectively an interactive prompt away.
+
 ### Custom Drawing Controls
 
 Expose any parameter you care about by declaring a `controls` array in your drawing definition. Each entry provides an `id`, `label`, `target` path (for example, `drawingData.level`), and UI metadata (`inputType`, `min`, `max`, `step`, `options`, etc.). The client automatically renders those sliders/selects under **Drawing Settings**, remembers the tweaks per drawing, and reapplies them whenever you change paper, margin, medium, or orientation.
