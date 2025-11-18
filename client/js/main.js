@@ -4,6 +4,7 @@ import { startProgressListener, stopProgressListener } from './modules/progress.
 import { createPreviewController } from './modules/preview.js';
 import { initPlotterControls } from './modules/plotterControls.js';
 import { initializeHatchControls, applyHatchSettingsToConfig, getHatchSettings } from './modules/hatchSettings.js';
+import { deriveResumeButtonState } from './modules/resumeButton.js';
 import { resolvePreviewProfile, evaluatePreviewWarnings, resolvePlotterDefaults } from './utils/paperProfile.js';
 import { normalizePaperColor, getPaperColor, getPaperTextureClass, computePlotterWarning } from './utils/paperUtils.js';
 import { filterPaletteByDisabledColors, loadDisabledColorPrefs, saveDisabledColorPrefs } from './utils/paletteUtils.js';
@@ -43,6 +44,7 @@ const { DEFAULT_MARGIN } = marginUtils;
 const DEFAULT_PAPER_COLOR = '#ffffff';
 const CONTROL_STORAGE_KEY = 'drawingControlValues';
 const DRAWING_STORAGE_KEY = 'selectedDrawingKey';
+const MEDIUM_STORAGE_KEY = 'selectedMediumId';
 const TRAVEL_LIMIT_MIN_METERS = 1;
 const TRAVEL_LIMIT_MAX_METERS = 100;
 const TRAVEL_LIMIT_INFINITE_SLIDER_VALUE = TRAVEL_LIMIT_MAX_METERS + 1;
@@ -51,7 +53,7 @@ const select = document.getElementById('drawingSelect');
 const container = document.getElementById('svgContainer');
 const exportButton = document.getElementById('exportSvg');
 const mediumSelect = document.getElementById('mediumSelect');
-const mediumColorSelect = document.getElementById('mediumColorSelect');
+const mediumColorList = document.getElementById('mediumColorList');
 const drawingControlsContainer = document.getElementById('drawingControlsContainer');
 const controlTabs = document.querySelectorAll('.control-tab');
 const controlPanels = document.querySelectorAll('.control-panel');
@@ -98,7 +100,8 @@ const state = {
     plotterSpecs: null,
     warnIfPaperExceedsPlotter: null,
     disabledColorsByMedium: loadDisabledColorPrefs(),
-    maxTravelPerLayerMeters: null
+    maxTravelPerLayerMeters: null,
+    activeLayerColorNames: new Set()
 };
 
 state.warnIfPaperExceedsPlotter = () => warnIfPaperExceedsPlotter(state, state.currentPaper);
@@ -109,12 +112,14 @@ function updateResumeButtonState() {
     if (!resumeButton) {
         return;
     }
-    const label = resumeStatus.layerLabel || (resumeStatus.layer ? `Layer ${resumeStatus.layer}` : null);
-    resumeButton.textContent = label ? `Resume ${label}` : 'Resume Plot';
     const layerSelect = document.getElementById('layerSelect');
-    const noLayerSelected = layerSelect?.value === 'all';
-    const shouldDisable = plotterIsRunning || !resumeStatus.available || noLayerSelected;
-    resumeButton.disabled = shouldDisable;
+    const { text, disabled } = deriveResumeButtonState({
+        resumeStatus,
+        plotterIsRunning,
+        layerSelectValue: layerSelect?.value
+    });
+    resumeButton.textContent = text;
+    resumeButton.disabled = disabled;
 }
 
 function applyResumeStatus(status = {}) {
@@ -122,6 +127,15 @@ function applyResumeStatus(status = {}) {
         available: Boolean(status.available),
         layer: status.layer ?? null,
         layerLabel: status.layerLabel ?? null
+    };
+    updateResumeButtonState();
+}
+
+function clearResumeStatusLocally() {
+    resumeStatus = {
+        available: false,
+        layer: null,
+        layerLabel: null
     };
     updateResumeButtonState();
 }
@@ -229,7 +243,7 @@ async function handleGlobalHatchChanged() {
         applyHatchSettingsToConfig(context.drawingConfig);
     }
     await draw();
-    populateLayerSelect();
+    refreshLayerSelectUI();
     updatePlotterStatus();
 }
 
@@ -252,7 +266,7 @@ initializeHatchControls({
     boundaryCheckbox: hatchBoundaryControl
 }, async () => {
     await draw();
-    populateLayerSelect();
+    refreshLayerSelectUI();
     updatePlotterStatus();
 });
 
@@ -299,6 +313,28 @@ function loadSavedDrawingKey() {
     }
 }
 
+function loadSavedMediumId() {
+    if (typeof window === 'undefined' || !window.localStorage) {
+        return null;
+    }
+    try {
+        return window.localStorage.getItem(MEDIUM_STORAGE_KEY);
+    } catch {
+        return null;
+    }
+}
+
+function persistSelectedMedium(mediumId) {
+    if (typeof window === 'undefined' || !window.localStorage) {
+        return;
+    }
+    try {
+        window.localStorage.setItem(MEDIUM_STORAGE_KEY, mediumId);
+    } catch {
+        // ignore
+    }
+}
+
 function persistSelectedDrawing(key) {
     if (typeof window === 'undefined' || !window.localStorage) {
         return;
@@ -311,37 +347,100 @@ function persistSelectedDrawing(key) {
 }
 
 function populateMediumColorSelect(mediumId, mediumMetadata = {}) {
-    if (!mediumColorSelect) {
+    if (!mediumColorList) {
         return;
     }
-    mediumColorSelect.innerHTML = '';
+    mediumColorList.innerHTML = '';
+    mediumColorList.dataset.disabled = 'true';
     const mediumInfo = mediumMetadata[mediumId];
     if (!mediumInfo?.colors) {
-        mediumColorSelect.disabled = true;
+        const empty = document.createElement('p');
+        empty.className = 'medium-color-empty';
+        empty.textContent = 'No palette information available.';
+        mediumColorList.appendChild(empty);
+        updateMediumColorUsageHighlight();
         return;
     }
     const disabledSet = state.disabledColorsByMedium.get(mediumId) || new Set();
     const entries = Object.entries(mediumInfo.colors)
         .sort(([, a], [, b]) => a.name.localeCompare(b.name));
     entries.forEach(([colorId, color]) => {
-        const option = document.createElement('option');
-        option.value = colorId;
-        option.textContent = color.name;
-        option.selected = disabledSet.has(colorId);
-        mediumColorSelect.appendChild(option);
+        const label = document.createElement('label');
+        label.dataset.colorName = color.name;
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.value = colorId;
+        checkbox.checked = disabledSet.has(colorId);
+        label.appendChild(checkbox);
+        const nameNode = document.createElement('span');
+        nameNode.textContent = color.name;
+        label.appendChild(nameNode);
+        mediumColorList.appendChild(label);
     });
-    mediumColorSelect.disabled = false;
+    mediumColorList.dataset.disabled = 'false';
+    updateMediumColorUsageHighlight();
 }
 
 
 function syncMediumColorSelections(mediumId) {
-    if (!mediumColorSelect) {
+    if (!mediumColorList) {
         return;
     }
     const disabledSet = state.disabledColorsByMedium.get(mediumId) || new Set();
-    Array.from(mediumColorSelect.options).forEach(option => {
-        option.selected = disabledSet.has(option.value);
+    const inputs = mediumColorList.querySelectorAll('input[type="checkbox"]');
+    inputs.forEach(input => {
+        input.checked = disabledSet.has(input.value);
     });
+}
+
+function extractLayerColorName(labelText = '') {
+    if (typeof labelText !== 'string') {
+        return '';
+    }
+    const dashIndex = labelText.indexOf('-');
+    let name = dashIndex >= 0 ? labelText.slice(dashIndex + 1).trim() : labelText.trim();
+    const passIndex = name.indexOf('(pass');
+    if (passIndex !== -1) {
+        name = name.slice(0, passIndex).trim();
+    }
+    return name;
+}
+
+function updateActiveLayerColorsFromSelect() {
+    const layerSelect = document.getElementById('layerSelect');
+    if (!layerSelect) {
+        return;
+    }
+    const names = new Set();
+    Array.from(layerSelect.options).forEach(option => {
+        if (!option || option.value === 'all') {
+            return;
+        }
+        const extracted = extractLayerColorName(option.textContent || '');
+        if (extracted) {
+            names.add(extracted);
+        }
+    });
+    state.activeLayerColorNames = names;
+}
+
+function updateMediumColorUsageHighlight() {
+    if (!mediumColorList) {
+        return;
+    }
+    const isDisabled = mediumColorList.dataset.disabled === 'true';
+    const activeNames = state.activeLayerColorNames || new Set();
+    mediumColorList.querySelectorAll('label').forEach(label => {
+        const colorName = label.dataset.colorName;
+        const shouldHighlight = !isDisabled && colorName && activeNames.has(colorName);
+        label.classList.toggle('is-active', Boolean(shouldHighlight));
+    });
+}
+
+function refreshLayerSelectUI() {
+    populateLayerSelect();
+    updateActiveLayerColorsFromSelect();
+    updateMediumColorUsageHighlight();
 }
 
 function loadColorUtilsModule() {
@@ -659,7 +758,7 @@ async function refreshDrawingControlsUI() {
         });
         await refreshDrawingControlsUI();
         await draw();
-        populateLayerSelect();
+        refreshLayerSelectUI();
         updatePlotterStatus();
     });
     drawingControlsContainer.appendChild(resetButton);
@@ -770,7 +869,7 @@ async function handleDrawingControlChange(context, control, rawValue) {
     storedValues[control.id] = normalized;
     persistControlValues();
     await draw();
-    populateLayerSelect();
+    refreshLayerSelectUI();
     updatePlotterStatus();
 }
 
@@ -939,7 +1038,7 @@ function toggleRefresh() {
 async function updateSvg() {
     stopRefresh();  // Stop auto-refresh
     await draw();   // Do a single draw
-    populateLayerSelect();
+    refreshLayerSelectUI();
     updatePlotterStatus();
     logDebug('Manual SVG update triggered');
 }
@@ -1067,12 +1166,19 @@ async function initialize() {
 
         const colorUtilsModule = await loadColorUtilsModule();
         const mediumOptions = populateMediumSelectOptions(colorUtilsModule.mediumMetadata);
-        const defaultMediumId = colorUtilsModule.defaultMediumId || mediumOptions[0]?.[0] || null;
+        const savedMediumId = loadSavedMediumId();
+        const defaultMediumId = savedMediumId
+            || colorUtilsModule.defaultMediumId
+            || mediumOptions[0]?.[0]
+            || null;
         if (defaultMediumId && mediumSelect) {
-            mediumSelect.value = defaultMediumId;
-            state.currentMediumId = defaultMediumId;
-            await applyMediumSettings(defaultMediumId, colorUtilsModule, { applyHatchDefaults: true });
-            populateMediumColorSelect(defaultMediumId, colorUtilsModule.mediumMetadata);
+            if (mediumSelect.querySelector(`option[value="${defaultMediumId}"]`)) {
+                mediumSelect.value = defaultMediumId;
+            }
+            state.currentMediumId = mediumSelect.value || defaultMediumId;
+            persistSelectedMedium(state.currentMediumId);
+            await applyMediumSettings(state.currentMediumId, colorUtilsModule, { applyHatchDefaults: true });
+            populateMediumColorSelect(state.currentMediumId, colorUtilsModule.mediumMetadata);
         } else if (!defaultMediumId) {
             logDebug('No mediums available from configuration', 'error');
         }
@@ -1088,7 +1194,7 @@ async function initialize() {
             await applyDrawingControlsState();
             await draw();
             await refreshDrawingControlsUI();
-            populateLayerSelect();
+            refreshLayerSelectUI();
             document.getElementById('layerSelect').value = 'all';
             updateLayerVisibility();
             updatePlotterStatus();
@@ -1107,7 +1213,7 @@ select.addEventListener('change', async () => {
     await applyDrawingControlsState();
     await draw();
     await refreshDrawingControlsUI();
-    populateLayerSelect();
+    refreshLayerSelectUI();
     // Set layer select to "all" when drawing changes
     document.getElementById('layerSelect').value = 'all';
     updateLayerVisibility();
@@ -1265,7 +1371,8 @@ initPlotterControls({
     handlePlotReady,
     updatePlotterStatus,
     setPreviewControlsDisabled,
-    refreshResumeStatus
+    refreshResumeStatus,
+    clearResumeStatus: clearResumeStatusLocally
 });
 
 refreshResumeStatus({ silent: true });
@@ -1317,7 +1424,7 @@ if (maxTravelSlider) {
             return;
         }
         await draw();
-        populateLayerSelect();
+        refreshLayerSelectUI();
         if (state.maxTravelPerLayerMeters === null) {
             logDebug('Layer travel limit disabled; layers will no longer auto-split.');
         } else {
@@ -1359,23 +1466,35 @@ if (mediumSelect) {
     mediumSelect.addEventListener('change', async (e) => {
         const medium = e.target.value;
         state.currentMediumId = medium;
+        persistSelectedMedium(medium);
         logDebug(`Changing medium to ${medium}`);
         const colorUtilsModule = await loadColorUtilsModule();
         await applyMediumSettings(medium, colorUtilsModule, { applyHatchDefaults: true });
         populateMediumColorSelect(medium, colorUtilsModule.mediumMetadata);
         await draw();
-        populateLayerSelect();
+        refreshLayerSelectUI();
         logDebug(`Updated drawings with ${medium} settings`);
     });
 }
 
-if (mediumColorSelect) {
-    mediumColorSelect.addEventListener('change', async () => {
-        const mediumId = state.currentMediumId;
-        if (!mediumId) {
+if (mediumColorList) {
+    mediumColorList.addEventListener('change', async (event) => {
+        const target = event.target;
+        if (!target || target.type !== 'checkbox') {
             return;
         }
-        const selectedIds = Array.from(mediumColorSelect.selectedOptions).map(option => option.value);
+        if (mediumColorList.dataset.disabled === 'true') {
+            target.checked = false;
+            return;
+        }
+        const mediumId = state.currentMediumId;
+        if (!mediumId) {
+            target.checked = false;
+            return;
+        }
+        const selectedIds = Array.from(
+            mediumColorList.querySelectorAll('input[type="checkbox"]:checked')
+        ).map(input => input.value);
         const colorUtilsModule = await loadColorUtilsModule();
         const mediumInfo = colorUtilsModule.mediumMetadata[mediumId];
         const totalColors = Object.keys(mediumInfo?.colors || {}).length;
@@ -1392,7 +1511,7 @@ if (mediumColorSelect) {
         persistDisabledColorsToStorage();
         await applyMediumSettings(mediumId, colorUtilsModule, { applyHatchDefaults: false });
         await draw();
-        populateLayerSelect();
+        refreshLayerSelectUI();
         logDebug(`Updated disabled colors for ${mediumInfo?.name || mediumId}`);
     });
 }

@@ -59,6 +59,29 @@ class TestResumeTracking(unittest.TestCase):
         self.assertTrue(status['available'])
         self.assertEqual(status['path'], self.resume_file)
 
+    def test_handle_command_home_clears_resume_state(self):
+        with open(self.resume_file, 'w', encoding='utf-8') as handle:
+            handle.write('resume data')
+        PlotterHandler.update_resume_state(
+            path=self.resume_file,
+            available=True,
+            layer=7,
+            layer_label='Test Layer'
+        )
+        handler = PlotterHandler.__new__(PlotterHandler)
+        with patch.object(PlotterHandler, 'execute_home_sequence', return_value=None) as mock_home:
+            response = handler.handle_command({
+                'command': 'home',
+                'pen_pos_up': 90,
+                'pen_pos_down': 60
+            })
+        mock_home.assert_called_once_with(90)
+        self.assertEqual(response['status'], 'success')
+        self.assertFalse(os.path.exists(self.resume_file))
+        status = PlotterHandler.get_resume_status(include_path=True)
+        self.assertFalse(status['available'])
+        self.assertIsNone(status['path'])
+
 
 class TestHomeSequence(unittest.TestCase):
     def setUp(self):

@@ -6,7 +6,8 @@ export function initPlotterControls({
     handlePlotReady,
     updatePlotterStatus,
     setPreviewControlsDisabled,
-    refreshResumeStatus
+    refreshResumeStatus,
+    clearResumeStatus
 }) {
     let lastPlottedLayer = null;
     const resumeButton = document.getElementById('plotterResumePlot');
@@ -124,6 +125,9 @@ export function initPlotterControls({
         if (resumeButton) {
             resumeButton.disabled = true;
             resumeButton.textContent = 'Resume Plot';
+        }
+        if (typeof clearResumeStatus === 'function') {
+            clearResumeStatus();
         }
         if (await sendPlotterCommand('home', { pen_pos_up: penPosUp, pen_pos_down: penPosDown })) {
             logDebug('Home command completed');
