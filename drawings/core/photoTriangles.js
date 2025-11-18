@@ -14,7 +14,8 @@ const TRI_LIMITS = {
     sampleResolution: { min: 48, max: 1024, default: 320 },
     contrast: { min: 0, max: 1, default: 0.25 },
     colorNoise: { min: 0, max: 0.35, default: 0.1 },
-    seed: { min: 1, max: 9999, default: 421 }
+    seed: { min: 1, max: 9999, default: 421 },
+    polygonMargin: { min: 0, max: 3, default: 0 }
 };
 
 export class PhotoTriangleConfig extends SizedDrawingConfig {
@@ -49,6 +50,12 @@ export class PhotoTriangleConfig extends SizedDrawingConfig {
             TRI_LIMITS.seed.min,
             TRI_LIMITS.seed.max,
             TRI_LIMITS.seed.default
+        );
+        this.polygonMargin = clampNumber(
+            params.polygonMargin,
+            TRI_LIMITS.polygonMargin.min,
+            TRI_LIMITS.polygonMargin.max,
+            TRI_LIMITS.polygonMargin.default
         );
         this.imageDataUrl = typeof params.imageDataUrl === 'string' ? params.imageDataUrl : '';
     }
@@ -108,17 +115,24 @@ export async function drawPhotoTriangleMosaic(drawingConfig, renderContext) {
         const sample = sampleTriangleColor(triangle, sampler, width, height);
         const paletteColor = choosePaletteColor(paletteEntries, sample, drawingData.colorNoise);
         const projectedPolygon = builder.projectPoints([...triangle, triangle[0]]);
-        const geometry = computeBoundsFromPoints(projectedPolygon);
+        const polygonMargin = Math.max(0, drawingConfig.drawingData.polygonMargin || 0);
+        const insetPolygon = polygonMargin > 0
+            ? insetPolygonTowardCentroid(projectedPolygon, polygonMargin)
+            : projectedPolygon;
+        if (!insetPolygon || insetPolygon.length < 4) {
+            return;
+        }
+        const geometry = computeBoundsFromPoints(insetPolygon);
         let pathPoints;
         if (hatchStyle === 'none') {
-            pathPoints = projectedPolygon;
+            pathPoints = insetPolygon;
         } else if (hatchStyle === 'serpentine') {
-            pathPoints = generatePolygonSerpentineHatch(projectedPolygon, hatchSpacing, {
+            pathPoints = generatePolygonSerpentineHatch(insetPolygon, hatchSpacing, {
                 inset: hatchInset,
                 includeBoundary
             });
         } else {
-            pathPoints = generatePolygonScanlineHatch(projectedPolygon, hatchSpacing, {
+            pathPoints = generatePolygonScanlineHatch(insetPolygon, hatchSpacing, {
                 inset: hatchInset,
                 includeBoundary
             });
@@ -526,6 +540,18 @@ const photoTriangleControls = [
         step: 1,
         default: TRI_LIMITS.seed.default,
         description: 'Seed controlling point distribution'
+    },
+    {
+        id: 'polygonMargin',
+        label: 'Polygon Margin',
+        target: 'drawingData.polygonMargin',
+        inputType: 'range',
+        min: TRI_LIMITS.polygonMargin.min,
+        max: TRI_LIMITS.polygonMargin.max,
+        step: 0.1,
+        default: TRI_LIMITS.polygonMargin.default,
+        units: 'mm',
+        description: 'Inset distance from each triangle edge to create gutters between adjacent polygons'
     }
 ];
 
@@ -547,6 +573,7 @@ const photoTriangleDefinition = attachControls(defineDrawing({
                 contrastBias: TRI_LIMITS.contrast.default,
                 colorNoise: TRI_LIMITS.colorNoise.default,
                 seed: TRI_LIMITS.seed.default,
+                polygonMargin: TRI_LIMITS.polygonMargin.default,
                 line: {
                     strokeWidth: 0.35
                 },
@@ -596,4 +623,39 @@ function logPhotoSampling(details) {
     } else {
         console.log(message);
     }
+}
+
+function insetPolygonTowardCentroid(polygon, inset) {
+    if (!Array.isArray(polygon) || polygon.length < 4 || inset <= 0) {
+        return polygon;
+    }
+    const open = polygon.slice(0, -1);
+    if (open.length < 3) {
+        return polygon;
+    }
+    const centroid = open.reduce(
+        (acc, point) => {
+            acc.x += point.x;
+            acc.y += point.y;
+            return acc;
+        },
+        { x: 0, y: 0 }
+    );
+    centroid.x /= open.length;
+    centroid.y /= open.length;
+    const adjusted = open.map(point => {
+        const dx = centroid.x - point.x;
+        const dy = centroid.y - point.y;
+        const dist = Math.hypot(dx, dy);
+        if (!Number.isFinite(dist) || dist <= 1e-3) {
+            return { x: point.x, y: point.y };
+        }
+        const move = Math.min(inset, dist * 0.9);
+        return {
+            x: point.x + (dx / dist) * move,
+            y: point.y + (dy / dist) * move
+        };
+    });
+    adjusted.push({ ...adjusted[0] });
+    return adjusted;
 }
