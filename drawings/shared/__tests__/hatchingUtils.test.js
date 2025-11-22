@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { generatePolygonScanlineHatch, generatePolygonSerpentineHatch, generatePolygonSkeletonHatch, rectToPolygon } from '../utils/hatchingUtils.js';
+import {
+    generatePolygonContourHatch,
+    generatePolygonScanlineHatch,
+    generatePolygonSerpentineHatch,
+    generatePolygonSkeletonHatch,
+    rectToPolygon
+} from '../utils/hatchingUtils.js';
 
 describe('generatePolygonScanlineHatch', () => {
     it('returns empty for invalid polygons', () => {
@@ -61,5 +67,26 @@ describe('generatePolygonSkeletonHatch', () => {
         expect(withBoundary.length).toBeGreaterThan(withoutBoundary.length);
         const boundaryCorner = withBoundary.some(point => Math.abs(point.x) < 1e-6 && Math.abs(point.y) < 1e-6);
         expect(boundaryCorner).toBe(true);
+    });
+});
+
+describe('generatePolygonContourHatch', () => {
+    it('builds inset contour rings', () => {
+        const polygon = rectToPolygon({ x: 0, y: 0, width: 20, height: 10 });
+        const path = generatePolygonContourHatch(polygon, 2, { inset: 1, includeBoundary: false });
+        expect(path.length).toBeGreaterThan(10);
+        const minX = Math.min(...path.map(point => point.x));
+        const maxX = Math.max(...path.map(point => point.x));
+        expect(minX).toBeGreaterThan(0);
+        expect(maxX).toBeLessThan(20);
+    });
+
+    it('optionally appends the boundary outline', () => {
+        const polygon = rectToPolygon({ x: 0, y: 0, width: 8, height: 6 });
+        const withoutBoundary = generatePolygonContourHatch(polygon, 1.5, { includeBoundary: false });
+        const withBoundary = generatePolygonContourHatch(polygon, 1.5, { includeBoundary: true });
+        expect(withBoundary.length).toBeGreaterThan(withoutBoundary.length);
+        const hitsCorner = withBoundary.some(point => Math.abs(point.x) < 1e-6 && Math.abs(point.y) < 1e-6);
+        expect(hitsCorner).toBe(true);
     });
 });

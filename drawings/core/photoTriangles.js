@@ -5,7 +5,8 @@ import {
     colorPalettes,
     generatePolygonScanlineHatch,
     generatePolygonSerpentineHatch,
-    generatePolygonSkeletonHatch
+    generatePolygonSkeletonHatch,
+    generatePolygonContourHatch
 } from '../shared/kit.js';
 import { attachControls } from '../shared/controlsUtils.js';
 import { clampInteger, clampNumber } from '../shared/utils/paramMath.js';
@@ -129,6 +130,11 @@ export async function drawPhotoTriangleMosaic(drawingConfig, renderContext) {
             pathPoints = insetPolygon;
         } else if (hatchStyle === 'serpentine') {
             pathPoints = generatePolygonSerpentineHatch(insetPolygon, hatchSpacing, {
+                inset: hatchInset,
+                includeBoundary
+            });
+        } else if (hatchStyle === 'contour') {
+            pathPoints = generatePolygonContourHatch(insetPolygon, hatchSpacing, {
                 inset: hatchInset,
                 includeBoundary
             });

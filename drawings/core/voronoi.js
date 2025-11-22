@@ -6,6 +6,7 @@ import {
     generatePolygonScanlineHatch,
     generatePolygonSerpentineHatch,
     generatePolygonSkeletonHatch,
+    generatePolygonContourHatch,
     rectToPolygon,
     computeBoundsFromPoints
 } from '../shared/kit.js';
@@ -334,6 +335,11 @@ export function drawVoronoiSketch(drawingConfig, renderContext) {
             pathPoints = polygonForFill;
         } else if (hatchStyle === 'serpentine') {
             pathPoints = generatePolygonSerpentineHatch(polygonForFill, spacing, {
+                inset: hatchInset,
+                includeBoundary
+            });
+        } else if (hatchStyle === 'contour') {
+            pathPoints = generatePolygonContourHatch(polygonForFill, spacing, {
                 inset: hatchInset,
                 includeBoundary
             });

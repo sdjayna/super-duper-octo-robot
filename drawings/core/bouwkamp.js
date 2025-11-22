@@ -6,6 +6,7 @@ import {
     generateSingleSerpentineLine,
     generatePolygonScanlineHatch,
     generatePolygonSkeletonHatch,
+    generatePolygonContourHatch,
     rectToPolygon,
     colorPalettes
 } from '../shared/kit.js';
@@ -84,6 +85,14 @@ export function drawBouwkampCode(drawingConfig, renderContext) {
             });
             if (skeletonPath.length > 0) {
                 builder.appendPath(skeletonPath, { geometry: projectedRect });
+            }
+        } else if (hatchStyle === 'contour') {
+            const contourPath = generatePolygonContourHatch(polygon, spacing, {
+                inset: hatchInset,
+                includeBoundary
+            });
+            if (contourPath.length > 0) {
+                builder.appendPath(contourPath, { geometry: projectedRect });
             }
         } else {
             const points = generateSingleSerpentineLine(projectedRect, spacing, drawingConfig.line.strokeWidth, {

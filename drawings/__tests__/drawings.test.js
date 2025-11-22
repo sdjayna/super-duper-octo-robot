@@ -125,16 +125,20 @@ describe('drawing functions', () => {
 
         const serpentineSvg = drawBouwkampCode(buildConfig({ hatchStyle: 'serpentine' }), renderContext);
         const scanlineSvg = drawBouwkampCode(buildConfig({ hatchStyle: 'scanline' }), renderContext);
+        const contourSvg = drawBouwkampCode(buildConfig({ hatchStyle: 'contour' }), renderContext);
         const outlineSvg = drawBouwkampCode(buildConfig({ hatchStyle: 'none' }), renderContext);
 
         const serpentinePathData = serpentineSvg.querySelectorAll('path')[0].getAttribute('d');
         const scanlinePathData = scanlineSvg.querySelectorAll('path')[0].getAttribute('d');
+        const contourPathData = contourSvg.querySelectorAll('path')[0].getAttribute('d');
         const outlinePathData = outlineSvg.querySelectorAll('path')[0].getAttribute('d');
 
         expect(serpentinePathData).toBeTruthy();
         expect(scanlinePathData).toBeTruthy();
+        expect(contourPathData).toBeTruthy();
         expect(outlinePathData).toBeTruthy();
         expect(serpentinePathData).not.toBe(scanlinePathData);
+        expect(contourPathData).not.toBe(scanlinePathData);
     });
 
     it('aligns Voronoi bounds with the paper aspect ratio', () => {
