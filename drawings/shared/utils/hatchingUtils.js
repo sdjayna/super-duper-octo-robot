@@ -472,8 +472,8 @@ function offsetPolygonInward(points, inset) {
         const dot = v1.x * v2.x + v1.y * v2.y;
         const clampedDot = Math.min(Math.max(dot, -1), 1);
         const angle = Math.acos(clampedDot);
-        if (angle < Math.PI / 12) {
-            const blend = 0.6;
+        if (angle < Math.PI / 9) {
+            const blend = 0.5;
             candidate = {
                 x: current.x + (candidate.x - current.x) * blend,
                 y: current.y + (candidate.y - current.y) * blend
@@ -483,6 +483,36 @@ function offsetPolygonInward(points, inset) {
     }
 
     return offsetVertices;
+}
+
+function doesSegmentIntersect(a1, a2, b1, b2) {
+    const det = (a2.x - a1.x) * (b2.y - b1.y) - (a2.y - a1.y) * (b2.x - b1.x);
+    if (Math.abs(det) < EPSILON) {
+        return false;
+    }
+    const ua = ((b2.x - b1.x) * (a1.y - b1.y) - (b2.y - b1.y) * (a1.x - b1.x)) / det;
+    const ub = ((a2.x - a1.x) * (a1.y - b1.y) - (a2.y - a1.y) * (a1.x - b1.x)) / det;
+    return ua > 0 && ua < 1 && ub > 0 && ub < 1;
+}
+
+function doesPolygonCross(boundary, candidate) {
+    if (!boundary?.length || !candidate?.length) {
+        return false;
+    }
+    const boundaryOpen = boundary.slice(0, -1);
+    const candidateOpen = candidate.slice(0, -1);
+    for (let i = 0; i < boundaryOpen.length; i++) {
+        const a1 = boundaryOpen[i];
+        const a2 = boundaryOpen[(i + 1) % boundaryOpen.length];
+        for (let j = 0; j < candidateOpen.length; j++) {
+            const b1 = candidateOpen[j];
+            const b2 = candidateOpen[(j + 1) % candidateOpen.length];
+            if (doesSegmentIntersect(a1, a2, b1, b2)) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 function findNearestIndex(points, target) {
@@ -550,7 +580,7 @@ export function generatePolygonContourHatch(polygonPoints, spacing = 2.5, option
         }
     }
     let current = open;
-    let currentInset = Math.max(insetStart, minInset);
+    let currentInset = Math.max(insetStart + (options.strokeWidth || 0.4), minInset);
     let loops = 0;
     const maxLoops = 400;
 
@@ -566,7 +596,8 @@ export function generatePolygonContourHatch(polygonPoints, spacing = 2.5, option
         }
         // Reject rings that escape the original polygon
         const outside = insetLoop.some(point => !isPointInsidePolygon(point, polygon));
-        if (outside) {
+        const crossesBoundary = doesPolygonCross(polygon, insetLoop);
+        if (outside || crossesBoundary) {
             break;
         }
         const startIndex = findNearestIndex(insetLoop, path[path.length - 1] || insetLoop[0]);
