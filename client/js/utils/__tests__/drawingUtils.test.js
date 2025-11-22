@@ -21,9 +21,10 @@ describe('drawing utils', () => {
             colorManager
         });
 
-        expect(result).toBeTruthy();
+        expect(result?.path).toBeTruthy();
+        expect(result?.color).toBe('#000');
         expect(layer.children).toHaveLength(1);
-        expect(result?.getAttribute('stroke-width')).toBe('0.5');
+        expect(result?.path?.getAttribute('stroke-width')).toBe('0.5');
         expect(colorManager.getValidColor).toHaveBeenCalled();
         expect(colorManager.updateTracking).toHaveBeenCalled();
     });

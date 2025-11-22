@@ -78,7 +78,7 @@ export function createRenderContext({ paper, drawingWidth, drawingHeight, bounds
             minY,
             width: safeDrawingWidth,
             height: safeDrawingHeight
-        }
+        },
     };
 
     context.projectPoint = (point) => {

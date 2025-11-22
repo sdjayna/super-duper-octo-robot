@@ -32,7 +32,10 @@ export function appendColoredPath({ points, strokeWidth, strokeLinecap, strokeLi
         layer.appendChild(path);
     }
     colorManager.updateTracking(resolvedColor, fallbackGeometry);
-    return path;
+    return {
+        path,
+        color: resolvedColor
+    };
 }
 
 function deriveGeometryFromPoints(points) {
@@ -48,4 +51,15 @@ function deriveGeometryFromPoints(points) {
         width: Math.max(maxX - minX, 1),
         height: Math.max(maxY - minY, 1)
     };
+}
+
+export function updatePathData(pathElement, points) {
+    if (!pathElement || !Array.isArray(points) || points.length === 0) {
+        return;
+    }
+    let pathData = `M ${points[0].x} ${points[0].y}`;
+    for (let i = 1; i < points.length; i++) {
+        pathData += ` L ${points[i].x} ${points[i].y}`;
+    }
+    pathElement.setAttribute('d', pathData);
 }

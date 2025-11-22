@@ -238,6 +238,8 @@ describe('drawing functions', () => {
         const pathCountWithEdges = scanlineSvg.querySelectorAll('path').length;
         const pathCountWithoutEdges = scanlineNoEdgesSvg.querySelectorAll('path').length;
         const insetPathData = scanlineInsetSvg.querySelector('path')?.getAttribute('d');
+        const baselinePaths = Array.from(scanlineSvg.querySelectorAll('path')).map(path => path.getAttribute('d'));
+        const insetPaths = Array.from(scanlineInsetSvg.querySelectorAll('path')).map(path => path.getAttribute('d'));
 
         expect(scanlinePathData).toBeTruthy();
         expect(serpentinePathData).toBeTruthy();
@@ -245,7 +247,7 @@ describe('drawing functions', () => {
         expect(scanlinePathData).not.toBe(serpentinePathData);
         expect(pathCountWithEdges).toBeGreaterThan(pathCountWithoutEdges);
         expect(insetPathData).toBeTruthy();
-        expect(insetPathData).not.toBe(scanlinePathData);
+        expect(insetPaths.some(pathData => !baselinePaths.includes(pathData))).toBe(true);
     });
 
     it('renders a Hilbert curve centered on the paper', () => {

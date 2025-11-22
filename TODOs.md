@@ -9,7 +9,7 @@
    - [ ] Add paper size preview/overlay  
    - [x] Standardize paper size changes across drawing types  
    - [ ] Order-safe fill clipping for overlapping polygons: before layer optimization/splitting, compute the visible portion of each polygon (subtract union of those above in the original render order) so color reordering never puts paint on top of paint. Needs robust polygon boolean ops and a fast path for non-overlapping cases.
-   - [ ] Minimize pen-up travel within each layer: build a centroid/endpoint graph per color layer, visit shapes in nearest-neighbor order (with optional segment reversals) and run a quick 2-opt pass so the pen makes the shortest tour possible before lifting, reducing wasted pen-up moves between polygons.
+   - [x] Minimize pen-up travel within each layer: for every color layer, build a graph using polygon centroids/endpoints, reorder the elements via a nearest-neighbor + 2-opt pass so every pen-up move between polygons/segments is as short as possible before the layer finishes.
 
 2. Lower the barrier for new drawings  
    - [x] Autoload drawing modules (manifest-driven)  

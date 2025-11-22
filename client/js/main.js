@@ -1433,7 +1433,6 @@ if (maxTravelSlider) {
     });
 }
 
-
 // Paper size selection handler
 document.getElementById('paperSelect').addEventListener('change', async (e) => {
     if (!state.paperConfig) {
