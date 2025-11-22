@@ -82,6 +82,9 @@ const maxTravelSlider = document.getElementById('maxTravelPerLayer');
 const maxTravelValueLabel = document.getElementById('maxTravelPerLayerValue');
 const previewZoomSlider = document.getElementById('previewZoomSlider');
 const previewZoomValue = document.getElementById('previewZoomValue');
+const previewContainer = document.getElementById('svgContainer');
+const previewCenterButton = document.getElementById('previewCenter');
+const previewResetButton = document.getElementById('previewReset');
 
 const state = {
     paperConfig: null,
@@ -104,7 +107,10 @@ const state = {
     disabledColorsByMedium: loadDisabledColorPrefs(),
     maxTravelPerLayerMeters: null,
     activeLayerColorNames: new Set(),
-    previewZoomPercent: 100
+    previewZoomPercent: 100,
+    previewPan: { x: 0, y: 0 },
+    isPanning: false,
+    panStart: null
 };
 
 state.warnIfPaperExceedsPlotter = () => warnIfPaperExceedsPlotter(state, state.currentPaper);
@@ -138,15 +144,26 @@ function applyPreviewZoom(percent) {
     const clamped = Math.min(Math.max(Math.round(percent / 10) * 10, 10), 400);
     state.previewZoomPercent = clamped;
     const scale = clamped / 100;
-    if (container) {
-        container.style.transform = `scale(${scale})`;
-    }
+    applyPreviewTransform(scale);
     if (previewZoomSlider) {
         previewZoomSlider.value = clamped;
     }
     if (previewZoomValue) {
         previewZoomValue.textContent = `${clamped}%`;
     }
+}
+
+function applyPreviewTransform(scaleOverride) {
+    const scale = scaleOverride || state.previewZoomPercent / 100;
+    if (previewContainer) {
+        const { x, y } = state.previewPan;
+        previewContainer.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+    }
+}
+
+function resetPreviewPan() {
+    state.previewPan = { x: 0, y: 0 };
+    applyPreviewTransform();
 }
 
 function clearResumeStatusLocally() {
@@ -1457,6 +1474,66 @@ if (previewZoomSlider) {
     previewZoomSlider.addEventListener('input', (event) => {
         applyPreviewZoom(Number(event.target.value));
     });
+}
+
+if (previewCenterButton) {
+    previewCenterButton.addEventListener('click', () => {
+        resetPreviewPan();
+    });
+}
+
+if (previewResetButton) {
+    previewResetButton.addEventListener('click', () => {
+        resetPreviewPan();
+        applyPreviewZoom(100);
+    });
+}
+
+if (previewContainer) {
+    previewContainer.addEventListener('mousedown', (event) => {
+        if (event.button !== 0) {
+            return;
+        }
+        state.isPanning = true;
+        previewContainer.classList.add('panning');
+        state.panStart = {
+            x: event.clientX - state.previewPan.x,
+            y: event.clientY - state.previewPan.y
+        };
+    });
+
+    previewContainer.addEventListener('mousemove', (event) => {
+        if (!state.isPanning) {
+            return;
+        }
+        const scale = state.previewZoomPercent / 100;
+        const nextX = (event.clientX - state.panStart.x);
+        const nextY = (event.clientY - state.panStart.y);
+        state.previewPan = {
+            x: nextX,
+            y: nextY
+        };
+        applyPreviewTransform(scale);
+    });
+
+    const stopPan = () => {
+        state.isPanning = false;
+        previewContainer.classList.remove('panning');
+    };
+
+    previewContainer.addEventListener('mouseup', stopPan);
+    previewContainer.addEventListener('mouseleave', stopPan);
+
+    previewContainer.addEventListener('wheel', (event) => {
+        const isZoomGesture = event.ctrlKey || Math.abs(event.deltaY) > Math.abs(event.deltaX);
+        if (!isZoomGesture) {
+            return;
+        }
+        event.preventDefault();
+        const delta = event.deltaY;
+        const step = delta < 0 ? 10 : -10;
+        applyPreviewZoom(state.previewZoomPercent + step);
+    }, { passive: false });
 }
 
 // Paper size selection handler

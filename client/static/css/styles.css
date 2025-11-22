@@ -249,6 +249,19 @@ body, html {
     width: 180px;
 }
 
+.zoom-control button {
+    border: 1px solid #dcdcdc;
+    background: #f9f9f9;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.zoom-control button:hover {
+    background: #f0f0f0;
+}
+
 rect.plotter-limit {
     fill: none;
     stroke: #4a90e2;
