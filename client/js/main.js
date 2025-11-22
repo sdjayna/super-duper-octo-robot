@@ -1227,22 +1227,20 @@ async function initialize() {
             logDebug('No mediums available from configuration', 'error');
         }
 
-        // Draw once but don't start refresh
-        await applyDrawingControlsState();
-        await draw();
-        await refreshDrawingControlsUI();
         const savedDrawingKey = loadSavedDrawingKey();
         if (savedDrawingKey && select?.querySelector(`option[value="${savedDrawingKey}"]`)) {
             select.value = savedDrawingKey;
             persistSelectedDrawing(savedDrawingKey);
-            await applyDrawingControlsState();
-            await draw();
-            await refreshDrawingControlsUI();
-            refreshLayerSelectUI();
-            document.getElementById('layerSelect').value = 'all';
-            updateLayerVisibility();
-            updatePlotterStatus();
         }
+
+        // Draw once but don't start refresh
+        await applyDrawingControlsState();
+        await draw();
+        await refreshDrawingControlsUI();
+        refreshLayerSelectUI();
+        document.getElementById('layerSelect').value = 'all';
+        updateLayerVisibility();
+        updatePlotterStatus();
         logDebug('Initial draw complete. Auto-refresh is off.');
     } catch (error) {
         console.error('Initialization error:', error);
