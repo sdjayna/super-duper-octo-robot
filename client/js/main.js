@@ -17,6 +17,11 @@ function setPreviewControlsDisabled(disabled) {
     document.querySelectorAll(PREVIEW_CONTROL_SELECTOR).forEach(control => {
         control.disabled = disabled;
     });
+    document.body.classList.toggle('busy', disabled);
+    const htmlEl = document.documentElement;
+    if (htmlEl) {
+        htmlEl.classList.toggle('busy', disabled);
+    }
 }
 
 function handlePlotReady(result) {
@@ -199,7 +204,8 @@ const previewController = createPreviewController({
     select,
     logDebug,
     marginUtils,
-    state
+    state,
+    setPreviewControlsDisabled
 });
 
 const {

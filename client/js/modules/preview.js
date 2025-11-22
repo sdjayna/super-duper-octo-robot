@@ -7,7 +7,8 @@ export function createPreviewController({
     select,
     logDebug,
     marginUtils,
-    state
+    state,
+    setPreviewControlsDisabled = () => {}
 }) {
     const { getMaxMargin, clampMargin, resolveMargin } = marginUtils;
     let refreshInterval = null;
@@ -15,6 +16,7 @@ export function createPreviewController({
 
     async function draw() {
         const requestId = ++drawRequestId;
+        setPreviewControlsDisabled(true);
         try {
             logDebug('Reloading modules...');
             const { generateSVG } = await import('../app.js?v=' + Date.now());
@@ -74,6 +76,8 @@ export function createPreviewController({
         } catch (error) {
             console.error('Error:', error);
             logDebug('Error generating SVG: ' + error.message, 'error');
+        } finally {
+            setPreviewControlsDisabled(false);
         }
     }
 

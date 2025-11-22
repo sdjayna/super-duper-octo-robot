@@ -472,8 +472,8 @@ function offsetPolygonInward(points, inset) {
         const dot = v1.x * v2.x + v1.y * v2.y;
         const clampedDot = Math.min(Math.max(dot, -1), 1);
         const angle = Math.acos(clampedDot);
-        if (angle < Math.PI / 9) {
-            const blend = 0.5;
+        if (angle < Math.PI / 8) {
+            const blend = 0.4;
             candidate = {
                 x: current.x + (candidate.x - current.x) * blend,
                 y: current.y + (candidate.y - current.y) * blend
@@ -569,8 +569,9 @@ export function generatePolygonContourHatch(polygonPoints, spacing = 2.5, option
     if (!Number.isFinite(minEdge) || minEdge < EPSILON) {
         return includeBoundary ? polygon : [];
     }
-    const minInset = Math.max(baseStep * 0.5, (options.strokeWidth || 0.4) * 0.75);
-    const maxInset = Math.max(Math.min(minEdge * 0.3, inradius * 0.8, baseStep * 2), baseStep * 0.4);
+    const strokeWidth = Number.isFinite(options.strokeWidth) ? options.strokeWidth : 0.4;
+    const minInset = Math.max(baseStep * 0.6, strokeWidth * 1.1, spacing * 0.4);
+    const maxInset = Math.max(Math.min(minEdge * 0.3, inradius * 0.8, baseStep * 1.6), baseStep * 0.4);
     const path = [];
     if (includeBoundary) {
         const boundary = polygon.slice(0, -1);
@@ -580,7 +581,7 @@ export function generatePolygonContourHatch(polygonPoints, spacing = 2.5, option
         }
     }
     let current = open;
-    let currentInset = Math.max(insetStart + (options.strokeWidth || 0.4), minInset);
+    let currentInset = Math.max(insetStart + strokeWidth * 1.25, minInset);
     let loops = 0;
     const maxLoops = 400;
 
@@ -600,10 +601,8 @@ export function generatePolygonContourHatch(polygonPoints, spacing = 2.5, option
         if (outside || crossesBoundary) {
             break;
         }
-        const startIndex = findNearestIndex(insetLoop, path[path.length - 1] || insetLoop[0]);
-        const rotated = rotateArray(insetLoop, startIndex);
-        rotated.forEach(point => pushUniquePoint(path, point));
-        pushUniquePoint(path, rotated[0]);
+        insetLoop.forEach(point => pushUniquePoint(path, point));
+        pushUniquePoint(path, insetLoop[0]);
 
         current = insetLoop;
         currentInset = Math.max(minInset, Math.min(step, maxInset));

@@ -89,4 +89,53 @@ describe('generatePolygonContourHatch', () => {
         const hitsCorner = withBoundary.some(point => Math.abs(point.x) < 1e-6 && Math.abs(point.y) < 1e-6);
         expect(hitsCorner).toBe(true);
     });
+
+    it('respects inset when filling a rectangle', () => {
+        const polygon = rectToPolygon({ x: 0, y: 0, width: 20, height: 10 });
+        const spacing = 2;
+        const inset = 1;
+        const path = generatePolygonContourHatch(polygon, spacing, { inset, includeBoundary: false, strokeWidth: 0.5 });
+        const minX = Math.min(...path.map(point => point.x));
+        const minY = Math.min(...path.map(point => point.y));
+        const maxX = Math.max(...path.map(point => point.x));
+        const maxY = Math.max(...path.map(point => point.y));
+        expect(minX).toBeGreaterThanOrEqual(1.1);
+        expect(minY).toBeGreaterThanOrEqual(1.1);
+        expect(maxX).toBeLessThanOrEqual(18.9);
+        expect(maxY).toBeLessThanOrEqual(8.9);
+    });
+});
+
+describe('scanline and serpentine respect spacing and inset', () => {
+    it('scanline applies inset and spacing', () => {
+        const polygon = rectToPolygon({ x: 0, y: 0, width: 20, height: 10 });
+        const spacing = 2;
+        const inset = 1;
+        const path = generatePolygonScanlineHatch(polygon, spacing, { inset, includeBoundary: false });
+        const yValues = Array.from(new Set(path.map(point => point.y))).sort((a, b) => a - b);
+        expect(yValues[0]).toBeCloseTo(inset, 5);
+        expect(yValues[yValues.length - 1]).toBeCloseTo(10 - inset, 5);
+        const steps = [];
+        for (let i = 1; i < yValues.length; i++) {
+            steps.push(yValues[i] - yValues[i - 1]);
+        }
+        const avgStep = steps.reduce((a, b) => a + b, 0) / steps.length;
+        expect(avgStep).toBeCloseTo(spacing, 0);
+    });
+
+    it('serpentine applies inset and spacing after rotation', () => {
+        const polygon = rectToPolygon({ x: 0, y: 0, width: 20, height: 12 });
+        const spacing = 1.5;
+        const inset = 0.5;
+        const path = generatePolygonSerpentineHatch(polygon, spacing, { inset, includeBoundary: false });
+        const xValues = Array.from(new Set(path.map(point => point.x))).sort((a, b) => a - b);
+        expect(xValues[0]).toBeCloseTo(inset, 5);
+        expect(xValues[xValues.length - 1]).toBeCloseTo(20 - inset, 5);
+        const steps = [];
+        for (let i = 1; i < xValues.length; i++) {
+            steps.push(xValues[i] - xValues[i - 1]);
+        }
+        const avgStep = steps.reduce((a, b) => a + b, 0) / steps.length;
+        expect(avgStep).toBeCloseTo(spacing, 1);
+    });
 });
