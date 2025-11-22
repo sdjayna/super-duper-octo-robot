@@ -584,6 +584,7 @@ export function generatePolygonContourHatch(polygonPoints, spacing = 2.5, option
     let currentInset = Math.max(insetStart + strokeWidth * 1.25, minInset);
     let loops = 0;
     const maxLoops = 400;
+    const rings = [];
 
     while (loops < maxLoops) {
         const step = Math.min(currentInset, maxInset);
@@ -601,22 +602,34 @@ export function generatePolygonContourHatch(polygonPoints, spacing = 2.5, option
         if (outside || crossesBoundary) {
             break;
         }
-        insetLoop.forEach(point => pushUniquePoint(path, point));
-        pushUniquePoint(path, insetLoop[0]);
-
-        if (options.debugBoundary) {
-            const debugPath = [];
-            insetLoop.forEach(point => pushUniquePoint(debugPath, point));
-            pushUniquePoint(debugPath, debugPath[0]);
-            path.debugBoundary = debugPath;
-        }
+        rings.push(insetLoop);
 
         current = insetLoop;
         currentInset = Math.max(minInset, Math.min(step, maxInset));
         loops += 1;
     }
 
-    return path;
+    let combined = [...path];
+    let previousRing = null;
+
+    rings.forEach((ring, ringIndex) => {
+        if (ring.length < 2) {
+            return;
+        }
+        const startIndex = ringIndex === 0 ? 0 : 0;
+        const rotated = rotateArray(ring, startIndex);
+        if (previousRing) {
+            const attachIndex = Math.min(startIndex, previousRing.length - 1);
+            const bridgeStart = previousRing[attachIndex];
+            const bridgeEnd = rotated[0];
+            pushUniquePoint(combined, bridgeStart);
+            pushUniquePoint(combined, bridgeEnd);
+        }
+        rotated.forEach(point => pushUniquePoint(combined, point));
+        previousRing = rotated;
+    });
+
+    return combined;
 }
 
 export function rectToPolygon(rect) {

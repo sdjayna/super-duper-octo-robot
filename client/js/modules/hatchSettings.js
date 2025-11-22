@@ -83,7 +83,6 @@ export function applyHatchSettingsToConfig(drawingConfig) {
     drawingConfig.line.hatchInset = hatchSettings.hatchInset;
     drawingConfig.line.includeBoundary = hatchSettings.includeBoundary;
     drawingConfig.line.spacing = hatchSettings.hatchSpacing;
-    drawingConfig.line.debugBoundary = hatchSettings.debugBoundary;
 }
 
 function formatMm(value) {
@@ -99,7 +98,6 @@ export function initializeHatchControls(elements = {}, onChange = () => {}) {
         insetSlider,
         insetValueLabel,
         boundaryCheckbox,
-        debugBoundaryCheckbox,
         linkCheckbox
     } = elements;
 
@@ -183,14 +181,6 @@ export function initializeHatchControls(elements = {}, onChange = () => {}) {
         boundaryCheckbox.checked = hatchSettings.includeBoundary;
         boundaryCheckbox.addEventListener('change', async (event) => {
             updateSettings({ includeBoundary: event.target.checked });
-            await notifyChange();
-        });
-    }
-
-    if (debugBoundaryCheckbox) {
-        debugBoundaryCheckbox.checked = hatchSettings.debugBoundary;
-        debugBoundaryCheckbox.addEventListener('change', async (event) => {
-            updateSettings({ debugBoundary: event.target.checked });
             await notifyChange();
         });
     }

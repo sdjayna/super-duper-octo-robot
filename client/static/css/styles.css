@@ -57,6 +57,7 @@ body.busy * {
     display: flex;
     height: 100vh;
     justify-content: center;
+    align-items: stretch;
 }
 
 .canvas-area {
@@ -65,19 +66,22 @@ body.busy * {
     align-items: center;
     justify-content: center;
     padding: 20px;
-    min-width: min-content;
+    min-width: 200px;
     margin: 0 auto;
-    flex: 1;
+    flex: 1 1 0;
     position: relative;
+    overflow: auto;
 }
 
 .debug-panel {
-    flex: 0 0 500px;
+    flex: 0 0 520px;
+    min-width: 420px;
+    max-width: 540px;
     background: white;
     border-left: 1px solid #ccc;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow-y: auto;
     height: 100vh;
 }
 

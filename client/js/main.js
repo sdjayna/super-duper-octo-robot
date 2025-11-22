@@ -81,7 +81,6 @@ const hatchSpacingValueLabel = document.getElementById('hatchSpacingValue');
 const hatchInsetControl = document.getElementById('hatchInsetControl');
 const hatchInsetValueLabel = document.getElementById('hatchInsetValue');
 const hatchBoundaryControl = document.getElementById('hatchBoundaryControl');
-const hatchDebugBoundaryControl = document.getElementById('hatchDebugBoundaryControl');
 const hatchLinkControl = document.getElementById('hatchLinkControl');
 const resumeButton = document.getElementById('plotterResumePlot');
 const maxTravelSlider = document.getElementById('maxTravelPerLayer');
@@ -147,7 +146,7 @@ function applyResumeStatus(status = {}) {
 }
 
 function applyPreviewZoom(percent) {
-    const clamped = Math.min(Math.max(Math.round(percent / 10) * 10, 10), 400);
+    const clamped = Math.min(Math.max(Math.round(percent / 10) * 10, 10), 1000);
     state.previewZoomPercent = clamped;
     const scale = clamped / 100;
     applyPreviewTransform(scale);
@@ -298,7 +297,6 @@ initializeHatchControls({
     insetSlider: hatchInsetControl,
     insetValueLabel: hatchInsetValueLabel,
     boundaryCheckbox: hatchBoundaryControl,
-    debugBoundaryCheckbox: hatchDebugBoundaryControl,
     linkCheckbox: hatchLinkControl
 }, handleGlobalHatchChanged);
 
@@ -308,8 +306,7 @@ initializeHatchControls({
     spacingValueLabel: hatchSpacingValueLabel,
     insetSlider: hatchInsetControl,
     insetValueLabel: hatchInsetValueLabel,
-    boundaryCheckbox: hatchBoundaryControl,
-    debugBoundaryCheckbox: hatchDebugBoundaryControl
+    boundaryCheckbox: hatchBoundaryControl
 }, async () => {
     await draw();
     refreshLayerSelectUI();
