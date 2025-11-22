@@ -462,7 +462,7 @@ function offsetPolygonInward(points, inset) {
             };
         } else {
             const dist = Math.hypot(candidate.x - current.x, candidate.y - current.y);
-            if (!Number.isFinite(dist) || dist > inset * 4) {
+            if (!Number.isFinite(dist) || dist > inset * 2) {
                 candidate = {
                     x: (p1.x + p2.x) / 2,
                     y: (p1.y + p2.y) / 2
@@ -529,6 +529,7 @@ export function generatePolygonContourHatch(polygonPoints, spacing = 2.5, option
     if (!Number.isFinite(minEdge) || minEdge < EPSILON) {
         return includeBoundary ? polygon : [];
     }
+    const minInset = Math.max(baseStep * 0.5, (options.strokeWidth || 0.4) * 0.75);
     const maxInset = Math.max(Math.min(minEdge * 0.45, inradius * 0.9, baseStep * 2), baseStep * 0.4);
     const path = [];
     if (includeBoundary) {
@@ -539,7 +540,7 @@ export function generatePolygonContourHatch(polygonPoints, spacing = 2.5, option
         }
     }
     let current = open;
-    let currentInset = insetStart;
+    let currentInset = Math.max(insetStart, minInset);
     let loops = 0;
     const maxLoops = 400;
 
@@ -553,13 +554,18 @@ export function generatePolygonContourHatch(polygonPoints, spacing = 2.5, option
         if (loopArea < EPSILON) {
             break;
         }
+        // Reject rings that escape the original polygon
+        const outside = insetLoop.some(point => !isPointInsidePolygon(point, polygon));
+        if (outside) {
+            break;
+        }
         const startIndex = findNearestIndex(insetLoop, path[path.length - 1] || insetLoop[0]);
         const rotated = rotateArray(insetLoop, startIndex);
         rotated.forEach(point => pushUniquePoint(path, point));
         pushUniquePoint(path, rotated[0]);
 
         current = insetLoop;
-        currentInset = Math.max(baseStep * 0.5, Math.min(step, maxInset));
+        currentInset = Math.max(minInset, Math.min(step, maxInset));
         loops += 1;
     }
 
