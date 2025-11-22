@@ -257,6 +257,14 @@ rect.plotter-limit {
     pointer-events: none;
 }
 
+#svgContainer.panning {
+    cursor: grabbing;
+}
+
+#svgContainer:not(.panning) {
+    cursor: grab;
+}
+
 .paper-description {
     font-size: 11px;
     color: #555;
