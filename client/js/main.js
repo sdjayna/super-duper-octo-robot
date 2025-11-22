@@ -80,6 +80,8 @@ const hatchLinkControl = document.getElementById('hatchLinkControl');
 const resumeButton = document.getElementById('plotterResumePlot');
 const maxTravelSlider = document.getElementById('maxTravelPerLayer');
 const maxTravelValueLabel = document.getElementById('maxTravelPerLayerValue');
+const previewZoomSlider = document.getElementById('previewZoomSlider');
+const previewZoomValue = document.getElementById('previewZoomValue');
 
 const state = {
     paperConfig: null,
@@ -101,7 +103,8 @@ const state = {
     warnIfPaperExceedsPlotter: null,
     disabledColorsByMedium: loadDisabledColorPrefs(),
     maxTravelPerLayerMeters: null,
-    activeLayerColorNames: new Set()
+    activeLayerColorNames: new Set(),
+    previewZoomPercent: 100
 };
 
 state.warnIfPaperExceedsPlotter = () => warnIfPaperExceedsPlotter(state, state.currentPaper);
@@ -129,6 +132,21 @@ function applyResumeStatus(status = {}) {
         layerLabel: status.layerLabel ?? null
     };
     updateResumeButtonState();
+}
+
+function applyPreviewZoom(percent) {
+    const clamped = Math.min(Math.max(Math.round(percent / 10) * 10, 10), 400);
+    state.previewZoomPercent = clamped;
+    const scale = clamped / 100;
+    if (container) {
+        container.style.transform = `scale(${scale})`;
+    }
+    if (previewZoomSlider) {
+        previewZoomSlider.value = clamped;
+    }
+    if (previewZoomValue) {
+        previewZoomValue.textContent = `${clamped}%`;
+    }
 }
 
 function clearResumeStatusLocally() {
@@ -177,6 +195,8 @@ const {
     updateLayerVisibility,
     populateLayerSelect
 } = previewController;
+
+applyPreviewZoom(state.previewZoomPercent);
 
 let colorUtilsModulePromise = null;
 let drawingsModulePromise = null;
@@ -1430,6 +1450,12 @@ if (maxTravelSlider) {
         } else {
             logDebug(`Layers will now split once travel exceeds ${formatTravelMeters(state.maxTravelPerLayerMeters)}`);
         }
+    });
+}
+
+if (previewZoomSlider) {
+    previewZoomSlider.addEventListener('input', (event) => {
+        applyPreviewZoom(Number(event.target.value));
     });
 }
 
