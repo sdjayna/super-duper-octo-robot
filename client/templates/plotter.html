@@ -12,12 +12,17 @@
         <button id="toggleDebug" title="Show/hide control panel">Hide</button>
         <div class="canvas-area">
             <div id="svgContainer"></div>
+            <div id="previewOverlay" aria-live="polite" hidden>
+                <div class="spinner"></div>
+                <span>Generating preview…</span>
+            </div>
             <div class="zoom-control" aria-label="Preview zoom control">
                 <label for="previewZoomSlider">Zoom</label>
                 <input type="range" id="previewZoomSlider" min="10" max="1000" step="10" value="100">
                 <span id="previewZoomValue">100%</span>
                 <button id="previewCenter" type="button" aria-label="Center preview">Center</button>
                 <button id="previewReset" type="button" aria-label="Reset zoom and center">Reset</button>
+                <button id="previewFit" type="button" aria-label="Fit to view">Fit</button>
             </div>
         </div>
         <div class="debug-panel">

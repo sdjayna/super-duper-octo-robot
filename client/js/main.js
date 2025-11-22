@@ -17,10 +17,8 @@ function setPreviewControlsDisabled(disabled) {
     document.querySelectorAll(PREVIEW_CONTROL_SELECTOR).forEach(control => {
         control.disabled = disabled;
     });
-    document.body.classList.toggle('busy', disabled);
-    const htmlEl = document.documentElement;
-    if (htmlEl) {
-        htmlEl.classList.toggle('busy', disabled);
+    if (previewOverlay) {
+        previewOverlay.hidden = !disabled;
     }
 }
 
@@ -90,6 +88,9 @@ const previewZoomValue = document.getElementById('previewZoomValue');
 const previewContainer = document.getElementById('svgContainer');
 const previewCenterButton = document.getElementById('previewCenter');
 const previewResetButton = document.getElementById('previewReset');
+const previewFitButton = document.getElementById('previewFit');
+const previewOverlay = document.getElementById('previewOverlay');
+const previewZoomBar = document.querySelector('.zoom-control');
 
 const state = {
     paperConfig: null,
@@ -1492,6 +1493,27 @@ if (previewResetButton) {
     previewResetButton.addEventListener('click', () => {
         resetPreviewPan();
         applyPreviewZoom(100);
+    });
+}
+
+if (previewFitButton) {
+    previewFitButton.addEventListener('click', () => {
+        resetPreviewPan();
+        const canvasArea = document.querySelector('.canvas-area');
+        const containerRect = canvasArea?.getBoundingClientRect?.();
+        const svg = container?.querySelector?.('svg');
+        if (!svg || !containerRect?.width || !containerRect?.height) {
+            applyPreviewZoom(100);
+            return;
+        }
+        const svgRect = svg.getBoundingClientRect();
+        const currentPercent = Math.max(10, Math.min(1000, state.previewZoomPercent));
+        const zoomBarHeight = previewZoomBar?.offsetHeight ?? 0;
+        const availableWidth = Math.max(50, containerRect.width);
+        const availableHeight = Math.max(50, containerRect.height - zoomBarHeight);
+        const scaleFactor = Math.min(availableWidth / svgRect.width, availableHeight / svgRect.height);
+        const targetPercent = Math.max(10, Math.min(1000, Math.floor(currentPercent * scaleFactor)));
+        applyPreviewZoom(targetPercent);
     });
 }
 
