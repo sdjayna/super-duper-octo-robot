@@ -469,6 +469,16 @@ function offsetPolygonInward(points, inset) {
                 };
             }
         }
+        const dot = v1.x * v2.x + v1.y * v2.y;
+        const clampedDot = Math.min(Math.max(dot, -1), 1);
+        const angle = Math.acos(clampedDot);
+        if (angle < Math.PI / 12) {
+            const blend = 0.6;
+            candidate = {
+                x: current.x + (candidate.x - current.x) * blend,
+                y: current.y + (candidate.y - current.y) * blend
+            };
+        }
         offsetVertices.push(candidate);
     }
 
@@ -530,7 +540,7 @@ export function generatePolygonContourHatch(polygonPoints, spacing = 2.5, option
         return includeBoundary ? polygon : [];
     }
     const minInset = Math.max(baseStep * 0.5, (options.strokeWidth || 0.4) * 0.75);
-    const maxInset = Math.max(Math.min(minEdge * 0.45, inradius * 0.9, baseStep * 2), baseStep * 0.4);
+    const maxInset = Math.max(Math.min(minEdge * 0.3, inradius * 0.8, baseStep * 2), baseStep * 0.4);
     const path = [];
     if (includeBoundary) {
         const boundary = polygon.slice(0, -1);
