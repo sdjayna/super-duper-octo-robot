@@ -530,7 +530,14 @@ export function generatePolygonContourHatch(polygonPoints, spacing = 2.5, option
         return includeBoundary ? polygon : [];
     }
     const maxInset = Math.max(Math.min(minEdge * 0.45, inradius * 0.9, baseStep * 2), baseStep * 0.4);
-    const path = includeBoundary ? polygon.slice(0, -1) : [];
+    const path = [];
+    if (includeBoundary) {
+        const boundary = polygon.slice(0, -1);
+        boundary.forEach(point => pushUniquePoint(path, point));
+        if (boundary.length) {
+            pushUniquePoint(path, boundary[0]);
+        }
+    }
     let current = open;
     let currentInset = insetStart;
     let loops = 0;
