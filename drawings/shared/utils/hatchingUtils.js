@@ -447,23 +447,29 @@ function offsetPolygonInward(points, inset) {
         const p2 = { x: current.x + n2.x * inset, y: current.y + n2.y * inset };
 
         const denom = (v2.y * v1.x - v2.x * v1.y) || 0;
-        if (Math.abs(denom) < EPSILON) {
-            const midpoint = {
+        let candidate = null;
+        if (Math.abs(denom) >= EPSILON) {
+            const t = ((p2.x - p1.x) * v2.y - (p2.y - p1.y) * v2.x) / denom;
+            candidate = {
+                x: p1.x + v1.x * t,
+                y: p1.y + v1.y * t
+            };
+        }
+        if (!candidate || !Number.isFinite(candidate.x) || !Number.isFinite(candidate.y)) {
+            candidate = {
                 x: (p1.x + p2.x) / 2,
                 y: (p1.y + p2.y) / 2
             };
-            offsetVertices.push(midpoint);
-            continue;
+        } else {
+            const dist = Math.hypot(candidate.x - current.x, candidate.y - current.y);
+            if (!Number.isFinite(dist) || dist > inset * 4) {
+                candidate = {
+                    x: (p1.x + p2.x) / 2,
+                    y: (p1.y + p2.y) / 2
+                };
+            }
         }
-        const t = ((p2.x - p1.x) * v2.y - (p2.y - p1.y) * v2.x) / denom;
-        const intersection = {
-            x: p1.x + v1.x * t,
-            y: p1.y + v1.y * t
-        };
-        if (!Number.isFinite(intersection.x) || !Number.isFinite(intersection.y)) {
-            return null;
-        }
-        offsetVertices.push(intersection);
+        offsetVertices.push(candidate);
     }
 
     return offsetVertices;
@@ -515,10 +521,15 @@ export function generatePolygonContourHatch(polygonPoints, spacing = 2.5, option
         const next = open[(index + 1) % open.length];
         return Math.min(acc, Math.hypot(point.x - next.x, point.y - next.y));
     }, Infinity);
+    const perimeter = open.reduce((acc, point, index) => {
+        const next = open[(index + 1) % open.length];
+        return acc + Math.hypot(point.x - next.x, point.y - next.y);
+    }, 0);
+    const inradius = perimeter > EPSILON ? Math.abs(polygonArea(polygon)) * 0.5 / perimeter : Infinity;
     if (!Number.isFinite(minEdge) || minEdge < EPSILON) {
         return includeBoundary ? polygon : [];
     }
-    const maxInset = Math.max(Math.min(minEdge * 0.5, baseStep * 2), baseStep * 0.5);
+    const maxInset = Math.max(Math.min(minEdge * 0.45, inradius * 0.9, baseStep * 2), baseStep * 0.4);
     const path = includeBoundary ? polygon.slice(0, -1) : [];
     let current = open;
     let currentInset = insetStart;
@@ -541,7 +552,7 @@ export function generatePolygonContourHatch(polygonPoints, spacing = 2.5, option
         pushUniquePoint(path, rotated[0]);
 
         current = insetLoop;
-        currentInset = Math.max(baseStep * 0.5, step);
+        currentInset = Math.max(baseStep * 0.5, Math.min(step, maxInset));
         loops += 1;
     }
 
