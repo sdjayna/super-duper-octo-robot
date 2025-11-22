@@ -398,6 +398,14 @@ rect.plotter-limit {
     align-items: center;
 }
 
+.debug-boundary {
+    stroke: #ff0033;
+    stroke-width: 0.7;
+    stroke-dasharray: 4 3;
+    fill: none;
+    pointer-events: none;
+}
+
 .control-section.collapsible {
     padding-bottom: 12px;
 }

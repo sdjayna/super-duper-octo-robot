@@ -604,6 +604,13 @@ export function generatePolygonContourHatch(polygonPoints, spacing = 2.5, option
         insetLoop.forEach(point => pushUniquePoint(path, point));
         pushUniquePoint(path, insetLoop[0]);
 
+        if (options.debugBoundary) {
+            const debugPath = [];
+            insetLoop.forEach(point => pushUniquePoint(debugPath, point));
+            pushUniquePoint(debugPath, debugPath[0]);
+            path.debugBoundary = debugPath;
+        }
+
         current = insetLoop;
         currentInset = Math.max(minInset, Math.min(step, maxInset));
         loops += 1;

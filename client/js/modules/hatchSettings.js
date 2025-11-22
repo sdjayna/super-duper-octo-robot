@@ -4,7 +4,8 @@ const DEFAULT_SETTINGS = {
     hatchSpacing: 2,
     hatchInset: 2,
     includeBoundary: true,
-    linkSpacingOffset: true
+    linkSpacingOffset: true,
+    debugBoundary: false
 };
 
 let hatchSettings = loadSettings();
@@ -21,6 +22,7 @@ function normalizeSettings(settings, partial = {}) {
     const merged = { ...settings, ...partial };
     merged.hatchSpacing = coerceSpacing(merged.hatchSpacing, settings.hatchSpacing);
     merged.hatchInset = coerceSpacing(merged.hatchInset, settings.hatchInset);
+    merged.debugBoundary = Boolean(merged.debugBoundary);
     if (merged.linkSpacingOffset) {
         let reference = merged.hatchSpacing;
         if (typeof partial.hatchSpacing === 'number') {
@@ -81,6 +83,7 @@ export function applyHatchSettingsToConfig(drawingConfig) {
     drawingConfig.line.hatchInset = hatchSettings.hatchInset;
     drawingConfig.line.includeBoundary = hatchSettings.includeBoundary;
     drawingConfig.line.spacing = hatchSettings.hatchSpacing;
+    drawingConfig.line.debugBoundary = hatchSettings.debugBoundary;
 }
 
 function formatMm(value) {
@@ -96,6 +99,7 @@ export function initializeHatchControls(elements = {}, onChange = () => {}) {
         insetSlider,
         insetValueLabel,
         boundaryCheckbox,
+        debugBoundaryCheckbox,
         linkCheckbox
     } = elements;
 
@@ -179,6 +183,14 @@ export function initializeHatchControls(elements = {}, onChange = () => {}) {
         boundaryCheckbox.checked = hatchSettings.includeBoundary;
         boundaryCheckbox.addEventListener('change', async (event) => {
             updateSettings({ includeBoundary: event.target.checked });
+            await notifyChange();
+        });
+    }
+
+    if (debugBoundaryCheckbox) {
+        debugBoundaryCheckbox.checked = hatchSettings.debugBoundary;
+        debugBoundaryCheckbox.addEventListener('change', async (event) => {
+            updateSettings({ debugBoundary: event.target.checked });
             await notifyChange();
         });
     }
