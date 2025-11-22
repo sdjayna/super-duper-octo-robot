@@ -415,23 +415,58 @@ export function generatePolygonSkeletonHatch(polygonPoints, options = {}) {
     return path;
 }
 
-function insetPolygonTowardsCentroid(points, centroid, distance) {
-    return points.map(point => {
-        const vector = { x: centroid.x - point.x, y: centroid.y - point.y };
-        const length = Math.hypot(vector.x, vector.y);
-        if (length < EPSILON) {
-            return { x: point.x, y: point.y };
+function offsetPolygonInward(points, inset) {
+    const loop = normalizePolygon(points);
+    if (loop.length < 4 || inset <= 0) {
+        return loop.slice(0, -1);
+    }
+    let signedArea = 0;
+    for (let i = 0; i < loop.length - 1; i++) {
+        const current = loop[i];
+        const next = loop[i + 1];
+        signedArea += current.x * next.y - next.x * current.y;
+    }
+    const inwardFactor = signedArea < 0 ? -1 : 1;
+    const offsetVertices = [];
+
+    const openLength = loop.length - 1;
+    for (let i = 0; i < openLength; i++) {
+        const prev = loop[(i - 1 + openLength) % openLength];
+        const current = loop[i];
+        const next = loop[(i + 1) % openLength];
+
+        const v1 = normalizeVector({ x: current.x - prev.x, y: current.y - prev.y });
+        const v2 = normalizeVector({ x: next.x - current.x, y: next.y - current.y });
+        if (!v1 || !v2) {
+            return null;
         }
-        const travel = Math.min(Math.max(length - EPSILON, 0), distance);
-        if (travel <= EPSILON) {
-            return { x: point.x, y: point.y };
+        const n1 = { x: -v1.y * inwardFactor, y: v1.x * inwardFactor };
+        const n2 = { x: -v2.y * inwardFactor, y: v2.x * inwardFactor };
+
+        const p1 = { x: current.x + n1.x * inset, y: current.y + n1.y * inset };
+        const p2 = { x: current.x + n2.x * inset, y: current.y + n2.y * inset };
+
+        const denom = (v2.y * v1.x - v2.x * v1.y) || 0;
+        if (Math.abs(denom) < EPSILON) {
+            const midpoint = {
+                x: (p1.x + p2.x) / 2,
+                y: (p1.y + p2.y) / 2
+            };
+            offsetVertices.push(midpoint);
+            continue;
         }
-        const factor = travel / length;
-        return {
-            x: point.x + vector.x * factor,
-            y: point.y + vector.y * factor
+        const t = ((p2.x - p1.x) * v2.y - (p2.y - p1.y) * v2.x) / denom;
+        const intersection = {
+            x: p1.x + v1.x * t,
+            y: p1.y + v1.y * t
         };
-    });
+        if (!Number.isFinite(intersection.x) || !Number.isFinite(intersection.y)) {
+            return null;
+        }
+        offsetVertices.push(intersection);
+    }
+
+    return offsetVertices;
 }
 
 function findNearestIndex(points, target) {
@@ -474,55 +509,40 @@ export function generatePolygonContourHatch(polygonPoints, spacing = 2.5, option
         return [];
     }
     const includeBoundary = options.includeBoundary !== false;
-    const step = Number.isFinite(spacing) ? Math.max(spacing, 0.1) : 2.5;
-    const insetStart = Number.isFinite(options.inset) ? Math.max(options.inset, 0) : step / 2;
-    const maxRadius = open.reduce(
-        (acc, point) => Math.max(acc, Math.hypot(point.x - centroid.x, point.y - centroid.y)),
-        0
-    );
-    if (maxRadius < EPSILON) {
+    const baseStep = Number.isFinite(spacing) ? Math.max(spacing, 0.1) : 2.5;
+    const insetStart = Number.isFinite(options.inset) ? Math.max(options.inset, 0) : baseStep / 2;
+    const minEdge = open.reduce((acc, point, index) => {
+        const next = open[(index + 1) % open.length];
+        return Math.min(acc, Math.hypot(point.x - next.x, point.y - next.y));
+    }, Infinity);
+    if (!Number.isFinite(minEdge) || minEdge < EPSILON) {
         return includeBoundary ? polygon : [];
     }
-
-    const path = [];
-    let lastPoint = null;
-    let totalInset = insetStart;
-    let previousSignature = null;
+    const maxInset = Math.max(Math.min(minEdge * 0.5, baseStep * 2), baseStep * 0.5);
+    const path = includeBoundary ? polygon.slice(0, -1) : [];
+    let current = open;
+    let currentInset = insetStart;
     let loops = 0;
-    const maxLoops = 300;
+    const maxLoops = 400;
 
-    while (totalInset < maxRadius && loops < maxLoops) {
-        const insetLoop = insetPolygonTowardsCentroid(open, centroid, totalInset);
-        const loopArea = polygonArea(insetLoop);
+    while (loops < maxLoops) {
+        const step = Math.min(currentInset, maxInset);
+        const insetLoop = offsetPolygonInward(current, step);
+        if (!insetLoop || insetLoop.length < 3) {
+            break;
+        }
+        const loopArea = polygonArea([...insetLoop, insetLoop[0]]);
         if (loopArea < EPSILON) {
             break;
         }
-        const closedLoop = [...insetLoop, { ...insetLoop[0] }];
-        const signature = closedLoop.map(point => `${point.x.toFixed(3)},${point.y.toFixed(3)}`).join('|');
-        if (signature === previousSignature) {
-            break;
-        }
-        previousSignature = signature;
-
-        const loopPoints = closedLoop.slice(0, -1);
-        const startIndex = lastPoint ? findNearestIndex(loopPoints, lastPoint) : 0;
-        const rotated = rotateArray(loopPoints, startIndex);
-
+        const startIndex = findNearestIndex(insetLoop, path[path.length - 1] || insetLoop[0]);
+        const rotated = rotateArray(insetLoop, startIndex);
+        rotated.forEach(point => pushUniquePoint(path, point));
         pushUniquePoint(path, rotated[0]);
-        for (let i = 1; i < rotated.length; i++) {
-            pushUniquePoint(path, rotated[i]);
-        }
-        pushUniquePoint(path, rotated[0]);
-        lastPoint = rotated[0];
 
-        totalInset += step;
+        current = insetLoop;
+        currentInset = Math.max(baseStep * 0.5, step);
         loops += 1;
-    }
-
-    if (includeBoundary) {
-        const anchor = path[path.length - 1] || open[0];
-        const nearest = nearestPointOnPolygon(anchor, polygon);
-        appendBoundaryLoop(path, polygon, nearest);
     }
 
     return path;
