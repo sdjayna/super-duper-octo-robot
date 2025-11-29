@@ -361,15 +361,17 @@ Add your own stock by copying one of the entries, tweaking the dimensions, and f
 
 ## Roadmap & Known Issues
 
-This is live code, and we keep the paper cuts documented:
+### Near-term roadmap
 
-- `/plot-progress` currently uses a single-threaded `HTTPServer`; long-lived SSE requests block other endpoints until we move to `ThreadingHTTPServer` or a worker thread.
-- Plot streaming reads `axicli` stderr synchronously; if stderr blocks, stdout stalls and the subprocess can hang. Needs non-blocking IO.
-- Static asset and SVG export endpoints trust path parameters, allowing `../` traversal. We need canonicalization + validation.
-- Auto-refresh in `client/templates/plotter.html` can fire overlapping async `draw()` calls. Guard refreshes with an “in-flight” flag.
-- Python server endpoints (`/plotter`, `/plot-progress`, `/save-svg`) lack automated tests; coverage is on the TODO list.
+- **NextDraw rollout** – ship a dedicated Bantam Tools NextDraw preset in `config/plotters.json`, document the migration path from legacy AxiDraw units, and plumb any new firmware flags into `server/plotter_config.py` as Bantam exposes them.
+- **Paper validation/overlay** – add explicit paper size validation + an optional preview overlay so mismatched config/paper pairs are caught before plotting.
+- **Drawing scaffolder** – provide a CLI (`npm run scaffold:drawing`) that generates boilerplate modules/tests to continue lowering the barrier for new community submissions.
 
-Additional backlog items live in `TODOs.md`.
+### Known issues
+
+- `/plot-progress` still rides on a single-threaded `HTTPServer`; keeping an SSE connection open blocks other requests until we swap in `ThreadingHTTPServer` (or run the SSE loop on a worker thread).
+- The `/drawings/*` static handler does not sanitize `../` sequences, so a carefully crafted path can escape the `drawings/` directory. We need canonicalization + allowlists before tightening the server.
+- Python endpoints (`/plotter`, `/plot-progress`, `/save-svg`) still lack automated coverage; integration tests remain on the TODO list even though most preview/worker issues have been ironed out.
 
 ## Community, Support & Contributions
 
