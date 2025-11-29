@@ -3,6 +3,7 @@
 import { applyPreviewEffects } from '../utils/previewEffects.js';
 import { applyLayerTravelLimit } from '../utils/layerTravelLimiter.js';
 import { createSVG } from '../utils/svgUtils.js';
+import { splitPassesByTravel } from '../utils/passTravelLimiter.js';
 import { isWorkerSafeDrawing } from '../../../drawings/shared/isWorkerSafe.js';
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const WORKER_TIMEOUT_MS = 10000;
@@ -147,7 +148,8 @@ export function createPreviewController({
             } else {
                 const hydrated = hydrateRenderResult({
                     renderResult,
-                    previewColor
+                    previewColor,
+                    maxTravelLimit: state.maxTravelPerLayerMeters
                 });
                 hydratedSvg = hydrated.svg;
                 travelSummary = hydrated.travelSummary;
@@ -340,8 +342,10 @@ function getGeneratorWorker() {
         console.debug('[preview] worker reuse existing instance');
         return generatorWorker;
     }
-    const cacheBust = `?ts=${Date.now()}`;
-    generatorWorker = new Worker(new URL(`../workers/renderGenerator.js${cacheBust}`, import.meta.url), { type: 'module' });
+    const workerUrl = new URL('../workers/renderGenerator.js', import.meta.url);
+    workerUrl.searchParams.set('ts', Date.now().toString());
+    const cacheBust = workerUrl.search;
+    generatorWorker = new Worker(workerUrl, { type: 'module' });
     console.debug('[preview] worker spawned renderGenerator', { cacheBust });
     generatorWorker.addEventListener('message', handleWorkerReadySignal);
     workerReadyPromise = new Promise(resolve => {
@@ -445,7 +449,7 @@ function buildPathData(points = []) {
     }, '').trim();
 }
 
-function hydrateRenderResult({ renderResult, previewColor }) {
+function hydrateRenderResult({ renderResult, previewColor, maxTravelLimit }) {
     const renderContext = {
         paperWidth: renderResult?.svgInfo?.paperWidth,
         paperHeight: renderResult?.svgInfo?.paperHeight,
@@ -455,8 +459,20 @@ function hydrateRenderResult({ renderResult, previewColor }) {
     const svg = createSVG(renderContext);
     svg.setAttribute('preserveAspectRatio', 'none');
     svg.style.backgroundColor = previewColor;
-    rebuildDrawingLayer(svg, renderResult?.passes || []);
-    return { svg, travelSummary: renderResult?.travelSummary, renderContext };
+    const limitValue = Number(maxTravelLimit);
+    const enforceLimit = Number.isFinite(limitValue) && limitValue > 0;
+    const passResult = enforceLimit
+        ? splitPassesByTravel(renderResult?.passes || [], limitValue)
+        : {
+            passes: (renderResult?.passes || []).slice(),
+            limitMeters: renderResult?.travelSummary?.limitMeters ?? null,
+            splitLayers: renderResult?.travelSummary?.splitLayers ?? 0,
+            totalLayers: renderResult?.travelSummary?.totalLayers ?? (renderResult?.passes?.length || 0)
+        };
+    const { passes: processedPasses, ...summary } = passResult;
+    rebuildDrawingLayer(svg, processedPasses);
+    const travelSummary = enforceLimit ? summary : (renderResult?.travelSummary ?? summary);
+    return { svg, travelSummary, renderContext };
 }
 
 async function runRenderGeneratorWorker(payload) {
@@ -1256,7 +1272,8 @@ export const __previewWorkerInternals = {
     runRenderGeneratorWorker,
     waitForWorkerReady,
     resetPreviewWorkerState,
-    WORKER_TIMEOUT_MS
+    WORKER_TIMEOUT_MS,
+    hydrateRenderResult
 };
 
 export const __layerOrderingInternals = {

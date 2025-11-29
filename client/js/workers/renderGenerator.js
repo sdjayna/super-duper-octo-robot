@@ -1,5 +1,6 @@
 import { setClientAdapters, resetClientAdapters } from '../../../drawings/shared/clientAdapters.js';
 import * as dataAdapters from '../../../drawings/shared/dataAdapters.js';
+import { splitPassesByTravel } from '../utils/passTravelLimiter.js';
 
 const workerBootStartedAt = Date.now();
 function workerDebug(level, message, extra = {}) {
@@ -305,7 +306,7 @@ async function renderDrawing(payload, requestId) {
 
     const initialPasses = buildPassesFromData(svg);
     console.debug('[renderGenerator] passes built', { drawingKey, passCount: initialPasses.length });
-    const travelSummary = applyTravelLimitToPasses(initialPasses, maxTravelPerLayerMeters);
+    const travelSummary = splitPassesByTravel(initialPasses, maxTravelPerLayerMeters);
     const passes = travelSummary.passes || initialPasses;
     console.debug('[renderGenerator] travel summary', { drawingKey, travelSummary });
     postProgress({ requestId, drawingKey, stage: 'travel_done', passCount: passes.length });
@@ -384,107 +385,6 @@ function buildPassesFromData(svg) {
     }));
     workerDebug('debug', 'buildPassesFromData complete', { layerCount: passes.length });
     return passes;
-}
-
-function applyTravelLimitToPasses(passes, maxTravelMeters) {
-    const limitMeters = Number(maxTravelMeters);
-    if (!Number.isFinite(limitMeters) || limitMeters <= 0 || !Array.isArray(passes)) {
-        workerDebug('debug', 'travel limit skipped', { limitMeters, passCount: passes?.length || 0 });
-        return {
-            limitMeters: null,
-            splitLayers: 0,
-            totalLayers: passes?.length || 0
-        };
-    }
-    const limitMm = limitMeters * 1000;
-    const rebuilt = [];
-    let splitLayers = 0;
-    workerDebug('debug', 'travel limit apply start', { limitMeters, passCount: passes.length });
-
-    passes.forEach(pass => {
-        const buckets = buildBuckets(pass.paths || [], limitMm);
-        if (!buckets.length) {
-            workerDebug('debug', 'bucket build produced no entries', { baseLabel: pass.baseLabel });
-            return;
-        }
-        if (buckets.length > 1) {
-            splitLayers += 1;
-        }
-        buckets.forEach((bucket, idx) => {
-            rebuilt.push({
-                baseOrder: pass.baseOrder,
-                baseLabel: pass.baseLabel,
-                label: buckets.length > 1 ? `${pass.baseLabel} (pass ${idx + 1}/${buckets.length})` : pass.baseLabel,
-                stroke: pass.stroke,
-                paths: bucket.paths,
-                travelMm: bucket.totalLength
-            });
-        });
-    });
-
-    rebuilt.sort((a, b) => {
-        if (a.baseOrder !== b.baseOrder) {
-            return a.baseOrder - b.baseOrder;
-        }
-        return 0;
-    });
-
-    return {
-        passes: rebuilt,
-        limitMeters,
-        splitLayers,
-        totalLayers: rebuilt.length
-    };
-}
-
-function buildBuckets(paths, limitMm) {
-    if (!limitMm) {
-        const total = totalLength(paths);
-        workerDebug('debug', 'buildBuckets no limit', { totalLength: total });
-        return [{ paths, totalLength: total }];
-    }
-    const buckets = [];
-    let current = [];
-    let travel = 0;
-    paths.forEach(path => {
-        const length = polylineLength(path.points);
-        if (current.length && travel + length > limitMm) {
-            buckets.push({ paths: current, totalLength: travel });
-            workerDebug('debug', 'bucket finalized', { bucketTravelMm: travel, pathCount: current.length });
-            current = [];
-            travel = 0;
-        }
-        current.push(path);
-        travel += length;
-    });
-    if (current.length) {
-        buckets.push({ paths: current, totalLength: travel });
-        workerDebug('debug', 'bucket finalized', { bucketTravelMm: travel, pathCount: current.length });
-    }
-    workerDebug('debug', 'buildBuckets complete', { bucketCount: buckets.length, limitMm });
-    return buckets;
-}
-
-function totalLength(paths) {
-    const total = (paths || []).reduce((sum, path) => sum + polylineLength(path.points), 0);
-    workerDebug('debug', 'totalLength computed', { pathCount: paths?.length || 0, total });
-    return total;
-}
-
-function polylineLength(points = []) {
-    if (!Array.isArray(points)) {
-        workerDebug('warn', 'polylineLength called with non-array');
-        return 0;
-    }
-    let length = 0;
-    for (let i = 1; i < points.length; i += 1) {
-        length += distance(points[i - 1], points[i]);
-    }
-    return length;
-}
-
-function distance(a = {}, b = {}) {
-    return Math.hypot((b.x ?? 0) - (a.x ?? 0), (b.y ?? 0) - (a.y ?? 0));
 }
 
 self.addEventListener('error', () => {
