@@ -153,7 +153,12 @@ export function createPreviewController({
             applyPreviewEffects(hydratedSvg, state.previewProfile);
             updatePlotterLimitOverlay(hydratedSvg, state, hydratedRenderContext);
             container.appendChild(hydratedSvg);
-            const layerCount = (renderResult?.passes || travelSummary?.totalLayers || hydratedSvg.querySelectorAll('g[inkscape\\:groupmode="layer"]').length || 0);
+            const passesFromWorker = Array.isArray(renderResult?.passes) ? renderResult.passes : null;
+            const layerCount = resolveLayerCount({
+                passes: passesFromWorker,
+                travelSummary,
+                svg: hydratedSvg
+            });
             const mode = renderResult?.error ? 'main' : 'worker';
             if (debugLogger) {
                 const elapsed = renderResult?.elapsedMs ? ` in ${Math.round(renderResult.elapsedMs)}ms` : '';
@@ -162,7 +167,7 @@ export function createPreviewController({
                     mode,
                     layerCount,
                     travelSummary,
-                    passes: renderResult?.error ? null : renderResult?.passes,
+                    passes: mode === 'worker' ? passesFromWorker : null,
                     svg: hydratedSvg
                 });
                 if (summaryMessage) {
@@ -1255,4 +1260,17 @@ function sumTravelFromSvg(svg) {
         }
     });
     return samples ? total : null;
+}
+
+function resolveLayerCount({ passes, travelSummary, svg }) {
+    if (Array.isArray(passes) && passes.length) {
+        return passes.length;
+    }
+    if (Number.isFinite(travelSummary?.totalLayers)) {
+        return travelSummary.totalLayers;
+    }
+    if (svg?.querySelectorAll) {
+        return svg.querySelectorAll('g[inkscape\\:groupmode="layer"]').length;
+    }
+    return 0;
 }
