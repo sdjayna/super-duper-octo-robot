@@ -515,22 +515,6 @@ function doesPolygonCross(boundary, candidate) {
     return false;
 }
 
-function findNearestIndex(points, target) {
-    if (!points?.length || !target) {
-        return 0;
-    }
-    let nearest = 0;
-    let distance = Infinity;
-    points.forEach((point, index) => {
-        const d = Math.hypot(point.x - target.x, point.y - target.y);
-        if (d < distance) {
-            distance = d;
-            nearest = index;
-        }
-    });
-    return nearest;
-}
-
 function polygonArea(points) {
     if (!points?.length) {
         return 0;

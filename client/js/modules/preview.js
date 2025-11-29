@@ -1,6 +1,10 @@
+/* global Worker */
 import { applyPreviewEffects } from '../utils/previewEffects.js';
 import { applyLayerTravelLimit } from '../utils/layerTravelLimiter.js';
 const SVG_NS = 'http://www.w3.org/2000/svg';
+const WORKER_TIMEOUT_MS = 12000;
+let renderWorker = null;
+let workerRequestId = 0;
 
 export function createPreviewController({
     container,
@@ -57,15 +61,31 @@ export function createPreviewController({
             svg.setAttribute('preserveAspectRatio', 'none');
             svg.style.backgroundColor = previewColor;
             applyPreviewEffects(svg, state.previewProfile);
-            const layerOrdering = collectLayerOrdering(svg, logDebug);
-            const travelSummary = applyLayerTravelLimit(svg, {
-                maxTravelPerLayerMeters: state.maxTravelPerLayerMeters,
-                orderedLayers: layerOrdering
+            const workerResult = await runWorkerOptimization(svg, {
+                maxTravelPerLayerMeters: state.maxTravelPerLayerMeters
             });
-            if (travelSummary?.splitLayers) {
-                const suffix = travelSummary.splitLayers === 1 ? '' : 's';
-                const limitDisplay = Number(travelSummary.limitMeters ?? 0).toFixed(1);
-                logDebug(`Split ${travelSummary.splitLayers} layer${suffix} to stay under ${limitDisplay} m (now ${travelSummary.totalLayers} layers).`);
+            let travelSummary = null;
+            if (workerResult?.applied) {
+                travelSummary = workerResult.summary;
+                if (travelSummary?.splitLayers) {
+                    const suffix = travelSummary.splitLayers === 1 ? '' : 's';
+                    const limitDisplay = Number(travelSummary.limitMeters ?? 0).toFixed(1);
+                    logDebug(`Split ${travelSummary.splitLayers} layer${suffix} to stay under ${limitDisplay} m (now ${travelSummary.totalLayers} layers).`);
+                }
+                if (Array.isArray(workerResult.warnings)) {
+                    workerResult.warnings.forEach(message => logDebug(message, 'warn'));
+                }
+            } else {
+                const layerOrdering = collectLayerOrdering(svg, logDebug);
+                travelSummary = applyLayerTravelLimit(svg, {
+                    maxTravelPerLayerMeters: state.maxTravelPerLayerMeters,
+                    orderedLayers: layerOrdering
+                });
+                if (travelSummary?.splitLayers) {
+                    const suffix = travelSummary.splitLayers === 1 ? '' : 's';
+                    const limitDisplay = Number(travelSummary.limitMeters ?? 0).toFixed(1);
+                    logDebug(`Split ${travelSummary.splitLayers} layer${suffix} to stay under ${limitDisplay} m (now ${travelSummary.totalLayers} layers).`);
+                }
             }
             updatePlotterLimitOverlay(svg, state, renderContext);
             container.appendChild(svg);
@@ -155,6 +175,154 @@ function applyMarginValue(value) {
         updateMarginControls,
         applyMarginValue
     };
+}
+
+function createRenderWorker() {
+    if (renderWorker) {
+        renderWorker.terminate();
+    }
+    renderWorker = new Worker(new URL('../workers/renderWorker.js', import.meta.url), { type: 'module' });
+    return renderWorker;
+}
+
+function disposeRenderWorker() {
+    if (renderWorker) {
+        renderWorker.terminate();
+        renderWorker = null;
+    }
+}
+
+function serializeLayersForWorker(svg) {
+    const drawingLayer = svg.querySelector('[data-role="drawing-content"]');
+    if (!drawingLayer) {
+        return [];
+    }
+    const groups = Array.from(drawingLayer.children || []).filter(
+        node => node?.getAttribute?.('inkscape:groupmode') === 'layer'
+    );
+    return groups.map((group, index) => {
+        const baseOrderAttr = group.getAttribute('data-layer-order');
+        const baseOrder = Number.isFinite(Number(baseOrderAttr)) ? Number(baseOrderAttr) : index;
+        const paths = Array.from(group.querySelectorAll('path')).map(path => ({
+            d: path.getAttribute('d') || '',
+            strokeWidth: path.getAttribute('stroke-width'),
+            strokeLinecap: path.getAttribute('stroke-linecap'),
+            strokeLinejoin: path.getAttribute('stroke-linejoin'),
+            stroke: path.getAttribute('stroke') || group.getAttribute('stroke') || null
+        }));
+        return {
+            baseOrder,
+            baseLabel: group.getAttribute('data-layer-base') || extractLayerBaseName(group),
+            label: group.getAttribute('inkscape:label') || '',
+            stroke: group.getAttribute('stroke') || null,
+            paths
+        };
+    });
+}
+
+function rebuildDrawingLayer(svg, workerPasses) {
+    const drawingLayer = svg.querySelector('[data-role="drawing-content"]');
+    if (!drawingLayer || !Array.isArray(workerPasses)) {
+        return;
+    }
+    drawingLayer.innerHTML = '';
+    workerPasses.forEach((entry, idx) => {
+        if (!entry?.paths?.length) {
+            return;
+        }
+        const layer = document.createElementNS(SVG_NS, 'g');
+        layer.setAttribute('inkscape:groupmode', 'layer');
+        const label = entry.label || entry.baseLabel || 'Layer';
+        layer.setAttribute('inkscape:label', `${idx}-${label}`);
+        layer.setAttribute('data-layer-order', String(entry.baseOrder ?? idx));
+        layer.setAttribute('data-layer-base', entry.baseLabel || label);
+        if (entry.travelMm > 0) {
+            layer.setAttribute('data-travel-mm', entry.travelMm.toFixed(2));
+        }
+        if (entry.stroke) {
+            layer.setAttribute('stroke', entry.stroke);
+        }
+        entry.paths.forEach(pathData => {
+            const path = document.createElementNS(SVG_NS, 'path');
+            path.setAttribute('d', buildPathData(pathData.points));
+            path.setAttribute('fill', 'none');
+            if (pathData.strokeWidth) {
+                path.setAttribute('stroke-width', String(pathData.strokeWidth));
+            }
+            if (pathData.strokeLinecap) {
+                path.setAttribute('stroke-linecap', pathData.strokeLinecap);
+            }
+            if (pathData.strokeLinejoin) {
+                path.setAttribute('stroke-linejoin', pathData.strokeLinejoin);
+            }
+            if (pathData.stroke) {
+                path.setAttribute('stroke', pathData.stroke);
+            }
+            layer.appendChild(path);
+        });
+        drawingLayer.appendChild(layer);
+    });
+}
+
+function buildPathData(points = []) {
+    if (!points.length) {
+        return '';
+    }
+    return points.reduce((acc, point, index) => {
+        const command = index === 0 ? 'M' : 'L';
+        return `${acc}${command} ${point.x} ${point.y} `;
+    }, '').trim();
+}
+
+function runWorkerOptimization(svg, options = {}) {
+    if (typeof Worker === 'undefined') {
+        return null;
+    }
+    const serializedLayers = serializeLayersForWorker(svg);
+    if (!serializedLayers.length) {
+        return null;
+    }
+    const worker = createRenderWorker();
+    const requestId = ++workerRequestId;
+    const payload = {
+        type: 'optimize',
+        requestId,
+        payload: {
+            layers: serializedLayers,
+            maxTravelPerLayerMeters: options.maxTravelPerLayerMeters
+        }
+    };
+    return new Promise(resolve => {
+        const timeout = setTimeout(() => {
+            disposeRenderWorker();
+            resolve(null);
+        }, WORKER_TIMEOUT_MS);
+        worker.addEventListener('message', event => {
+            const data = event.data || {};
+            if (data.requestId !== requestId || data.type !== 'optimizeResult') {
+                return;
+            }
+            clearTimeout(timeout);
+            if (data.error || !Array.isArray(data.passes)) {
+                disposeRenderWorker();
+                resolve(null);
+                return;
+            }
+            rebuildDrawingLayer(svg, data.passes);
+            disposeRenderWorker();
+            resolve({
+                applied: true,
+                summary: data.summary,
+                warnings: data.summary?.warnings || []
+            });
+        }, { once: true });
+        worker.addEventListener('error', () => {
+            clearTimeout(timeout);
+            disposeRenderWorker();
+            resolve(null);
+        }, { once: true });
+        worker.postMessage(payload);
+    });
 }
 
 function updatePlotterLimitOverlay(svg, state, renderContext) {

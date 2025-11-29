@@ -64,7 +64,7 @@ export function createLayerTravelOptimizer(colorGroups) {
             pathElement
         };
         const state = layerState.get(color) || { entries: [] };
-        const { orientation, placement } = selectOrientation(entry, state.entries);
+        const { placement } = selectOrientation(entry, state.entries);
         const orientedPoints = entry.originalPoints;
         entry.start = orientedPoints[0];
         entry.end = orientedPoints[orientedPoints.length - 1];
