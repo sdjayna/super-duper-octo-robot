@@ -94,4 +94,22 @@ describe('applyLayerTravelLimit', () => {
             .map(node => node.getAttribute('inkscape:label'));
         expect(labels).toEqual(['0-Alpha', '1-Beta']);
     });
+
+    it('keeps split passes grouped by their original base order', () => {
+        const first = createLayer('0-Primary');
+        first.appendChild(createPath('M 0 0 L 0 6000'));
+        const second = createLayer('1-Secondary');
+        second.appendChild(createPath('M 0 0 L 0 500'));
+        drawingLayer.appendChild(first);
+        drawingLayer.appendChild(second);
+
+        applyLayerTravelLimit(svg, { maxTravelPerLayerMeters: 2 });
+        const labels = Array.from(drawingLayer.children).map(layer => layer.getAttribute('inkscape:label'));
+        expect(labels).toEqual([
+            '0-Primary (pass 1/3)',
+            '1-Primary (pass 2/3)',
+            '2-Primary (pass 3/3)',
+            '3-Secondary'
+        ]);
+    });
 });

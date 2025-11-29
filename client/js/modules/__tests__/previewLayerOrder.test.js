@@ -1,3 +1,7 @@
+/**
+ * @vitest-environment jsdom
+ */
+
 import { describe, it, expect } from 'vitest';
 import { __layerOrderingInternals } from '../../modules/preview.js';
 
@@ -5,7 +9,10 @@ const {
     limitSamplePoints,
     getRepresentativePoints,
     orderLayersByDistance,
-    MAX_REPRESENTATIVE_POINTS
+    MAX_REPRESENTATIVE_POINTS,
+    deriveLayerBaseLabel,
+    formatLayerSelectLabel,
+    formatLayerIndex
 } = __layerOrderingInternals;
 
 describe('preview layer ordering helpers', () => {
@@ -52,6 +59,34 @@ describe('preview layer ordering helpers', () => {
         ordered.forEach(entry => {
             const points = getRepresentativePoints(entry);
             expect(points.length).toBeLessThanOrEqual(MAX_REPRESENTATIVE_POINTS);
+        });
+    });
+
+    describe('layer select helpers', () => {
+        it('derives layer base label with attribute override', () => {
+            const element = document.createElement('g');
+            element.setAttribute('data-layer-base', 'Primary');
+            const metadata = { element, label: '0-Secondary (pass 1/3)' };
+            expect(deriveLayerBaseLabel(metadata)).toBe('Primary');
+            element.removeAttribute('data-layer-base');
+            expect(deriveLayerBaseLabel(metadata)).toBe('Secondary');
+        });
+
+        it('formats layer index with padding', () => {
+            expect(formatLayerIndex('0')).toBe('000');
+            expect(formatLayerIndex('7')).toBe('007');
+            expect(formatLayerIndex('42')).toBe('042');
+            expect(formatLayerIndex('alpha')).toBe('alpha');
+        });
+
+        it('builds descriptive select label', () => {
+            const formatted = formatLayerSelectLabel({
+                index: '12',
+                baseLabel: 'Burgundy',
+                position: 2,
+                total: 5
+            });
+            expect(formatted).toBe('012 - Burgundy - (2/5)');
         });
     });
 });

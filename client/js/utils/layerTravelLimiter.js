@@ -39,6 +39,11 @@ export function applyLayerTravelLimit(svg, options = {}) {
         };
     }
 
+    const originalLayerOrder = new Map();
+    originalLayers.forEach((layer, idx) => {
+        originalLayerOrder.set(layer, idx);
+    });
+
     const orderedEntries = Array.isArray(options.orderedLayers)
         ? options.orderedLayers
             .map(entry => entry?.element || entry)
@@ -48,11 +53,14 @@ export function applyLayerTravelLimit(svg, options = {}) {
 
     const rebuiltLayers = [];
     let splitLayers = 0;
-    let fallbackOrder = processLayers.length;
 
-    processLayers.forEach(layer => {
-        const baseOrderValue = Number(layer.getAttribute('data-layer-order'));
-        const baseOrder = Number.isFinite(baseOrderValue) ? baseOrderValue : fallbackOrder++;
+    processLayers.forEach((layer, index) => {
+        const dataOrder = layer.getAttribute('data-layer-order');
+        const baseOrderValue = dataOrder === null ? Number.NaN : Number(dataOrder);
+        const fallbackOrder = originalLayerOrder.get(layer);
+        const baseOrder = Number.isFinite(baseOrderValue) && !Number.isNaN(baseOrderValue)
+            ? baseOrderValue
+            : fallbackOrder ?? index;
         const baseName = layer.getAttribute('data-layer-base') || getLayerBaseName(layer);
         const buckets = buildLayerBuckets(layer, limitMillimeters);
         travelDebug('layer processed', {
@@ -106,7 +114,7 @@ export function applyLayerTravelLimit(svg, options = {}) {
         if (a.baseOrder !== b.baseOrder) {
             return a.baseOrder - b.baseOrder;
         }
-        return a.passIndex - b.passIndex;
+        return (a.passIndex ?? 0) - (b.passIndex ?? 0);
     });
 
     rebuiltLayers.forEach((entry, idx) => {

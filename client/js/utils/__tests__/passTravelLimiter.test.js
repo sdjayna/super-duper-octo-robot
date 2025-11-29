@@ -35,5 +35,12 @@ describe('splitPassesByTravel', () => {
         expect(result.splitLayers).toBe(1);
         expect(result.totalLayers).toBeGreaterThan(1);
         expect(result.passes.every(entry => polylineLength(entry.paths[0].points) <= 1000 + 1e-3)).toBe(true);
+        const labels = result.passes.map(entry => entry.label);
+        expect(labels).toEqual([
+            'Long Layer (pass 1/4)',
+            'Long Layer (pass 2/4)',
+            'Long Layer (pass 3/4)',
+            'Long Layer (pass 4/4)'
+        ]);
     });
 });

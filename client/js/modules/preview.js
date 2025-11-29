@@ -123,6 +123,9 @@ export function createPreviewController({
                     abortSignal
                 })
                 : { error: 'worker_disabled', drawingKey: select.value };
+            let renderElapsedMs = Number.isFinite(renderResult?.elapsedMs)
+                ? Number(renderResult.elapsedMs)
+                : null;
 
             if (abortSignal.aborted) {
                 return;
@@ -139,7 +142,6 @@ export function createPreviewController({
                 logDebug(`Worker render failed for ${workerKey}: ${workerError}${elapsed}. Falling back to main thread.${workerStack}`, 'warn');
                 // Mirror to console for easier DevTools inspection
                 console.warn('[preview] worker render failed', { workerKey, workerError, elapsedMs: renderResult?.elapsedMs, stack: renderResult?.stack });
-                const fallbackStart = performance.now();
                 const fallback = await renderOnMainThread(selectedDrawing, {
                     paper: paperForRender,
                     orientation: state.currentOrientation,
@@ -147,7 +149,10 @@ export function createPreviewController({
                     maxTravelPerLayerMeters: state.maxTravelPerLayerMeters,
                     abortSignal
                 });
-                console.warn('[preview] main-thread fallback render complete', { workerKey, elapsedMs: Math.round(performance.now() - fallbackStart) });
+                renderElapsedMs = Number.isFinite(fallback?.elapsedMs)
+                    ? Number(fallback.elapsedMs)
+                    : renderElapsedMs;
+                console.warn('[preview] main-thread fallback render complete', { workerKey, elapsedMs: renderElapsedMs });
                 hydratedSvg = fallback.svg;
                 travelSummary = fallback.travelSummary;
                 hydratedRenderContext = fallback.renderContext;
@@ -183,14 +188,17 @@ export function createPreviewController({
             });
             const mode = renderResult?.error ? 'main' : 'worker';
             if (debugLogger) {
-                const elapsed = renderResult?.elapsedMs ? ` in ${Math.round(renderResult.elapsedMs)}ms` : '';
+                const elapsed = Number.isFinite(renderElapsedMs)
+                    ? ` in ${formatRenderDuration(renderElapsedMs)}`
+                    : '';
                 debugLogger(`Preview render complete via ${mode}: ${layerCount} layer(s)${elapsed}.`);
                 const summaryMessage = buildPreviewSummary({
                     mode,
                     layerCount,
                     travelSummary,
                     passes: mode === 'worker' ? passesFromWorker : null,
-                    svg: hydratedSvg
+                    svg: hydratedSvg,
+                    elapsedMs: renderElapsedMs
                 });
                 if (summaryMessage) {
                     debugLogger(summaryMessage);
@@ -799,10 +807,27 @@ function populateLayerSelect(container, logDebug, options = {}) {
 
     const previousValue = layerSelect.value;
     layerSelect.innerHTML = '<option value="all">Show All Layers</option>';
-    orderedLayers.forEach(({ index, label }) => {
+    const totalsByBase = new Map();
+    orderedLayers.forEach(entry => {
+        const baseLabel = deriveLayerBaseLabel(entry);
+        entry.baseLabel = baseLabel;
+        totalsByBase.set(baseLabel, (totalsByBase.get(baseLabel) || 0) + 1);
+    });
+
+    const positionsByBase = new Map();
+    orderedLayers.forEach(entry => {
+        const { index } = entry;
         const option = document.createElement('option');
         option.value = index;
-        option.textContent = label;
+        const baseLabel = entry.baseLabel;
+        const nextPosition = (positionsByBase.get(baseLabel) || 0) + 1;
+        positionsByBase.set(baseLabel, nextPosition);
+        option.textContent = formatLayerSelectLabel({
+            index,
+            baseLabel,
+            position: nextPosition,
+            total: totalsByBase.get(baseLabel) || 1
+        });
         layerSelect.appendChild(option);
     });
 
@@ -931,6 +956,42 @@ function computeLayerMetadata(layer) {
         rects,
         element: layer
     };
+}
+
+function deriveLayerBaseLabel(metadata) {
+    const baseAttribute = metadata?.element?.getAttribute?.('data-layer-base');
+    if (baseAttribute) {
+        return baseAttribute;
+    }
+    const rawLabel = metadata?.label || '';
+    const dashIndex = rawLabel.indexOf('-');
+    const suffix = dashIndex >= 0 ? rawLabel.slice(dashIndex + 1) : rawLabel;
+    const trimmed = suffix.trim();
+    const parenIndex = trimmed.indexOf('(');
+    const withoutPass = parenIndex >= 0 ? trimmed.slice(0, parenIndex) : trimmed;
+    return withoutPass.trim() || 'Layer';
+}
+
+function formatLayerSelectLabel({ index, baseLabel, position, total }) {
+    const paddedIndex = formatLayerIndex(index);
+    const cleanBase = baseLabel || 'Layer';
+    const cappedTotal = Number.isFinite(total) && total > 0 ? total : 1;
+    const normalizedPosition = Number.isFinite(position) && position > 0
+        ? Math.min(position, cappedTotal)
+        : 1;
+    return `${paddedIndex} - ${cleanBase} - (${normalizedPosition}/${cappedTotal})`;
+}
+
+function formatLayerIndex(index) {
+    const numeric = Number(index);
+    if (Number.isFinite(numeric)) {
+        return numeric.toString().padStart(3, '0');
+    }
+    const raw = String(index ?? '').trim();
+    if (/^\d+$/.test(raw)) {
+        return raw.padStart(3, '0');
+    }
+    return raw || '000';
 }
 
 function extractSamplePoints(root) {
@@ -1265,7 +1326,9 @@ async function renderOnMainThread(selectedDrawing, options) {
         drawing: selectedDrawing?.name,
         maxTravelPerLayerMeters: options.maxTravelPerLayerMeters
     });
+    const renderStart = performance.now();
     const { svg, renderContext } = await generateSVG(selectedDrawing, options);
+    const elapsedMs = Math.round(performance.now() - renderStart);
     const travelSummary = applyLayerTravelLimit(svg, {
         maxTravelPerLayerMeters: options.maxTravelPerLayerMeters,
         orderedLayers: null
@@ -1275,7 +1338,7 @@ async function renderOnMainThread(selectedDrawing, options) {
         const limitDisplay = Number(travelSummary.limitMeters ?? 0).toFixed(1);
         debugLogger?.(`Preview split ${travelSummary.splitLayers} layer${suffix} to stay under ${limitDisplay} m (now ${travelSummary.totalLayers}).`);
     }
-    return { svg, renderContext, travelSummary };
+    return { svg, renderContext, travelSummary, elapsedMs };
 }
 
 export const __previewWorkerInternals = {
@@ -1292,10 +1355,13 @@ export const __layerOrderingInternals = {
     limitSamplePoints,
     getRepresentativePoints,
     layerDistance,
-    orderLayersByDistance
+    orderLayersByDistance,
+    deriveLayerBaseLabel,
+    formatLayerSelectLabel,
+    formatLayerIndex
 };
 
-function buildPreviewSummary({ mode, layerCount, travelSummary, passes, svg }) {
+function buildPreviewSummary({ mode, layerCount, travelSummary, passes, svg, elapsedMs }) {
     const travelMm = computeTravelMillimeters({ travelSummary, passes, svg });
     const layerSuffix = layerCount === 1 ? '' : 's';
     let message = `Plot summary via ${mode}: ${layerCount} layer${layerSuffix}`;
@@ -1309,7 +1375,22 @@ function buildPreviewSummary({ mode, layerCount, travelSummary, passes, svg }) {
     if (travelSummary?.limitMeters) {
         message += ` (cap ${travelSummary.limitMeters} m)`;
     }
+    if (Number.isFinite(elapsedMs) && elapsedMs >= 0) {
+        message += `. Rendered in ${formatRenderDuration(elapsedMs)}`;
+    }
     return message;
+}
+
+function formatRenderDuration(elapsedMs) {
+    if (!Number.isFinite(elapsedMs) || elapsedMs < 0) {
+        return '';
+    }
+    if (elapsedMs >= 1000) {
+        const seconds = elapsedMs / 1000;
+        const precision = seconds >= 10 ? 1 : 2;
+        return `${seconds.toFixed(precision)} s`;
+    }
+    return `${Math.max(1, Math.round(elapsedMs))} ms`;
 }
 
 function computeTravelMillimeters({ travelSummary, passes, svg }) {

@@ -111,7 +111,8 @@ export function splitPassesByTravel(passes = [], maxTravelMeters) {
                 label: buckets.length > 1 ? `${pass.baseLabel} (pass ${idx + 1}/${buckets.length})` : pass.baseLabel,
                 stroke: pass.stroke,
                 paths: bucket.paths,
-                travelMm: bucket.totalLength
+                travelMm: bucket.totalLength,
+                passIndex: idx
             });
         });
     });
@@ -120,7 +121,7 @@ export function splitPassesByTravel(passes = [], maxTravelMeters) {
         if (a.baseOrder !== b.baseOrder) {
             return a.baseOrder - b.baseOrder;
         }
-        return 0;
+        return (a.passIndex ?? 0) - (b.passIndex ?? 0);
     });
     passDebug('split complete', { rebuiltCount: rebuilt.length, splitLayers });
     return {
