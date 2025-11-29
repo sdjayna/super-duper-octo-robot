@@ -23,7 +23,8 @@ const TRI_LIMITS = {
 export class PhotoTriangleConfig extends SizedDrawingConfig {
     constructor(params = {}) {
         super(params);
-        this.preserveAspectRatio = true;
+        this._matchPhotoAspectRatio = true;
+        this.matchPhotoAspectRatio = params.matchPhotoAspectRatio !== false;
         this.triangleCount = clampInteger(
             params.triangleCount,
             TRI_LIMITS.triangleCount.min,
@@ -61,6 +62,70 @@ export class PhotoTriangleConfig extends SizedDrawingConfig {
             TRI_LIMITS.polygonMargin.default
         );
         this.imageDataUrl = typeof params.imageDataUrl === 'string' ? params.imageDataUrl : '';
+        this.imageAspectRatio = null;
+        this.imageNaturalWidth = null;
+        this.imageNaturalHeight = null;
+        this.imageMetadataSource = null;
+        if (Number.isFinite(params.imageAspectRatio) && params.imageAspectRatio > 0) {
+            this.setImageMetadata({
+                aspectRatio: params.imageAspectRatio,
+                width: params.imageNaturalWidth,
+                height: params.imageNaturalHeight,
+                source: params.imageMetadataSource || this.imageDataUrl || null
+            });
+        }
+    }
+
+    get matchPhotoAspectRatio() {
+        return this._matchPhotoAspectRatio;
+    }
+
+    set matchPhotoAspectRatio(value) {
+        this._matchPhotoAspectRatio = value !== false;
+        this.preserveAspectRatio = this._matchPhotoAspectRatio;
+    }
+
+    setImageMetadata(metadata) {
+        if (!metadata) {
+            this.imageAspectRatio = null;
+            this.imageNaturalWidth = null;
+            this.imageNaturalHeight = null;
+            this.imageMetadataSource = null;
+            return;
+        }
+        const aspect = Number(metadata.aspectRatio);
+        if (!Number.isFinite(aspect) || aspect <= 0) {
+            return;
+        }
+        this.imageAspectRatio = aspect;
+        this.imageNaturalWidth = Number(metadata.width) || null;
+        this.imageNaturalHeight = Number(metadata.height) || null;
+        this.imageMetadataSource = metadata.source || this.imageDataUrl || null;
+    }
+
+    getBounds(context = {}) {
+        if (this.matchPhotoAspectRatio && Number.isFinite(this.imageAspectRatio) && this.imageAspectRatio > 0) {
+            const base = Math.max(Math.min(this.width, this.height), 1);
+            if (this.imageAspectRatio >= 1) {
+                return {
+                    minX: 0,
+                    minY: 0,
+                    width: base * this.imageAspectRatio,
+                    height: base
+                };
+            }
+            return {
+                minX: 0,
+                minY: 0,
+                width: base,
+                height: base / this.imageAspectRatio
+            };
+        }
+        const previousPreserve = this.preserveAspectRatio;
+        this.preserveAspectRatio = false;
+        const bounds = super.getBounds(context);
+        this.preserveAspectRatio = previousPreserve;
+        return bounds;
     }
 }
 
@@ -499,6 +564,15 @@ const photoTriangleControls = [
         emptyLabel: 'No file selected',
         loadedLabel: 'Image loaded',
         description: 'Upload a reference image to convert into triangles'
+    },
+    {
+        id: 'matchPhotoAspectRatio',
+        label: 'Lock Photo Aspect',
+        target: 'drawingData.matchPhotoAspectRatio',
+        inputType: 'checkbox',
+        valueType: 'boolean',
+        default: true,
+        description: 'Preserve the photo proportions; uncheck to stretch artwork to the paper'
     },
     {
         id: 'triangleCount',

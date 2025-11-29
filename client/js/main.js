@@ -8,6 +8,7 @@ import { deriveResumeButtonState } from './modules/resumeButton.js';
 import { resolvePreviewProfile, evaluatePreviewWarnings, resolvePlotterDefaults } from './utils/paperProfile.js';
 import { normalizePaperColor, getPaperColor, getPaperTextureClass, computePlotterWarning } from './utils/paperUtils.js';
 import { filterPaletteByDisabledColors, loadDisabledColorPrefs, saveDisabledColorPrefs } from './utils/paletteUtils.js';
+import { collectLayerColorNames, applyColorUsageHighlight } from './utils/layerColorUsage.js';
 
 window.logDebug = logDebug;
 initLogTabs();
@@ -357,6 +358,70 @@ function readFileAsDataURL(file) {
     });
 }
 
+async function loadImageMetadataFromDataUrl(dataUrl) {
+    if (!dataUrl || typeof Image === 'undefined') {
+        return null;
+    }
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+            const width = img.naturalWidth || img.width;
+            const height = img.naturalHeight || img.height;
+            if (!width || !height) {
+                reject(new Error('Image dimensions unavailable'));
+                return;
+            }
+            resolve({
+                width,
+                height,
+                aspectRatio: width / height
+            });
+        };
+        img.onerror = () => reject(new Error('Failed to load image metadata'));
+        img.src = dataUrl;
+    });
+}
+
+async function ensurePhotoAspectMetadata(drawingConfig, dataUrl) {
+    const drawingData = drawingConfig?.drawingData;
+    if (!drawingData) {
+        return;
+    }
+    if (!dataUrl) {
+        if (typeof drawingData.setImageMetadata === 'function') {
+            drawingData.setImageMetadata(null);
+        } else {
+            drawingData.imageAspectRatio = null;
+            drawingData.imageMetadataSource = null;
+            drawingData.imageNaturalWidth = null;
+            drawingData.imageNaturalHeight = null;
+        }
+        return;
+    }
+    const existingSource = drawingData.imageMetadataSource || drawingData._imageMetaSource;
+    if (existingSource === dataUrl && Number.isFinite(drawingData.imageAspectRatio)) {
+        return;
+    }
+    try {
+        const metadata = await loadImageMetadataFromDataUrl(dataUrl);
+        if (!metadata) {
+            return;
+        }
+        metadata.source = dataUrl;
+        if (typeof drawingData.setImageMetadata === 'function') {
+            drawingData.setImageMetadata(metadata);
+        } else {
+            drawingData.imageAspectRatio = metadata.aspectRatio;
+            drawingData.imageNaturalWidth = metadata.width;
+            drawingData.imageNaturalHeight = metadata.height;
+            drawingData.imageMetadataSource = dataUrl;
+            drawingData._imageMetaSource = dataUrl;
+        }
+    } catch (error) {
+        logDebug(`Unable to inspect photo dimensions: ${error.message}`, 'warn');
+    }
+}
+
 function loadSavedDrawingKey() {
     if (typeof window === 'undefined' || !window.localStorage) {
         return null;
@@ -448,35 +513,9 @@ function syncMediumColorSelections(mediumId) {
     });
 }
 
-function extractLayerColorName(labelText = '') {
-    if (typeof labelText !== 'string') {
-        return '';
-    }
-    const dashIndex = labelText.indexOf('-');
-    let name = dashIndex >= 0 ? labelText.slice(dashIndex + 1).trim() : labelText.trim();
-    const passIndex = name.indexOf('(pass');
-    if (passIndex !== -1) {
-        name = name.slice(0, passIndex).trim();
-    }
-    return name;
-}
-
 function updateActiveLayerColorsFromSelect() {
     const layerSelect = document.getElementById('layerSelect');
-    if (!layerSelect) {
-        return;
-    }
-    const names = new Set();
-    Array.from(layerSelect.options).forEach(option => {
-        if (!option || option.value === 'all') {
-            return;
-        }
-        const extracted = extractLayerColorName(option.textContent || '');
-        if (extracted) {
-            names.add(extracted);
-        }
-    });
-    state.activeLayerColorNames = names;
+    state.activeLayerColorNames = collectLayerColorNames(layerSelect);
 }
 
 function updateMediumColorUsageHighlight() {
@@ -485,11 +524,7 @@ function updateMediumColorUsageHighlight() {
     }
     const isDisabled = mediumColorList.dataset.disabled === 'true';
     const activeNames = state.activeLayerColorNames || new Set();
-    mediumColorList.querySelectorAll('label').forEach(label => {
-        const colorName = label.dataset.colorName;
-        const shouldHighlight = !isDisabled && colorName && activeNames.has(colorName);
-        label.classList.toggle('is-active', Boolean(shouldHighlight));
-    });
+    applyColorUsageHighlight(mediumColorList, activeNames, { disabled: isDisabled });
 }
 
 function refreshLayerSelectUI() {
@@ -745,7 +780,7 @@ async function getDrawingControlContext() {
     return { drawingKey, drawingConfig, controls };
 }
 
-function applyStoredControlValues(context) {
+async function applyStoredControlValues(context) {
     if (!context) {
         return;
     }
@@ -757,11 +792,15 @@ function applyStoredControlValues(context) {
     if (!saved) {
         return;
     }
-    controls.forEach(control => {
+    for (const control of controls) {
         if (Object.prototype.hasOwnProperty.call(saved, control.id)) {
-            setNestedValue(drawingConfig, control.target, saved[control.id]);
+            const savedValue = saved[control.id];
+            setNestedValue(drawingConfig, control.target, savedValue);
+            if (control.id === 'imageDataUrl') {
+                await ensurePhotoAspectMetadata(drawingConfig, savedValue);
+            }
         }
-    });
+    }
 }
 
 function getControlValue(context, control) {
@@ -786,7 +825,7 @@ function getControlValue(context, control) {
 
 async function applyDrawingControlsState() {
     const context = await getDrawingControlContext();
-    applyStoredControlValues(context);
+    await applyStoredControlValues(context);
     return context;
 }
 
@@ -826,9 +865,12 @@ async function refreshDrawingControlsUI() {
         }
         delete state.drawingControlValues[context.drawingKey];
         persistControlValues();
-        controls.forEach(control => {
+        for (const control of controls) {
             setNestedValue(context.drawingConfig, control.target, control.default);
-        });
+            if (control.id === 'imageDataUrl') {
+                await ensurePhotoAspectMetadata(context.drawingConfig, control.default);
+            }
+        }
         await refreshDrawingControlsUI();
         await requestDraw({ forceRestart: true });
         refreshLayerSelectUI();
@@ -938,6 +980,9 @@ async function handleDrawingControlChange(context, control, rawValue) {
     }
     const normalized = normalizeControlValue(control, rawValue);
     setNestedValue(context.drawingConfig, control.target, normalized);
+    if (control.id === 'imageDataUrl') {
+        await ensurePhotoAspectMetadata(context.drawingConfig, normalized);
+    }
     const storedValues = ensureControlState(context.drawingKey);
     storedValues[control.id] = normalized;
     persistControlValues();

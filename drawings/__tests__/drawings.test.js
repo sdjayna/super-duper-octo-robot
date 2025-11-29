@@ -204,6 +204,24 @@ describe('drawing functions', () => {
         photoTriangleTestUtils.resetImageSamplerFactory();
     });
 
+    it('locks to the uploaded photo aspect ratio when enabled', () => {
+        const config = new PhotoTriangleConfig({ width: 200, height: 150 });
+        config.setImageMetadata({ aspectRatio: 16 / 9, width: 1600, height: 900, source: 'mock' });
+        const bounds = config.getBounds({ paper: { width: 300, height: 200, margin: 5 }, orientation: 'landscape' });
+        expect(bounds.width / bounds.height).toBeCloseTo(16 / 9, 3);
+    });
+
+    it('falls back to paper proportions when aspect locking is disabled', () => {
+        const config = new PhotoTriangleConfig({ width: 200, height: 150, matchPhotoAspectRatio: false });
+        config.setImageMetadata({ aspectRatio: 4 / 3, width: 800, height: 600, source: 'mock' });
+        const paper = { width: 420, height: 297, margin: 10 };
+        const bounds = config.getBounds({ paper, orientation: 'portrait' });
+        const printableWidth = Math.max(paper.width - paper.margin * 2, 1);
+        const printableHeight = Math.max(paper.height - paper.margin * 2, 1);
+        const expectedRatio = Math.min(printableWidth, printableHeight) / Math.max(printableWidth, printableHeight);
+        expect(bounds.width / bounds.height).toBeCloseTo(expectedRatio, 3);
+    });
+
     it('applies hatch styles to Voronoi cells', () => {
         const buildConfig = (style, showEdges = true, cellInset = 0) => createTestDrawingConfig({
             drawingData: {
