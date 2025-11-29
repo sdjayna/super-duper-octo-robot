@@ -219,6 +219,14 @@ const {
     updateLayerVisibility,
     populateLayerSelect
 } = previewController;
+let isInitializing = true;
+
+async function requestDraw(options = {}) {
+    if (isInitializing) {
+        return null;
+    }
+    return draw(options);
+}
 
 applyPreviewZoom(state.previewZoomPercent);
 
@@ -286,7 +294,7 @@ async function handleGlobalHatchChanged() {
     if (context) {
         applyHatchSettingsToConfig(context.drawingConfig);
     }
-    await draw();
+    await requestDraw({ forceRestart: true });
     refreshLayerSelectUI();
     updatePlotterStatus();
 }
@@ -309,7 +317,7 @@ initializeHatchControls({
     insetValueLabel: hatchInsetValueLabel,
     boundaryCheckbox: hatchBoundaryControl
 }, async () => {
-    await draw();
+    await requestDraw({ forceRestart: true });
     refreshLayerSelectUI();
     updatePlotterStatus();
 });
@@ -524,6 +532,24 @@ async function loadPlotterSpecs() {
     }
     state.plotterSpecs = await plotterSpecsPromise;
     return state.plotterSpecs;
+}
+
+function populateDrawingSelectOptions(drawingsMap, selectEl, desiredKey) {
+    if (!selectEl || !drawingsMap) {
+        return null;
+    }
+    const entries = Object.entries(drawingsMap)
+        .sort(([, a], [, b]) => a.name.localeCompare(b.name));
+    selectEl.innerHTML = entries
+        .map(([key, drawing]) => `<option value="${key}">${drawing.name}</option>`)
+        .join('');
+    const target = desiredKey && entries.some(([key]) => key === desiredKey)
+        ? desiredKey
+        : entries[0]?.[0] || null;
+    if (target) {
+        selectEl.value = target;
+    }
+    return target;
 }
 
 function populateMediumSelectOptions(mediumMetadata = {}) {
@@ -801,7 +827,7 @@ async function refreshDrawingControlsUI() {
             setNestedValue(context.drawingConfig, control.target, control.default);
         });
         await refreshDrawingControlsUI();
-        await draw();
+        await requestDraw({ forceRestart: true });
         refreshLayerSelectUI();
         updatePlotterStatus();
     });
@@ -912,7 +938,7 @@ async function handleDrawingControlChange(context, control, rawValue) {
     const storedValues = ensureControlState(context.drawingKey);
     storedValues[control.id] = normalized;
     persistControlValues();
-    await draw();
+    await requestDraw({ forceRestart: true });
     refreshLayerSelectUI();
     updatePlotterStatus();
 }
@@ -1081,7 +1107,7 @@ function toggleRefresh() {
 
 async function updateSvg() {
     stopRefresh();  // Stop auto-refresh
-    await draw();   // Do a single draw
+    await requestDraw({ forceRestart: true });   // Do a single draw
     refreshLayerSelectUI();
     updatePlotterStatus();
     logDebug('Manual SVG update triggered');
@@ -1227,22 +1253,33 @@ async function initialize() {
             logDebug('No mediums available from configuration', 'error');
         }
 
-        // Draw once but don't start refresh
-        await applyDrawingControlsState();
-        await draw();
-        await refreshDrawingControlsUI();
         const savedDrawingKey = loadSavedDrawingKey();
-        if (savedDrawingKey && select?.querySelector(`option[value="${savedDrawingKey}"]`)) {
-            select.value = savedDrawingKey;
-            persistSelectedDrawing(savedDrawingKey);
-            await applyDrawingControlsState();
-            await draw();
-            await refreshDrawingControlsUI();
-            refreshLayerSelectUI();
-            document.getElementById('layerSelect').value = 'all';
-            updateLayerVisibility();
-            updatePlotterStatus();
+        const drawingsModule = await loadDrawingsModule();
+        if (drawingsModule.drawingsReady) {
+            await drawingsModule.drawingsReady;
         }
+        const initialDrawingKey = savedDrawingKey
+            || select?.value
+            || select?.options?.[0]?.value
+            || null;
+        const resolvedDrawingKey = populateDrawingSelectOptions(drawingsModule.drawings, select, initialDrawingKey);
+        const source = savedDrawingKey ? 'saved' : 'default';
+        logDebug(`Startup drawing set to "${resolvedDrawingKey || 'none'}" (${source})`);
+
+        if (resolvedDrawingKey && select) {
+            persistSelectedDrawing(resolvedDrawingKey);
+        } else {
+            logDebug('No initial drawing could be resolved', 'warn');
+        }
+
+        await applyDrawingControlsState();
+        await refreshDrawingControlsUI();
+        isInitializing = false;
+        await draw({ delayMs: 0, forceRestart: false });
+        refreshLayerSelectUI();
+        document.getElementById('layerSelect').value = 'all';
+        updateLayerVisibility();
+        updatePlotterStatus();
         logDebug('Initial draw complete. Auto-refresh is off.');
     } catch (error) {
         console.error('Initialization error:', error);
@@ -1255,7 +1292,7 @@ initialize();
 // Handle drawing selection changes
 select.addEventListener('change', async () => {
     await applyDrawingControlsState();
-    await draw();
+    await requestDraw({ forceRestart: true });
     await refreshDrawingControlsUI();
     refreshLayerSelectUI();
     // Set layer select to "all" when drawing changes
@@ -1295,7 +1332,7 @@ document.getElementById('toggleOrientation').addEventListener('click', toggleOri
 document.getElementById('marginSlider').addEventListener('input', async (e) => {
     if (applyMarginValue(e.target.value)) {
         state.warnIfPaperExceedsPlotter();
-        await draw();
+        await requestDraw({ forceRestart: true });
     }
 });
 
@@ -1467,7 +1504,7 @@ if (maxTravelSlider) {
         if (!updated) {
             return;
         }
-        await draw();
+        await requestDraw({ forceRestart: true });
         refreshLayerSelectUI();
         if (state.maxTravelPerLayerMeters === null) {
             logDebug('Layer travel limit disabled; layers will no longer auto-split.');
@@ -1588,7 +1625,7 @@ document.getElementById('paperSelect').addEventListener('change', async (e) => {
     updatePreviewProfile();
     updatePlotterDefaults();
     state.warnIfPaperExceedsPlotter();
-    await draw();
+    await requestDraw({ forceRestart: true });
 });
 
 // Medium selection handler
@@ -1601,7 +1638,7 @@ if (mediumSelect) {
         const colorUtilsModule = await loadColorUtilsModule();
         await applyMediumSettings(medium, colorUtilsModule, { applyHatchDefaults: true });
         populateMediumColorSelect(medium, colorUtilsModule.mediumMetadata);
-        await draw();
+        await requestDraw({ forceRestart: true });
         refreshLayerSelectUI();
         logDebug(`Updated drawings with ${medium} settings`);
     });
@@ -1640,7 +1677,7 @@ if (mediumColorList) {
         }
         persistDisabledColorsToStorage();
         await applyMediumSettings(mediumId, colorUtilsModule, { applyHatchDefaults: false });
-        await draw();
+        await requestDraw({ forceRestart: true });
         refreshLayerSelectUI();
         logDebug(`Updated disabled colors for ${mediumInfo?.name || mediumId}`);
     });

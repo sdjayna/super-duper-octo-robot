@@ -4,9 +4,14 @@ import { applyPreviewEffects } from '../utils/previewEffects.js';
 import { applyLayerTravelLimit } from '../utils/layerTravelLimiter.js';
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const WORKER_TIMEOUT_MS = 12000;
+const MAX_PREVIEW_LAYERS = 400;
+const TARGET_PREVIEW_LAYERS = 150;
 let renderWorker = null;
 let workerRequestId = 0;
 let activeAbortController = null;
+let debugLogger = null;
+let isDrawing = false;
+let restartRequested = false;
 
 export function createPreviewController({
     container,
@@ -16,19 +21,29 @@ export function createPreviewController({
     state,
     setPreviewControlsDisabled = () => {}
 }) {
+    debugLogger = logDebug;
     const { getMaxMargin, clampMargin, resolveMargin } = marginUtils;
     let refreshInterval = null;
     let drawRequestId = 0;
 
-    async function draw() {
+    async function executeDraw(options = {}) {
+        const forceRestart = options.forceRestart !== false;
+        if (isDrawing && !forceRestart) {
+            restartRequested = true;
+            if (debugLogger) {
+                debugLogger('Render already running; queued another pass', 'warn');
+            }
+            return;
+        }
         cancelActiveDraw('restart');
+        isDrawing = true;
         const abortController = new AbortController();
         activeAbortController = abortController;
         const abortSignal = abortController.signal;
         const requestId = ++drawRequestId;
         setPreviewControlsDisabled(true);
         try {
-            logDebug('Reloading modules...');
+            logDebug('Loading drawing modules and presets…');
             const { generateSVG } = await import('../app.js?v=' + Date.now());
             const { drawings, drawingsReady } = await import('../drawings.js?v=' + Date.now());
             await drawingsReady;
@@ -39,6 +54,10 @@ export function createPreviewController({
             }
 
             const selectedDrawing = drawings[select.value];
+            if (!selectedDrawing && debugLogger) {
+                debugLogger(`Selected drawing key "${select.value}" missing. Keys loaded: ${Object.keys(drawings).slice(0, 5).join(', ')}`, 'error');
+                return;
+            }
             logDebug(`Generating drawing: ${selectedDrawing.name}`);
             const currentLayer = document.getElementById('layerSelect').value;
             updateOrientationButton(state.currentOrientation);
@@ -85,7 +104,7 @@ export function createPreviewController({
                 if (travelSummary?.splitLayers) {
                     const suffix = travelSummary.splitLayers === 1 ? '' : 's';
                     const limitDisplay = Number(travelSummary.limitMeters ?? 0).toFixed(1);
-                    logDebug(`Split ${travelSummary.splitLayers} layer${suffix} to stay under ${limitDisplay} m (now ${travelSummary.totalLayers} layers).`);
+                    logDebug(`Preview split ${travelSummary.splitLayers} layer${suffix} to stay under ${limitDisplay} m (now ${travelSummary.totalLayers}).`);
                 }
                 if (Array.isArray(workerResult.warnings)) {
                     workerResult.warnings.forEach(message => logDebug(message, 'warn'));
@@ -99,8 +118,12 @@ export function createPreviewController({
                 if (travelSummary?.splitLayers) {
                     const suffix = travelSummary.splitLayers === 1 ? '' : 's';
                     const limitDisplay = Number(travelSummary.limitMeters ?? 0).toFixed(1);
-                    logDebug(`Split ${travelSummary.splitLayers} layer${suffix} to stay under ${limitDisplay} m (now ${travelSummary.totalLayers} layers).`);
+                    logDebug(`Preview split ${travelSummary.splitLayers} layer${suffix} to stay under ${limitDisplay} m (now ${travelSummary.totalLayers}).`);
                 }
+            }
+            if (maybeRaiseTravelLimitForPreview(travelSummary, state, logDebug)) {
+                await draw({ delayMs: 0, forceRestart: true });
+                return;
             }
             if (abortSignal.aborted) {
                 return;
@@ -123,12 +146,52 @@ export function createPreviewController({
             if (activeAbortController === abortController) {
                 activeAbortController = null;
             }
+            isDrawing = false;
+            if (restartRequested) {
+                restartRequested = false;
+                draw({ delayMs: 0, forceRestart });
+            }
         }
+    }
+
+    let pendingDrawTimeout = null;
+    let pendingDraw = null;
+
+    function draw(options = {}) {
+        const forceRestart = options.forceRestart === true;
+        const delayMs = typeof options.delayMs === 'number' ? Math.max(0, options.delayMs) : 40;
+        if (pendingDrawTimeout) {
+            if (forceRestart) {
+                cancelActiveDraw('superseded');
+            }
+            clearTimeout(pendingDrawTimeout);
+        }
+        if (!pendingDraw || pendingDraw.settled) {
+            let resolver = null;
+            const promise = new Promise(resolve => {
+                resolver = resolve;
+            });
+            pendingDraw = { promise, resolve: resolver, settled: false };
+        }
+        pendingDrawTimeout = setTimeout(async () => {
+            pendingDrawTimeout = null;
+            try {
+                await executeDraw({ forceRestart });
+            } finally {
+                if (pendingDraw && !pendingDraw.settled) {
+                    pendingDraw.settled = true;
+                    if (typeof pendingDraw.resolve === 'function') {
+                        pendingDraw.resolve();
+                    }
+                }
+            }
+        }, delayMs);
+        return pendingDraw.promise;
     }
 
     function startRefresh() {
         logDebug('Starting automatic refresh');
-        draw();
+        draw({ delayMs: 0 });
         refreshInterval = setInterval(draw, 1000);
         setRefreshButtonState(true);
     }
@@ -202,8 +265,12 @@ function applyMarginValue(value) {
     };
 }
 
-function cancelActiveDraw() {
+function cancelActiveDraw(reason = '') {
     if (activeAbortController) {
+        if (debugLogger) {
+            const suffix = reason ? ` (${reason})` : '';
+            debugLogger(`Render cancelled${suffix}`, 'warn');
+        }
         activeAbortController.abort();
         activeAbortController = null;
     }
@@ -258,8 +325,11 @@ function rebuildDrawingLayer(svg, workerPasses) {
     if (!drawingLayer || !Array.isArray(workerPasses)) {
         return;
     }
+    const passes = workerPasses.length > MAX_PREVIEW_LAYERS
+        ? workerPasses.slice(0, MAX_PREVIEW_LAYERS)
+        : workerPasses;
     drawingLayer.innerHTML = '';
-    workerPasses.forEach((entry, idx) => {
+    passes.forEach((entry, idx) => {
         if (!entry?.paths?.length) {
             return;
         }
@@ -357,6 +427,9 @@ function runWorkerOptimization(svg, options = {}) {
                 return;
             }
             rebuildDrawingLayer(svg, data.passes);
+            if (Array.isArray(data.passes) && data.passes.length > MAX_PREVIEW_LAYERS && debugLogger) {
+                debugLogger(`Preview capped at ${MAX_PREVIEW_LAYERS} of ${data.passes.length} layers (export keeps all).`, 'warn');
+            }
             disposeRenderWorker();
             resolve({
                 applied: true,
@@ -470,6 +543,9 @@ function populateDrawingSelect(drawings, select) {
         .join('');
     if (previousValue && entries.some(([key]) => key === previousValue)) {
         select.value = previousValue;
+    } else if (previousValue && debugLogger) {
+        const available = entries.slice(0, 5).map(([key]) => key).join(', ');
+        debugLogger(`Previous drawing "${previousValue}" not in loaded presets. Sample presets: ${available}`, 'warn');
     }
 }
 
@@ -910,3 +986,49 @@ function optimizeLayerOrder(order, matrix) {
         }
     }
 }
+function maybeRaiseTravelLimitForPreview(summary, state, logDebug) {
+    if (!summary || !Number.isFinite(summary.limitMeters)) {
+        return false;
+    }
+    const totalLayers = Number(summary.totalLayers || 0);
+    if (totalLayers <= MAX_PREVIEW_LAYERS) {
+        return false;
+    }
+    const target = TARGET_PREVIEW_LAYERS;
+    const currentLimit = summary.limitMeters;
+    const factor = Math.max(1.05, (totalLayers / target));
+    let proposed = currentLimit * factor;
+    const slider = document.getElementById('maxTravelPerLayer');
+    const label = document.getElementById('maxTravelPerLayerValue');
+    const sliderMax = Number(slider?.max) || 100;
+    const infiniteValue = Number(slider?.dataset?.infiniteValue || sliderMax + 1);
+    if (!Number.isFinite(proposed)) {
+        return false;
+    }
+    if (proposed > sliderMax) {
+        proposed = null; // Infinity
+    }
+    if (proposed !== null && proposed <= currentLimit) {
+        return false;
+    }
+    state.maxTravelPerLayerMeters = proposed;
+    if (slider) {
+        if (proposed === null) {
+            slider.value = String(infiniteValue);
+            if (label) {
+                label.textContent = '∞';
+            }
+        } else {
+            const rounded = Math.round(proposed);
+            slider.value = String(rounded);
+            if (label) {
+                label.textContent = `${rounded} m`;
+            }
+        }
+    }
+        if (logDebug) {
+            const nextText = proposed === null ? '∞' : `${Math.round(proposed)} m`;
+            logDebug(`Auto-raised preview travel cap to ${nextText} to keep layers under ${MAX_PREVIEW_LAYERS} (would be ${totalLayers}).`, 'warn');
+        }
+        return true;
+    }
