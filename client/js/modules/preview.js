@@ -811,6 +811,41 @@ function restoreLayerSelection(previousLayer) {
     }
 }
 
+const MAX_REPRESENTATIVE_POINTS = 60;
+const MAX_TRACKED_ORDER_POINTS = 320;
+
+function limitSamplePoints(points, limit = MAX_REPRESENTATIVE_POINTS) {
+    if (!Array.isArray(points) || points.length === 0) {
+        return [];
+    }
+    if (!Number.isFinite(limit) || limit <= 0 || points.length <= limit) {
+        return points.slice();
+    }
+    if (limit === 1) {
+        return [points[0]];
+    }
+    const step = (points.length - 1) / (limit - 1);
+    const sampled = [];
+    for (let i = 0; i < limit; i += 1) {
+        const index = Math.min(points.length - 1, Math.round(i * step));
+        sampled.push(points[index]);
+    }
+    return sampled;
+}
+
+function appendPointsWithLimit(target, addition, limit = MAX_TRACKED_ORDER_POINTS) {
+    if (!Array.isArray(target) || !Array.isArray(addition) || addition.length === 0) {
+        return;
+    }
+    target.push(...addition);
+    if (!Number.isFinite(limit) || limit <= 0 || target.length <= limit) {
+        return;
+    }
+    const trimmed = limitSamplePoints(target, limit);
+    target.length = 0;
+    target.push(...trimmed);
+}
+
 function setRefreshButtonState(isRefreshing) {
     const toggleButton = document.getElementById('toggleRefresh');
     if (!toggleButton) return;
@@ -947,35 +982,37 @@ function pointDistance(a, b) {
 }
 
 function layerDistance(a, b) {
-    const aPoints = a?.points || [];
-    const bPoints = b?.points || [];
-    let minDistance = Infinity;
-    if (aPoints.length && bPoints.length) {
-        for (const pointA of aPoints) {
-            for (const pointB of bPoints) {
-                const distance = pointDistance(pointA, pointB);
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    if (minDistance === 0) {
-                        return 0;
+    const aPoints = getRepresentativePoints(a);
+    const bPoints = getRepresentativePoints(b);
+    if (!aPoints.length || !bPoints.length) {
+        if (a?.rects?.length && b?.rects?.length) {
+            let minRectDistance = Infinity;
+            for (const rectA of a.rects) {
+                for (const rectB of b.rects) {
+                    const distance = rectDistance(rectA, rectB);
+                    if (distance < minRectDistance) {
+                        minRectDistance = distance;
+                        if (minRectDistance === 0) {
+                            return 0;
+                        }
                     }
                 }
             }
+            return Number.isFinite(minRectDistance) ? minRectDistance : 0;
         }
-    } else if (a?.rects?.length && b?.rects?.length) {
-        for (const rectA of a.rects) {
-            for (const rectB of b.rects) {
-                const distance = rectDistance(rectA, rectB);
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    if (minDistance === 0) {
-                        return 0;
-                    }
-                }
-            }
-        }
-    } else {
         return 0;
+    }
+    let minDistance = Infinity;
+    for (const pointA of aPoints) {
+        for (const pointB of bPoints) {
+            const distance = pointDistance(pointA, pointB);
+            if (distance < minDistance) {
+                minDistance = distance;
+                if (minDistance === 0) {
+                    return 0;
+                }
+            }
+        }
     }
     return Number.isFinite(minDistance) ? minDistance : 0;
 }
@@ -1011,7 +1048,10 @@ function orderLayersByDistance(layers) {
 
     const remaining = entries.filter(entry => entry !== start);
     const ordered = start ? [start] : [];
-    const plottedPoints = start ? getRepresentativePoints(start) : [];
+    const plottedPoints = [];
+    if (start) {
+        appendPointsWithLimit(plottedPoints, getRepresentativePoints(start), MAX_TRACKED_ORDER_POINTS);
+    }
 
     while (remaining.length) {
         let bestScore = -Infinity;
@@ -1040,7 +1080,7 @@ function orderLayersByDistance(layers) {
         });
         const [selected] = remaining.splice(bestIndex, 1);
         ordered.push(selected);
-        plottedPoints.push(...getRepresentativePoints(selected));
+        appendPointsWithLimit(plottedPoints, getRepresentativePoints(selected), MAX_TRACKED_ORDER_POINTS);
     }
 
     optimizeLayerOrder(ordered, distanceMatrix);
@@ -1049,23 +1089,39 @@ function orderLayersByDistance(layers) {
 }
 
 function getRepresentativePoints(entry) {
-    if (entry.points?.length) {
-        return entry.points;
-    }
-    if (!entry.rects?.length) {
+    if (!entry) {
         return [];
     }
-    const samples = [];
-    entry.rects.forEach(rect => {
-        samples.push(
-            { x: rect.x, y: rect.y },
-            { x: rect.x + rect.width, y: rect.y },
-            { x: rect.x, y: rect.y + rect.height },
-            { x: rect.x + rect.width, y: rect.y + rect.height },
-            { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 }
-        );
-    });
-    return samples;
+    if (Array.isArray(entry.__representativePoints)) {
+        return entry.__representativePoints;
+    }
+    let rawPoints = [];
+    if (Array.isArray(entry.points) && entry.points.length) {
+        rawPoints = entry.points.map(point => ({
+            x: Number(point?.x) || 0,
+            y: Number(point?.y) || 0
+        }));
+    } else if (Array.isArray(entry.rects) && entry.rects.length) {
+        const samples = [];
+        entry.rects.forEach(rect => {
+            if (!rect) return;
+            const x = Number(rect.x) || 0;
+            const y = Number(rect.y) || 0;
+            const width = Number(rect.width) || 0;
+            const height = Number(rect.height) || 0;
+            samples.push(
+                { x, y },
+                { x: x + width, y },
+                { x, y: y + height },
+                { x: x + width, y: y + height },
+                { x: x + width / 2, y: y + height / 2 }
+            );
+        });
+        rawPoints = samples;
+    }
+    const representative = limitSamplePoints(rawPoints, MAX_REPRESENTATIVE_POINTS);
+    entry.__representativePoints = representative;
+    return representative;
 }
 
 function buildDistanceMatrix(entries) {
@@ -1187,6 +1243,15 @@ export const __previewWorkerInternals = {
     waitForWorkerReady,
     resetPreviewWorkerState,
     WORKER_TIMEOUT_MS
+};
+
+export const __layerOrderingInternals = {
+    MAX_REPRESENTATIVE_POINTS,
+    MAX_TRACKED_ORDER_POINTS,
+    limitSamplePoints,
+    getRepresentativePoints,
+    layerDistance,
+    orderLayersByDistance
 };
 
 function buildPreviewSummary({ mode, layerCount, travelSummary, passes, svg }) {
