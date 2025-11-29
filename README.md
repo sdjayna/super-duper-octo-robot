@@ -202,15 +202,6 @@ After dropping a new file in `drawings/core/` or `drawings/community/`, run `mak
 - **Constraint-aware helpers** - shared adapters expose color, geometry, and SVG utilities so modules don’t need deep client imports.
 - **Paper + medium presets** - drop in a new pen brand or sheet size via JSON and it immediately appears in the UI selectors. Papers can specify finish, weight, absorbency, and preview colour (see [Paper Presets](#paper-presets)) and you can override the colour live with the picker next to the Paper dropdown.
 
-### Photo Triangles
-
-- Added a "Polygon Margin" slider (0–3 mm, 0.1 mm steps) so triangles inset before hatching and leave clean gutters like Simple Perfect Rectangle.
-
-- Added a "Polygon Margin" slider (0–3 mm, 0.1 mm steps) so triangles inset before hatching and leave clean gutters like Simple Perfect Rectangle.
-
-### Photo Triangles
-
-- Added a "Polygon Margin" slider (0–3 mm) so artists can inset triangles and leave consistent gutters.
 ### Adding a Drawing with Codex (AI Pair Programming)
 
 If you’re in the Codex CLI (this exact assistant), spinning up a new module is literally a prompt away:
@@ -369,9 +360,9 @@ Add your own stock by copying one of the entries, tweaking the dimensions, and f
 
 ### Known issues
 
-- `/plot-progress` still rides on a single-threaded `HTTPServer`; keeping an SSE connection open blocks other requests until we swap in `ThreadingHTTPServer` (or run the SSE loop on a worker thread).
-- The `/drawings/*` static handler does not sanitize `../` sequences, so a carefully crafted path can escape the `drawings/` directory. We need canonicalization + allowlists before tightening the server.
-- Python endpoints (`/plotter`, `/plot-progress`, `/save-svg`) still lack automated coverage; integration tests remain on the TODO list even though most preview/worker issues have been ironed out.
+- The Python server still uses the single-threaded `HTTPServer`; `/plot-progress` streams work, but concurrent requests share that thread. Upgrading to `ThreadingHTTPServer` (or moving the SSE loop off-thread) would unblock future features.
+- The `/drawings/*` static handler does not sanitize `../` segments, so a malicious URL could traverse outside the drawings directory. Canonicalization + allowlists are planned.
+- `/plotter`, `/plot-progress`, and `/save-svg` still lack integration tests; only the client/unit layers have coverage today.
 
 ## Community, Support & Contributions
 
@@ -389,8 +380,10 @@ Add your own stock by copying one of the entries, tweaking the dimensions, and f
 ## Built with AI Pair Programming
 
 Development leaned on AI copilots (aider.chat, DeepSeek R1, Claude 3 Sonnet) for fast iteration while keeping humans in the loop for aesthetics, safety, and hardware testing.
-- **Paper presets** – edit `config/papers.json` to describe stock in terms of size, weight, finish, absorbency, bleed, and notes. The UI logs these traits when you switch sheets so you don’t lose track of what’s loaded on the bed.
-- **A3 parameter cheatsheet** – the table below captures the ranges we’ve found to sit nicely on an A3 SE/A3 bed without murdering line density:
+
+## Appendix: Parameter Cheatsheet
+
+Quick A3 references for popular algorithms (tweak to taste and to match your pens/papers):
 
 | Algorithm | A3-friendly settings |
 |-----------|----------------------|
