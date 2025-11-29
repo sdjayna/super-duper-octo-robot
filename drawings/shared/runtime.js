@@ -2,12 +2,10 @@ import { createSVG, createDrawingBuilder } from './clientAdapters.js';
 
 /**
  * Creates the common SVG + builder runtime used by drawing modules.
- * @param {Object} params
- * @param {Object} params.drawingConfig
- * @param {Object} params.renderContext
+ * @param {{ drawingConfig: any, renderContext: any, abortSignal?: AbortSignal | null }} params
  * @returns {{ svg: SVGElement, builder: Object }}
  */
-export function createDrawingRuntime({ drawingConfig, renderContext, abortSignal }) {
+export function createDrawingRuntime({ drawingConfig, renderContext, abortSignal = null }) {
     const svg = createSVG(renderContext);
     const builder = createDrawingBuilder({ svg, drawingConfig, renderContext, abortSignal: abortSignal || renderContext?.abortSignal });
     return { svg, builder };

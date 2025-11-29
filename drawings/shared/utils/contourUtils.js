@@ -1,4 +1,4 @@
-export function generateContourPaths({ width, height, cols = 160, rows, fieldFn, thresholds }) {
+export function generateContourPaths({ width, height, cols = 160, rows = undefined, fieldFn, thresholds }) {
     const columnCount = Math.max(10, cols);
     const rowCount = Math.max(10, rows || Math.round((height / width) * columnCount));
     const values = new Float32Array((columnCount + 1) * (rowCount + 1));

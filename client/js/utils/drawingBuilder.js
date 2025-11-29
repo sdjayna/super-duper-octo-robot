@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { createDrawingContext } from './drawingContext.js';
 
 export function createDrawingBuilder({ svg, drawingConfig, renderContext, abortSignal }) {

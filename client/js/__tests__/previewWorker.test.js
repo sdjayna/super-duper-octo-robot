@@ -96,8 +96,8 @@ describe('runRenderGeneratorWorker', () => {
         MockWorker.reset();
         originalWorker = global.Worker;
         originalAbortController = global.AbortController;
-        global.Worker = MockWorker;
-        global.AbortController = AbortControllerPolyfill;
+        global.Worker = /** @type {any} */ (MockWorker);
+        global.AbortController = /** @type {any} */ (AbortControllerPolyfill);
     });
 
     afterEach(() => {

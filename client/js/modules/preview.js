@@ -28,6 +28,9 @@ export function createPreviewController({
     setPreviewControlsDisabled = () => {}
 }) {
     debugLogger = logDebug;
+    const disablePreviewControls = typeof setPreviewControlsDisabled === 'function'
+        ? setPreviewControlsDisabled
+        : () => {};
     const { getMaxMargin, clampMargin, resolveMargin } = marginUtils;
     let refreshInterval = null;
     let drawRequestId = 0;
@@ -48,7 +51,7 @@ export function createPreviewController({
         activeAbortController = abortController;
         const abortSignal = abortController.signal;
         const requestId = ++drawRequestId;
-        setPreviewControlsDisabled(true);
+        disablePreviewControls(true);
         try {
             logDebug('Loading drawing modules and presets…');
             const { drawings, drawingsReady } = await import('../drawings.js?v=' + Date.now());
@@ -255,7 +258,7 @@ export function createPreviewController({
                 logDebug('Error generating SVG: ' + error.message, 'error');
             }
         } finally {
-            setPreviewControlsDisabled(false);
+            disablePreviewControls(false);
             if (activeAbortController === abortController) {
                 activeAbortController = null;
             }

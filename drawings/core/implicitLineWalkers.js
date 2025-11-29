@@ -40,7 +40,8 @@ class ImplicitLineWalkersConfig extends SizedDrawingConfig {
         this.layerCount = clampInteger(params.layerCount, WALKER_LIMITS.layerCount.min, WALKER_LIMITS.layerCount.max, WALKER_LIMITS.layerCount.default);
         this.seed = clampInteger(params.seed, WALKER_LIMITS.seed.min, WALKER_LIMITS.seed.max, WALKER_LIMITS.seed.default);
 
-        this.getBounds = ({ paper, orientation } = {}) => {
+        this.getBounds = (options = {}) => {
+            const { paper, orientation } = options || {};
             const margin = Number(paper?.margin) || 0;
             const rawWidth = Number(paper?.width) || this.width;
             const rawHeight = Number(paper?.height) || this.height;

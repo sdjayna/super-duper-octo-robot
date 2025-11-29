@@ -11,6 +11,8 @@
     "test": "vitest && npm run test:py",
     "test:py": "python3 -m unittest discover -s tests",
     "lint": "node --check client/js/modules/preview.js && npx eslint . --ext .js,.mjs",
+    "format": "prettier --write \"{client,drawings,server,scripts}/**/*.{js,mjs,cjs}\"",
+    "typecheck": "tsc --noEmit",
     "test:watch": "vitest watch",
     "build:drawings": "node scripts/build-drawings-manifest.mjs",
     "watch:drawings": "node scripts/watch-drawings-manifest.mjs"
@@ -28,12 +30,15 @@
   },
   "homepage": "https://github.com/sdjayna/super-duper-octo-robot#readme",
   "devDependencies": {
+    "@types/node": "^24.10.1",
     "eslint": "^9.39.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-vitest-globals": "^1.5.0",
     "jsdom": "^27.0.1",
     "node-fetch": "^3.3.2",
+    "prettier": "^3.7.3",
+    "typescript": "^5.9.3",
     "vitest": "^3.2.4"
   }
 }

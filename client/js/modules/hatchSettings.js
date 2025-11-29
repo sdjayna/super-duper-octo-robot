@@ -90,7 +90,7 @@ function formatMm(value) {
     return `${fixed.replace(/\.?0+$/, '')} mm`;
 }
 
-export function initializeHatchControls(elements = {}, onChange = () => {}) {
+export function initializeHatchControls(elements = {}, onChangeParam) {
     const {
         styleSelect,
         spacingSlider,
@@ -101,8 +101,10 @@ export function initializeHatchControls(elements = {}, onChange = () => {}) {
         linkCheckbox
     } = elements;
 
+    const safeOnChange = typeof onChangeParam === 'function' ? onChangeParam : () => {};
+
     const notifyChange = async () => {
-        const maybePromise = onChange(getHatchSettings());
+        const maybePromise = safeOnChange(getHatchSettings());
         if (maybePromise?.then) {
             await maybePromise;
         }

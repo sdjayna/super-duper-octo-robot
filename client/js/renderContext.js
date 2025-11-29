@@ -1,4 +1,4 @@
-export function createRenderContext({ paper, drawingWidth, drawingHeight, bounds, orientation = 'landscape', plotterArea }) {
+export function createRenderContext({ paper, drawingWidth, drawingHeight, bounds = null, orientation = 'landscape', plotterArea = null }) {
     if (!paper) {
         throw new Error('Paper configuration is required to create a render context');
     }

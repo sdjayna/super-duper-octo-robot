@@ -3,7 +3,9 @@ import { attachControls } from '../controlsUtils.js';
 
 describe('attachControls', () => {
     it('attaches controls to definition and config class', () => {
-        class DummyConfig {}
+        class DummyConfig {
+            static availableControls = [];
+        }
         const definition = { configClass: DummyConfig };
         const controls = [{ id: 'foo' }];
 
@@ -13,7 +15,9 @@ describe('attachControls', () => {
     });
 
     it('handles missing controls gracefully', () => {
-        class NoControlConfig {}
+        class NoControlConfig {
+            static availableControls = [];
+        }
         const definition = { configClass: NoControlConfig };
         const result = attachControls(definition);
         expect(Array.isArray(result.controls)).toBe(true);
@@ -25,7 +29,9 @@ describe('attachControls', () => {
     });
 
     it('returns the same object reference for chaining', () => {
-        class ChainConfig {}
+        class ChainConfig {
+            static availableControls = [];
+        }
         const definition = { id: 'chain', configClass: ChainConfig };
         const result = attachControls(definition, [{ id: 'foo' }]);
         expect(result).toBe(definition);

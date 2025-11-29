@@ -369,6 +369,9 @@ Add your own stock by copying one of the entries, tweaking the dimensions, and f
 - **Install dependencies** – `make install` (Python venv + npm).
 - **Run the dev server** – `make dev` (rebuilds the drawings manifest, watches for changes, and launches the Python server with autoreload).
 - **Tests** – `npm test` runs the Vitest suite. The shared tests cover the drawing registry, control helpers, render contexts, preview heuristics (`drawings/shared/__tests__/previewProfile.test.js`), and the SVG filter plumbing (`client/js/utils/__tests__/previewEffects.test.js`) without touching the network.
+- **Formatting** – `npm run format` runs Prettier across `client/`, `drawings/`, `server/`, and `scripts/`. Run it before opening a PR so diffs stay clean.
+- **Static analysis** – `npm run typecheck` executes `tsc --noEmit` with `allowJs` + `checkJs`, focusing on the shared drawing runtime, render-context math, hatch controls, and the SSE progress plumbing. DOM-heavy helpers such as `client/js/utils/svgUtils.js` and `client/js/utils/drawingBuilder.js` are temporarily annotated with `// @ts-nocheck` until we have typed shims—leave the comment in place (or add a typed declaration) if you edit those files.
+- **One-shot verification** – `make verify` chains `lint`, `typecheck`, and the Vitest/Python suites. Run `make hooks` once to install a Git pre-commit hook that runs `make precommit` (lint + typecheck + tests) automatically before every commit.
 - **Drawing manifest** – `npm run build:drawings` (or `make manifest`) must be executed after adding or renaming drawing modules so the client can discover them.
 - **Code style** – the repo sticks to modern ES modules, ESLint defaults, and Vitest assertions. Python files follow PEP 8 and reuse the logging helpers in `server/server.py`.
 - **Contributing** – see [CONTRIBUTING.md](CONTRIBUTING.md) for workflow details, commit conventions, and review expectations.

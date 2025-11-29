@@ -2,7 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { defineDrawing } from '../drawingDefinition.js';
 
 describe('defineDrawing', () => {
-    class DummyConfig {}
+    class DummyConfig {
+        static availableControls = [];
+    }
     const drawFn = () => {};
 
     it('returns controls metadata and attaches it to the config class', () => {
@@ -28,7 +30,9 @@ describe('defineDrawing', () => {
     });
 
     it('defaults to an empty controls array when none provided', () => {
-        class NoControlConfig {}
+        class NoControlConfig {
+            static availableControls = [];
+        }
         const definition = defineDrawing({
             id: 'nocontrol',
             name: 'No Control Drawing',

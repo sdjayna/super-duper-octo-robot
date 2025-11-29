@@ -1,4 +1,4 @@
-.PHONY: install run clean test dev help
+.PHONY: install run clean test dev help lint typecheck format verify precommit hooks
 
 VENV?=.venv
 PYTHON=$(VENV)/bin/python3
@@ -33,6 +33,19 @@ clean:
 test:
 	npm test
 
+lint:
+	npm run lint
+
+typecheck:
+	npm run typecheck
+
+format:
+	npm run format
+
+verify: lint typecheck test
+
+precommit: lint typecheck test
+
 manifest:
 	npm run build:drawings
 
@@ -42,11 +55,22 @@ dev: install
 	trap "kill $$WATCH_PID 2>/dev/null || true" EXIT; \
 	PATH=$(VENV)/bin:$$PATH PYTHONPATH=. $(PYTHON) server/server_runner.py'
 
+hooks:
+	@echo "#!/usr/bin/env bash" > .git/hooks/pre-commit
+	@echo "set -euo pipefail" >> .git/hooks/pre-commit
+	@echo "make precommit" >> .git/hooks/pre-commit
+	chmod +x .git/hooks/pre-commit
+
 help:
 	@echo "Available commands:"
 	@echo "  make install  - Create the Python venv and install npm deps"
 	@echo "  make run      - Start the development server"
 	@echo "  make clean    - Remove build artifacts (venv, node_modules, temp files)"
 	@echo "  make test     - Run the Vitest suite"
+	@echo "  make lint     - Run ESLint + node --check"
+	@echo "  make typecheck- Run the TypeScript checker over shared modules"
+	@echo "  make format   - Format JS modules with Prettier"
+	@echo "  make verify   - Run lint + typecheck + test in sequence"
+	@echo "  make hooks    - Install the pre-commit hook (runs make precommit)"
 	@echo "  make dev      - Install dependencies and start the server"
 	@echo "  make help     - Show this help message"

@@ -1,4 +1,4 @@
-export function defineDrawing({ id, name, configClass, drawFunction, validator, presets = [], controls = [] }) {
+export function defineDrawing({ id, name, configClass, drawFunction, validator = null, presets = [], controls = [] }) {
     if (!id) {
         throw new Error('Drawing definition requires an id');
     }

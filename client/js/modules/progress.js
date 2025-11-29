@@ -92,7 +92,7 @@ export function startProgressListener({ logDebug, logProgress, onPlotReady, play
         console.error('SSE error:', error);
         logDebug?.('Progress listener error, reconnecting...', 'error');
         stopProgressListener();
-        setTimeout(() => startProgressListener({ logDebug, onPlotReady, playCompletionSiren }), 1000);
+        setTimeout(() => startProgressListener({ logDebug, logProgress, onPlotReady, playCompletionSiren }), 1000);
     };
 
     progressEventSource.onopen = () => {
