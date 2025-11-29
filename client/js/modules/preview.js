@@ -3,7 +3,7 @@
 import { applyPreviewEffects } from '../utils/previewEffects.js';
 import { applyLayerTravelLimit } from '../utils/layerTravelLimiter.js';
 import { createSVG } from '../utils/svgUtils.js';
-import { isWorkerSafeDrawing } from '../../drawings/shared/isWorkerSafe.js';
+import { isWorkerSafeDrawing } from '../../../drawings/shared/isWorkerSafe.js';
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const WORKER_TIMEOUT_MS = 2000;
 const MAX_PREVIEW_LAYERS = 400;
@@ -352,6 +352,11 @@ function waitForWorkerReady() {
         workerReadyPromise = Promise.resolve();
     }
     return workerReadyPromise;
+}
+
+function resetPreviewWorkerState(reason = 'test_reset') {
+    workerRequestId = 0;
+    disposeGeneratorWorker(reason);
 }
 
 function rebuildDrawingLayer(svg, workerPasses) {
@@ -1179,3 +1184,9 @@ async function renderOnMainThread(selectedDrawing, options) {
     }
     return { svg, renderContext, travelSummary };
 }
+
+export const __previewWorkerInternals = {
+    runRenderGeneratorWorker,
+    waitForWorkerReady,
+    resetPreviewWorkerState
+};

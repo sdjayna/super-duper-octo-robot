@@ -26,7 +26,7 @@ export function createSVG(renderContext) {
     };
 }
 
-export function createDrawingBuilder({ svg, drawingConfig, abortSignal }) {
+export function createDrawingBuilder({ svg, drawingConfig, renderContext, abortSignal }) {
     const palette = drawingConfig.colorPalette || colorPalettes.defaultPalette || {};
     const colorManager = new ColorManager(palette);
     const layersByColor = new Map();
@@ -76,9 +76,15 @@ export function createDrawingBuilder({ svg, drawingConfig, abortSignal }) {
             return path;
         },
         projectPoints(points) {
+            if (renderContext?.projectPoints) {
+                return renderContext.projectPoints(points);
+            }
             return points.map(point => ({ x: Number(point.x) || 0, y: Number(point.y) || 0 }));
         },
         projectRect(rect) {
+            if (renderContext?.projectRect) {
+                return renderContext.projectRect(rect);
+            }
             return {
                 x: Number(rect?.x ?? 0),
                 y: Number(rect?.y ?? 0),

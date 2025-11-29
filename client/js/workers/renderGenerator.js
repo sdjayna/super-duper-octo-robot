@@ -1,5 +1,5 @@
-import { setClientAdapters, resetClientAdapters } from '../../drawings/shared/clientAdapters.js';
-import * as dataAdapters from '../../drawings/shared/dataAdapters.js';
+import { setClientAdapters, resetClientAdapters } from '../../../drawings/shared/clientAdapters.js';
+import * as dataAdapters from '../../../drawings/shared/dataAdapters.js';
 
 const workerBootStartedAt = Date.now();
 let lastMessageReceivedAt = null;
@@ -245,7 +245,7 @@ async function renderDrawing(payload, requestId) {
     console.info('[renderGenerator] resolve drawing entry', { drawingKey, hasControlValues: Boolean(controlValues && Object.keys(controlValues).length) });
     if (!drawingsModulePromise) {
         postProgress({ requestId, drawingKey, stage: 'manifest_fetch_start' });
-        drawingsModulePromise = import('../../client/js/drawings.js')
+        drawingsModulePromise = import('../drawings.js')
             .then(async mod => {
                 if (mod.drawingsReady) {
                     await mod.drawingsReady;
@@ -290,7 +290,7 @@ async function renderDrawing(payload, requestId) {
     console.debug('[renderGenerator] controls applied', { drawingKey, controlKeys: Object.keys(controlValues || {}) });
 
     if (!appModulePromise) {
-        appModulePromise = import('../../client/js/app.js');
+        appModulePromise = import('../app.js');
     }
     const { generateSVG } = await appModulePromise;
     workerDebug('debug', 'app module ready', { drawingKey });
