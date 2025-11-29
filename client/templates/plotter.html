@@ -137,9 +137,13 @@
                     <p>Prep paper, manage pens, and send layers to the plotter.</p>
                 </header>
                 <div class="plotter-controls">
-                    <div class="control-section">
-                        <h4>Plot</h4>
-                        <div class="control-section-content">
+                    <div class="control-section collapsible" data-role="plot-section">
+                        <button id="plotSectionToggle" class="collapsible-toggle" type="button"
+                            aria-expanded="true" aria-controls="plotSectionContent">
+                            <span class="collapsible-title">Plot</span>
+                            <span class="collapsible-icon" aria-hidden="true"></span>
+                        </button>
+                        <div id="plotSectionContent" class="control-section-content">
                             <select id="layerSelect">
                                 <option value="all">Show All Layers</option>
                             </select>
@@ -148,32 +152,38 @@
                             <button id="plotterStopPlot" class="plotter-button danger" title="Stop the current plotting operation">Stop Plot</button>
                         </div>
                     </div>
-                    <div class="control-section">
-                        <h4>Setup</h4>
-                        <div class="control-section-content">
-                            <button id="plotterHome" class="plotter-button" title="Return plotter to home position"><span class="setup-icon">🏠</span></button>
-                            <button id="plotterCycle" class="plotter-button" title="Cycle pen up and down"><span class="setup-icon">∞</span></button>
-                            <button id="plotterAlign" class="plotter-button" title="Align pen with paper"><span class="setup-icon">⚏</span></button>
-                            <button id="plotterToggle" class="plotter-button" title="Toggle pen position"><span class="setup-icon">⇅</span></button>
-                            <button id="plotterDisableMotors" class="plotter-button" title="Turn off plotter motors">
-                                <span class="power-icon" style="color: #d32f2f;">⏻</span>
-                            </button>
-                            <button id="toggleMute" class="plotter-button" title="Toggle completion sound">
-                                <span class="speaker-icon">🔊</span>
-                            </button>
-                        </div>
-                        <div class="pen-controls">
-                            <div class="slider-group">
-                                <label for="penPosDown">Pen Down: <span id="penPosDownValue">50</span></label>
-                                <input type="range" id="penPosDown" min="0" max="100" value="50">
+                    <div class="control-section collapsible" data-role="setup-section">
+                        <button id="setupSectionToggle" class="collapsible-toggle" type="button"
+                            aria-expanded="true" aria-controls="setupSectionContent">
+                            <span class="collapsible-title">Setup</span>
+                            <span class="collapsible-icon" aria-hidden="true"></span>
+                        </button>
+                        <div id="setupSectionContent" class="control-section-content">
+                            <div class="setup-buttons">
+                                <button id="plotterHome" class="plotter-button" title="Return plotter to home position"><span class="setup-icon">🏠</span></button>
+                                <button id="plotterCycle" class="plotter-button" title="Cycle pen up and down"><span class="setup-icon">∞</span></button>
+                                <button id="plotterAlign" class="plotter-button" title="Align pen with paper"><span class="setup-icon">⚏</span></button>
+                                <button id="plotterToggle" class="plotter-button" title="Toggle pen position"><span class="setup-icon">⇅</span></button>
+                                <button id="plotterDisableMotors" class="plotter-button" title="Turn off plotter motors">
+                                    <span class="power-icon" style="color: #d32f2f;">⏻</span>
+                                </button>
+                                <button id="toggleMute" class="plotter-button" title="Toggle completion sound">
+                                    <span class="speaker-icon">🔊</span>
+                                </button>
                             </div>
-                            <div class="slider-group">
-                                <label for="penPosUp">Pen Up: <span id="penPosUpValue">95</span></label>
-                                <input type="range" id="penPosUp" min="0" max="100" value="95">
-                            </div>
-                            <div class="slider-group">
-                                <label for="penRateLower">Pen Rate Lower: <span id="penRateLowerValue">10</span></label>
-                                <input type="range" id="penRateLower" min="1" max="100" value="10">
+                            <div class="pen-controls">
+                                <div class="slider-group">
+                                    <label for="penPosDown">Pen Down: <span id="penPosDownValue">50</span></label>
+                                    <input type="range" id="penPosDown" min="0" max="100" value="50">
+                                </div>
+                                <div class="slider-group">
+                                    <label for="penPosUp">Pen Up: <span id="penPosUpValue">95</span></label>
+                                    <input type="range" id="penPosUp" min="0" max="100" value="95">
+                                </div>
+                                <div class="slider-group">
+                                    <label for="penRateLower">Pen Rate Lower: <span id="penRateLowerValue">10</span></label>
+                                    <input type="range" id="penRateLower" min="1" max="100" value="10">
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -197,9 +207,13 @@
                             </div>
                         </div>
                     </div>
-                    <div class="control-section">
-                        <h4>Medium</h4>
-                        <div class="control-section-content">
+                    <div class="control-section collapsible" data-role="travel-section">
+                        <button id="travelSectionToggle" class="collapsible-toggle" type="button"
+                            aria-expanded="true" aria-controls="travelSectionContent">
+                            <span class="collapsible-title">Travel Limits</span>
+                            <span class="collapsible-icon" aria-hidden="true"></span>
+                        </button>
+                        <div id="travelSectionContent" class="control-section-content">
                             <div class="slider-group">
                                 <label for="maxTravelPerLayer">Max Travel Per Layer: <span id="maxTravelPerLayerValue">5 m</span></label>
                                 <input type="range" id="maxTravelPerLayer" min="1" max="101" step="1" value="5">

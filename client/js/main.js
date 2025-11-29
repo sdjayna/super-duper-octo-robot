@@ -74,6 +74,15 @@ const mediumSettingsSection = document.querySelector('[data-role="medium-setting
 const hatchSettingsToggle = document.getElementById('hatchSettingsToggle');
 const hatchSettingsContent = document.getElementById('hatchSettingsContent');
 const hatchSettingsSection = document.querySelector('[data-role="hatch-settings-section"]');
+const plotSectionToggle = document.getElementById('plotSectionToggle');
+const plotSectionContent = document.getElementById('plotSectionContent');
+const plotSection = document.querySelector('[data-role="plot-section"]');
+const setupSectionToggle = document.getElementById('setupSectionToggle');
+const setupSectionContent = document.getElementById('setupSectionContent');
+const setupSection = document.querySelector('[data-role="setup-section"]');
+const travelSectionToggle = document.getElementById('travelSectionToggle');
+const travelSectionContent = document.getElementById('travelSectionContent');
+const travelSection = document.querySelector('[data-role="travel-section"]');
 const hatchStyleControl = document.getElementById('hatchStyleControl');
 const hatchSpacingControl = document.getElementById('hatchSpacingControl');
 const hatchSpacingValueLabel = document.getElementById('hatchSpacingValue');
@@ -291,6 +300,27 @@ registerSectionToggle({
     toggle: hatchSettingsToggle,
     content: hatchSettingsContent,
     label: 'Toggle hatch settings panel'
+});
+
+registerSectionToggle({
+    section: plotSection,
+    toggle: plotSectionToggle,
+    content: plotSectionContent,
+    label: 'Toggle plot controls'
+});
+
+registerSectionToggle({
+    section: setupSection,
+    toggle: setupSectionToggle,
+    content: setupSectionContent,
+    label: 'Toggle setup controls'
+});
+
+registerSectionToggle({
+    section: travelSection,
+    toggle: travelSectionToggle,
+    content: travelSectionContent,
+    label: 'Toggle travel limit controls'
 });
 
 async function handleGlobalHatchChanged() {
