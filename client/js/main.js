@@ -102,6 +102,7 @@ const state = {
     currentMargin: DEFAULT_MARGIN,
     lastRenderedPaper: null,
     currentMediumId: null,
+    currentMediumName: null,
     currentPalette: null,
     currentStrokeWidth: null,
     currentLineCap: 'round',
@@ -891,11 +892,9 @@ function createControlElement(control, value, onChange) {
         valueDisplay.textContent = value
             ? (control.loadedLabel || 'Image loaded')
             : (control.emptyLabel || 'No file selected');
-    } else {
+    } else if (control.inputType !== 'checkbox') {
         valueDisplay.textContent = formatControlValue(value, control);
     }
-    label.appendChild(labelText);
-    label.appendChild(valueDisplay);
     const inputContainer = document.createElement('div');
     inputContainer.className = 'drawing-control-input';
     let inputElement;
@@ -912,17 +911,31 @@ function createControlElement(control, value, onChange) {
             valueDisplay.textContent = formatControlValue(event.target.value, control);
             await onChange(event.target.value);
         });
+    } else if (control.inputType === 'checkbox') {
+        inputElement = document.createElement('input');
+        inputElement.type = 'checkbox';
+        inputElement.checked = Boolean(value);
+        inputElement.classList.add('drawing-control-checkbox');
+        valueDisplay.classList.add('drawing-control-value-checkbox');
+        valueDisplay.appendChild(inputElement);
+        label.classList.add('drawing-control-checkbox-label');
+        label.appendChild(labelText);
+        label.appendChild(valueDisplay);
+        wrapper.appendChild(label);
+        inputElement.addEventListener('change', async (event) => {
+            const actualValue = event.target.checked;
+            await onChange(actualValue);
+        });
+        if (control.description) {
+            const help = document.createElement('p');
+            help.className = 'drawing-control-help';
+            help.textContent = control.description;
+            wrapper.appendChild(help);
+        }
+        return wrapper;
     } else {
         inputElement = document.createElement('input');
-        if (control.inputType === 'checkbox') {
-            inputElement.type = 'checkbox';
-            inputElement.checked = Boolean(value);
-            inputElement.addEventListener('change', async (event) => {
-                const actualValue = event.target.checked;
-                valueDisplay.textContent = formatControlValue(actualValue, control);
-                await onChange(actualValue);
-            });
-        } else if (control.inputType === 'file') {
+        if (control.inputType === 'file') {
             inputElement.type = 'file';
             if (control.accept) {
                 inputElement.accept = control.accept;
@@ -962,9 +975,13 @@ function createControlElement(control, value, onChange) {
             });
         }
     }
-    inputContainer.appendChild(inputElement);
-    wrapper.appendChild(label);
-    wrapper.appendChild(inputContainer);
+    if (control.inputType !== 'checkbox') {
+        label.appendChild(labelText);
+        label.appendChild(valueDisplay);
+        inputContainer.appendChild(inputElement);
+        wrapper.appendChild(label);
+        wrapper.appendChild(inputContainer);
+    }
     if (control.description) {
         const help = document.createElement('p');
         help.className = 'drawing-control-help';
@@ -1802,6 +1819,7 @@ function applyPenDefaults(defaults = {}) {
 
 async function applyMediumSettings(mediumId, colorUtilsModule, options = {}) {
     if (!mediumId) {
+        state.currentMediumName = null;
         return;
     }
     const { colorPalettes, mediumMetadata } = colorUtilsModule || await loadColorUtilsModule();
@@ -1813,6 +1831,7 @@ async function applyMediumSettings(mediumId, colorUtilsModule, options = {}) {
         state.currentPalette = filteredPalette;
     }
     const mediumInfo = mediumMetadata[mediumId];
+    state.currentMediumName = mediumInfo?.name || mediumId || 'Unspecified';
     if (mediumInfo?.strokeWidth) {
         state.currentStrokeWidth = mediumInfo.strokeWidth;
         state.currentLineCap = mediumInfo.strokeLinecap || 'round';
@@ -1822,6 +1841,9 @@ async function applyMediumSettings(mediumId, colorUtilsModule, options = {}) {
         state.currentStrokeWidth = null;
         state.currentLineCap = 'round';
         state.currentLineJoin = 'round';
+        if (!state.currentMediumName) {
+            state.currentMediumName = mediumId || 'Unspecified';
+        }
     }
     state.currentMediumId = mediumId;
     updatePreviewProfile();

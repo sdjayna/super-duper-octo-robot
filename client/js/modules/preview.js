@@ -34,6 +34,7 @@ export function createPreviewController({
 
     async function executeDraw(options = {}) {
         const forceRestart = options.forceRestart !== false;
+        const suppressCancelLog = options.suppressCancelLog === true;
         if (isDrawing && !forceRestart) {
             restartRequested = true;
             if (debugLogger) {
@@ -41,7 +42,7 @@ export function createPreviewController({
             }
             return;
         }
-        cancelActiveDraw('restart');
+        cancelActiveDraw('restart', { suppressLog: suppressCancelLog });
         isDrawing = true;
         const abortController = new AbortController();
         activeAbortController = abortController;
@@ -83,9 +84,13 @@ export function createPreviewController({
                 return;
             }
 
-            const attemptWorker = USE_WORKER_RENDER && isWorkerSafeDrawing(selectedDrawing);
-            if (debugLogger) {
-                debugLogger(`Render path: ${attemptWorker ? 'worker' : 'main'} for ${select.value}`);
+            const workerSafe = isWorkerSafeDrawing(selectedDrawing);
+            const attemptWorker = USE_WORKER_RENDER && workerSafe;
+            let workerReason = null;
+            if (!attemptWorker) {
+                workerReason = USE_WORKER_RENDER
+                    ? 'requires main thread (photo/image inputs)'
+                    : 'disabled globally';
             }
             const hatchSettings = state.currentHatchSettings;
             const workerLineOverrides = {
@@ -104,16 +109,39 @@ export function createPreviewController({
             const cleanedOverrides = Object.fromEntries(
                 Object.entries(workerLineOverrides).filter(([, value]) => typeof value !== 'undefined')
             );
+            const controlValues = state.drawingControlValues[select.value] || {};
+            logRenderPlan({
+                logDebug,
+                drawingName: selectedDrawing.name,
+                drawingKey: select.value,
+                mode: attemptWorker ? 'worker' : 'main',
+                paper: paperForRender,
+                orientation: state.currentOrientation,
+                marginMm: marginValue,
+                mediumName: state.currentMediumName || state.currentMediumId || 'Unspecified',
+                strokeWidth: state.currentStrokeWidth,
+                palette: state.currentPalette,
+                disabledColors: state.disabledColorsByMedium.get(state.currentMediumId),
+                travelLimit: state.maxTravelPerLayerMeters,
+                hatchSettings,
+                previewProfile: state.previewProfile,
+                controlValues,
+                workerDisabledReason: workerReason
+            });
 
             console.debug('[preview] render invocation', {
                 drawingKey: select.value,
                 useWorker: attemptWorker,
                 maxTravelLimit: state.maxTravelPerLayerMeters
             });
-            const renderResult = attemptWorker
-                ? await runRenderGeneratorWorker({
+            let renderResult = null;
+            let renderElapsedMs = null;
+            let renderMode = attemptWorker ? 'worker' : 'main';
+            let passesFromWorker = null;
+            if (attemptWorker) {
+                renderResult = await runRenderGeneratorWorker({
                     drawingKey: select.value,
-                    controlValues: state.drawingControlValues[select.value] || {},
+                    controlValues,
                     paper: paperForRender,
                     orientation: state.currentOrientation,
                     plotterArea: state.plotterSpecs?.paper,
@@ -121,11 +149,11 @@ export function createPreviewController({
                     paletteOverride: state.currentPalette,
                     lineOverrides: cleanedOverrides,
                     abortSignal
-                })
-                : { error: 'worker_disabled', drawingKey: select.value };
-            let renderElapsedMs = Number.isFinite(renderResult?.elapsedMs)
-                ? Number(renderResult.elapsedMs)
-                : null;
+                });
+                renderElapsedMs = Number.isFinite(renderResult?.elapsedMs)
+                    ? Number(renderResult.elapsedMs)
+                    : null;
+            }
 
             if (abortSignal.aborted) {
                 return;
@@ -134,14 +162,7 @@ export function createPreviewController({
             let hydratedSvg;
             let travelSummary;
             let hydratedRenderContext;
-            if (!renderResult || renderResult.error) {
-                const workerError = renderResult?.error || 'unknown error';
-                const workerStack = renderResult?.stack ? ` Stack: ${renderResult.stack.slice(0, 200)}...` : '';
-                const workerKey = renderResult?.drawingKey || select.value;
-                const elapsed = renderResult?.elapsedMs ? ` after ${Math.round(renderResult.elapsedMs)}ms` : '';
-                logDebug(`Worker render failed for ${workerKey}: ${workerError}${elapsed}. Falling back to main thread.${workerStack}`, 'warn');
-                // Mirror to console for easier DevTools inspection
-                console.warn('[preview] worker render failed', { workerKey, workerError, elapsedMs: renderResult?.elapsedMs, stack: renderResult?.stack });
+            if (!attemptWorker) {
                 const fallback = await renderOnMainThread(selectedDrawing, {
                     paper: paperForRender,
                     orientation: state.currentOrientation,
@@ -149,13 +170,31 @@ export function createPreviewController({
                     maxTravelPerLayerMeters: state.maxTravelPerLayerMeters,
                     abortSignal
                 });
-                renderElapsedMs = Number.isFinite(fallback?.elapsedMs)
-                    ? Number(fallback.elapsedMs)
-                    : renderElapsedMs;
-                console.warn('[preview] main-thread fallback render complete', { workerKey, elapsedMs: renderElapsedMs });
+                renderElapsedMs = fallback.elapsedMs;
                 hydratedSvg = fallback.svg;
                 travelSummary = fallback.travelSummary;
                 hydratedRenderContext = fallback.renderContext;
+            } else if (!renderResult || renderResult.error) {
+                const workerError = renderResult?.error || 'unknown error';
+                if (workerError !== 'worker_disabled') {
+                    const workerStack = renderResult?.stack ? ` Stack: ${renderResult.stack.slice(0, 200)}...` : '';
+                    const workerKey = renderResult?.drawingKey || select.value;
+                    const elapsed = renderResult?.elapsedMs ? ` after ${Math.round(renderResult.elapsedMs)}ms` : '';
+                    logDebug(`Worker render failed for ${workerKey}: ${workerError}${elapsed}. Falling back to main thread.${workerStack}`, 'warn');
+                    console.warn('[preview] worker render failed', { workerKey, workerError, elapsedMs: renderResult?.elapsedMs, stack: renderResult?.stack });
+                }
+                const fallback = await renderOnMainThread(selectedDrawing, {
+                    paper: paperForRender,
+                    orientation: state.currentOrientation,
+                    plotterArea: state.plotterSpecs?.paper,
+                    maxTravelPerLayerMeters: state.maxTravelPerLayerMeters,
+                    abortSignal
+                });
+                renderElapsedMs = fallback.elapsedMs;
+                hydratedSvg = fallback.svg;
+                travelSummary = fallback.travelSummary;
+                hydratedRenderContext = fallback.renderContext;
+                renderMode = 'main';
             } else {
                 const hydrated = hydrateRenderResult({
                     renderResult,
@@ -165,13 +204,14 @@ export function createPreviewController({
                 hydratedSvg = hydrated.svg;
                 travelSummary = hydrated.travelSummary;
                 hydratedRenderContext = hydrated.renderContext;
+                passesFromWorker = renderResult?.passes || null;
             }
 
             if (requestId !== drawRequestId || abortSignal.aborted) {
                 return;
             }
             if (maybeRaiseTravelLimitForPreview(travelSummary, state, logDebug)) {
-                await draw({ delayMs: 0, forceRestart: true });
+                await draw({ delayMs: 0, forceRestart: true, suppressCancelLog: true });
                 return;
             }
 
@@ -180,13 +220,12 @@ export function createPreviewController({
             applyPreviewEffects(hydratedSvg, state.previewProfile);
             updatePlotterLimitOverlay(hydratedSvg, state, hydratedRenderContext);
             container.appendChild(hydratedSvg);
-            const passesFromWorker = Array.isArray(renderResult?.passes) ? renderResult.passes : null;
             const layerCount = resolveLayerCount({
                 passes: passesFromWorker,
                 travelSummary,
                 svg: hydratedSvg
             });
-            const mode = renderResult?.error ? 'main' : 'worker';
+            const mode = renderMode;
             if (debugLogger) {
                 const elapsed = Number.isFinite(renderElapsedMs)
                     ? ` in ${formatRenderDuration(renderElapsedMs)}`
@@ -234,9 +273,10 @@ export function createPreviewController({
     function draw(options = {}) {
         const forceRestart = options.forceRestart === true;
         const delayMs = typeof options.delayMs === 'number' ? Math.max(0, options.delayMs) : 40;
+        const suppressCancelLog = options.suppressCancelLog === true;
         if (pendingDrawTimeout) {
             if (forceRestart) {
-                cancelActiveDraw('superseded');
+                cancelActiveDraw('superseded', { suppressLog: suppressCancelLog });
             }
             clearTimeout(pendingDrawTimeout);
         }
@@ -250,7 +290,7 @@ export function createPreviewController({
         pendingDrawTimeout = setTimeout(async () => {
             pendingDrawTimeout = null;
             try {
-                await executeDraw({ forceRestart });
+                await executeDraw({ forceRestart, suppressCancelLog });
             } finally {
                 if (pendingDraw && !pendingDraw.settled) {
                     pendingDraw.settled = true;
@@ -339,9 +379,9 @@ function applyMarginValue(value) {
     };
 }
 
-function cancelActiveDraw(reason = '') {
+function cancelActiveDraw(reason = '', options = {}) {
     if (activeAbortController) {
-        if (debugLogger) {
+        if (debugLogger && !options.suppressLog) {
             const suffix = reason ? ` (${reason})` : '';
             debugLogger(`Render cancelled${suffix}`, 'warn');
         }
@@ -1314,8 +1354,9 @@ function maybeRaiseTravelLimitForPreview(summary, state, logDebug) {
         }
     }
     if (logDebug) {
-        const nextText = proposed === null ? '∞' : `${Math.round(proposed)} m`;
-        logDebug(`Auto-raised preview travel cap to ${nextText} to keep layers under ${MAX_PREVIEW_LAYERS} (would be ${totalLayers}).`, 'warn');
+        const prevText = formatMeters(currentLimit);
+        const nextText = formatMeters(proposed);
+        logDebug(`Auto-raised preview travel cap ${prevText} → ${nextText} (layers ${totalLayers} > ${MAX_PREVIEW_LAYERS}); restarting render.`, 'warn');
     }
     return true;
 }
@@ -1363,22 +1404,28 @@ export const __layerOrderingInternals = {
 
 function buildPreviewSummary({ mode, layerCount, travelSummary, passes, svg, elapsedMs }) {
     const travelMm = computeTravelMillimeters({ travelSummary, passes, svg });
-    const layerSuffix = layerCount === 1 ? '' : 's';
-    let message = `Plot summary via ${mode}: ${layerCount} layer${layerSuffix}`;
-    if (travelMm != null) {
-        message += `, approx ${(travelMm / 1000).toFixed(2)} m travel`;
+    const summaryLines = [];
+    const durationText = Number.isFinite(elapsedMs) && elapsedMs >= 0
+        ? formatRenderDuration(elapsedMs)
+        : null;
+    summaryLines.push('Render Summary →');
+    const pathBits = [`path ${mode}`];
+    if (durationText) {
+        pathBits.push(`time ${durationText}`);
     }
+    summaryLines.push(`• ${pathBits.join(' • ')}`);
+    const layerBits = [`layers ${layerCount}`];
     if (travelSummary?.splitLayers) {
-        const splitSuffix = travelSummary.splitLayers === 1 ? '' : 's';
-        message += `, ${travelSummary.splitLayers} split layer${splitSuffix}`;
+        layerBits.push(`split ${travelSummary.splitLayers}`);
     }
-    if (travelSummary?.limitMeters) {
-        message += ` (cap ${travelSummary.limitMeters} m)`;
+    if (Number.isFinite(travelSummary?.limitMeters) && travelSummary.limitMeters > 0) {
+        layerBits.push(`cap ${formatMeters(travelSummary.limitMeters)}`);
     }
-    if (Number.isFinite(elapsedMs) && elapsedMs >= 0) {
-        message += `. Rendered in ${formatRenderDuration(elapsedMs)}`;
+    summaryLines.push(`• ${layerBits.join(' • ')}`);
+    if (travelMm != null) {
+        summaryLines.push(`• travel ${formatTravelDistance(travelMm)}`);
     }
-    return message;
+    return summaryLines.join('\n');
 }
 
 function formatRenderDuration(elapsedMs) {
@@ -1451,4 +1498,180 @@ function resolveLayerCount({ passes, travelSummary, svg }) {
         return svg.querySelectorAll('g[inkscape\\:groupmode="layer"]').length;
     }
     return 0;
+}
+
+function logRenderPlan({
+    logDebug,
+    drawingName,
+    drawingKey,
+    mode,
+    paper,
+    orientation,
+    marginMm,
+    mediumName,
+    strokeWidth,
+    palette,
+    disabledColors,
+    travelLimit,
+    hatchSettings,
+    previewProfile,
+    controlValues,
+    workerDisabledReason
+}) {
+    if (typeof logDebug !== 'function') {
+        return;
+    }
+    const lines = ['Render Inputs →'];
+    lines.push(`• Drawing: ${drawingName} (${drawingKey}) via ${mode}`);
+    const paperLabel = paper?.name ? `${paper.name} ` : '';
+    lines.push(`• Paper: ${paperLabel}${formatPaperSize(paper)}, margin ${formatMillimeters(marginMm)}, orientation ${orientation}`);
+    const mediumBits = [`medium ${mediumName || 'unset'}`];
+    if (Number.isFinite(strokeWidth)) {
+        mediumBits.push(`stroke ${formatMillimeters(strokeWidth)}`);
+    }
+    const paletteSummary = summarizePalette(palette, disabledColors);
+    if (paletteSummary) {
+        mediumBits.push(paletteSummary);
+    }
+    lines.push(`• ${mediumBits.join(' • ')}`);
+    if (workerDisabledReason) {
+        lines.push(`• Worker render unavailable: ${workerDisabledReason}`);
+    }
+    lines.push(`• travel cap ${formatMeters(travelLimit)} • hatch ${summarizeHatchSettings(hatchSettings)}`);
+    if (previewProfile) {
+        const profileText = [
+            `pressure ${previewProfile.pressure?.toFixed?.(2) ?? previewProfile.pressure}`,
+            `spacing ${formatMillimeters(previewProfile.hatchSpacing)}`,
+            `bleed ${formatMillimeters(previewProfile.bleedRadius)}`
+        ].join(', ');
+        lines.push(`• Preview profile ${profileText}`);
+    }
+    const controlSummary = summarizeControlValues(controlValues);
+    if (controlSummary) {
+        lines.push(`• Controls ${controlSummary}`);
+    }
+    logDebug(lines.join('\n'));
+}
+
+function summarizeControlValues(controlValues = {}, limit = 5) {
+    const entries = Object.entries(controlValues)
+        .filter(([key]) => key !== 'imageDataUrl')
+        .sort(([a], [b]) => a.localeCompare(b));
+    if (!entries.length) {
+        return '';
+    }
+    const parts = entries.slice(0, limit).map(([key, value]) => `${key}=${formatControlValue(value)}`);
+    if (entries.length > limit) {
+        const extraEntries = entries.slice(limit);
+        const extraNames = extraEntries.map(([key]) => key).join(', ');
+        parts.push(`… +${extraEntries.length}: ${extraNames}`);
+    }
+    return parts.join(', ');
+}
+
+function formatControlValue(value) {
+    if (typeof value === 'number') {
+        return value % 1 === 0 ? String(value) : value.toFixed(2).replace(/\.?0+$/, '');
+    }
+    if (typeof value === 'boolean') {
+        return value ? 'true' : 'false';
+    }
+    if (typeof value === 'string') {
+        return value.length > 24 ? `${value.slice(0, 21)}…` : value;
+    }
+    if (Array.isArray(value)) {
+        return `[${value.length} entries]`;
+    }
+    if (value && typeof value === 'object') {
+        return '{…}';
+    }
+    return String(value ?? '');
+}
+
+function summarizePalette(palette, disabledColors) {
+    if (!palette) {
+        return '';
+    }
+    const activeCount = Object.keys(palette).length;
+    const disabledCount = disabledColors?.size || 0;
+    if (!activeCount) {
+        return '';
+    }
+    return disabledCount
+        ? `${activeCount} active colors (${disabledCount} disabled)`
+        : `${activeCount} active colors`;
+}
+
+function summarizeHatchSettings(hatchSettings) {
+    if (!hatchSettings) {
+        return 'default';
+    }
+    const parts = [];
+    if (hatchSettings.hatchStyle) {
+        parts.push(hatchSettings.hatchStyle);
+    }
+    if (Number.isFinite(hatchSettings.hatchSpacing)) {
+        parts.push(`spacing ${formatMillimeters(hatchSettings.hatchSpacing)}`);
+    }
+    if (Number.isFinite(hatchSettings.hatchInset)) {
+        parts.push(`inset ${formatMillimeters(hatchSettings.hatchInset)}`);
+    }
+    if (typeof hatchSettings.includeBoundary === 'boolean') {
+        parts.push(`boundary ${hatchSettings.includeBoundary ? 'on' : 'off'}`);
+    }
+    return parts.join(', ') || 'default';
+}
+
+function formatPaperSize(paper = {}) {
+    const width = formatNumber(paper.width);
+    const height = formatNumber(paper.height);
+    if (width && height) {
+        return `${width}×${height} mm`;
+    }
+    return 'unknown size';
+}
+
+function formatNumber(value) {
+    if (!Number.isFinite(value)) {
+        return '';
+    }
+    return value % 1 === 0 ? String(value) : value.toFixed(1);
+}
+
+function formatMillimeters(value) {
+    if (!Number.isFinite(value)) {
+        return '0 mm';
+    }
+    if (Math.abs(value) >= 1) {
+        return `${value.toFixed(1).replace(/\.0$/, '')} mm`;
+    }
+    return `${value.toFixed(2)} mm`;
+}
+
+function formatMeters(limit) {
+    if (!Number.isFinite(limit) || limit <= 0) {
+        return '∞';
+    }
+    if (limit >= 100) {
+        return `${limit.toFixed(0)} m`;
+    }
+    if (limit >= 10) {
+        return `${limit.toFixed(1)} m`;
+    }
+    return `${limit.toFixed(2)} m`;
+}
+
+function formatTravelDistance(mm) {
+    if (!Number.isFinite(mm)) {
+        return 'unknown';
+    }
+    if (mm >= 1_000_000) {
+        const km = mm / 1_000_000;
+        const meters = mm / 1000;
+        return `${km.toFixed(2)} km (${meters.toFixed(0)} m)`;
+    }
+    if (mm >= 1_000) {
+        return `${(mm / 1000).toFixed(2)} m`;
+    }
+    return `${mm.toFixed(0)} mm`;
 }
