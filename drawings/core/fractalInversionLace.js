@@ -76,19 +76,20 @@ function generateLacePaths(config, width, height, layerIndex) {
 
     for (let row = 0; row <= rows; row++) {
         for (let col = 0; col <= columns; col++) {
-            const start = {
+            const start = clampPoint({
                 x: col * spacingX + (rand() - 0.5) * jitter,
                 y: row * spacingY + (rand() - 0.5) * jitter
-            };
+            }, width, height);
             let current = start;
             const path = [current];
             for (let iter = 0; iter < config.iterations; iter++) {
                 const circle = circles[(iter + col + row) % circles.length];
                 current = invertPoint(current, circle);
-                path.push({
+                current = clampPoint({
                     x: current.x + (rand() - 0.5) * jitter * 0.5,
                     y: current.y + (rand() - 0.5) * jitter * 0.5
-                });
+                }, width, height);
+                path.push(current);
             }
             if (path.length > 2) {
                 paths.push(path);
@@ -96,6 +97,13 @@ function generateLacePaths(config, width, height, layerIndex) {
         }
     }
     return paths;
+}
+
+function clampPoint(point, width, height) {
+    return {
+        x: Math.min(Math.max(point.x, 0), width),
+        y: Math.min(Math.max(point.y, 0), height)
+    };
 }
 
 export function drawFractalInversionLace(drawingConfig, renderContext) {

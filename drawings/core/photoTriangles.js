@@ -23,6 +23,7 @@ const TRI_LIMITS = {
 export class PhotoTriangleConfig extends SizedDrawingConfig {
     constructor(params = {}) {
         super(params);
+        this.preserveAspectRatio = true;
         this.triangleCount = clampInteger(
             params.triangleCount,
             TRI_LIMITS.triangleCount.min,

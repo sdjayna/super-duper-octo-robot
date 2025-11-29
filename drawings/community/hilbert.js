@@ -27,20 +27,6 @@ export class HilbertConfig extends SizedDrawingConfig {
         this.segmentSize = clampInteger(params.segmentSize, HILBERT_LIMITS.segmentSize.min, HILBERT_LIMITS.segmentSize.max, HILBERT_LIMITS.segmentSize.default);
     }
 
-    getBounds({ paper, orientation } = {}) {
-        const width = Number(paper?.width ?? this.bounds.width);
-        const height = Number(paper?.height ?? this.bounds.height);
-        const longer = Math.max(width, height);
-        const shorter = Math.min(width, height);
-        const isPortrait = orientation === 'portrait';
-        return {
-            minX: 0,
-            minY: 0,
-            width: isPortrait ? shorter : longer,
-            height: isPortrait ? longer : shorter
-        };
-    }
-
     toArray() {
         return [this.level];
     }
@@ -111,13 +97,7 @@ export function drawHilbertCurve(drawingConfig, renderContext) {
     const hilbert = drawingConfig.drawingData;
     const { svg, builder } = createDrawingRuntime({ drawingConfig, renderContext });
 
-    const bounds = hilbert.getBounds({
-        paper: {
-            width: renderContext.paperWidth,
-            height: renderContext.paperHeight
-        },
-        orientation: renderContext.orientation
-    });
+    const bounds = renderContext.bounds;
     const rawPoints = generateHilbertPoints(hilbert.level, bounds.width, bounds.height);
     const points = builder.projectPoints(rawPoints);
     const segmentSize = Math.max(2, Math.floor(hilbert.segmentSize) || 3);

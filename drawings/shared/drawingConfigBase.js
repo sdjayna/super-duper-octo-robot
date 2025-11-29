@@ -3,6 +3,8 @@ import { computeBoundsFromPoints } from './utils/geometryUtils.js';
 export class DrawingConfigBase {
     constructor(params = {}) {
         this.paper = params.paper;
+        this.preserveAspectRatio = Boolean(params.preserveAspectRatio);
+        this.bounds = params.bounds || null;
     }
 
     getFallbackBounds(context = {}) {
@@ -17,7 +19,23 @@ export class DrawingConfigBase {
     }
 
     getBounds(context = {}) {
-        return this.bounds || this.getFallbackBounds(context);
+        if (this.preserveAspectRatio || !context.paper) {
+            return this.bounds || this.getFallbackBounds(context);
+        }
+        const margin = Number(context.paper.margin) || 0;
+        const rawWidth = Number(context.paper.width ?? this.bounds?.width ?? 100);
+        const rawHeight = Number(context.paper.height ?? this.bounds?.height ?? 100);
+        const printableWidth = Math.max(rawWidth - margin * 2, 1);
+        const printableHeight = Math.max(rawHeight - margin * 2, 1);
+        const longer = Math.max(printableWidth, printableHeight);
+        const shorter = Math.min(printableWidth, printableHeight);
+        const isPortrait = context.orientation === 'portrait';
+        return {
+            minX: 0,
+            minY: 0,
+            width: isPortrait ? shorter : longer,
+            height: isPortrait ? longer : shorter
+        };
     }
 }
 

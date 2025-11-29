@@ -36,31 +36,7 @@ export class VoronoiConfig extends SizedDrawingConfig {
     }
 
     getBounds(context = {}) {
-        const baseBounds = super.getBounds(context);
-        const ratio = resolvePaperAspectRatio(context.paper, context.orientation);
-        if (!ratio) {
-            return baseBounds;
-        }
-        const baseWidth = Math.max(baseBounds.width, 1);
-        const baseHeight = Math.max(baseBounds.height, 1);
-        const baseRatio = baseWidth / baseHeight;
-        if (!Number.isFinite(baseRatio) || Math.abs(baseRatio - ratio) < 1e-3) {
-            return baseBounds;
-        }
-        let width;
-        let height;
-        if (ratio >= baseRatio) {
-            height = baseHeight;
-            width = height * ratio;
-        } else {
-            width = baseWidth;
-            height = width / ratio;
-        }
-        return {
-            ...baseBounds,
-            width,
-            height
-        };
+        return super.getBounds(context);
     }
 }
 
@@ -279,25 +255,6 @@ function insetPolygonPoints(polygon, inset) {
     return insetPoints;
 }
 
-function resolvePaperAspectRatio(paper, orientation) {
-    if (!paper) {
-        return null;
-    }
-    const width = Number(paper.width);
-    const height = Number(paper.height);
-    if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
-        return null;
-    }
-    const normalizedOrientation = orientation === 'portrait' ? 'portrait' : 'landscape';
-    const longer = Math.max(width, height);
-    const shorter = Math.min(width, height);
-    const orientedWidth = normalizedOrientation === 'portrait' ? shorter : longer;
-    const orientedHeight = normalizedOrientation === 'portrait' ? longer : shorter;
-    if (orientedHeight <= 0) {
-        return null;
-    }
-    return orientedWidth / orientedHeight;
-}
 
 export function drawVoronoiSketch(drawingConfig, renderContext) {
     const { svg, builder } = createDrawingRuntime({ drawingConfig, renderContext });

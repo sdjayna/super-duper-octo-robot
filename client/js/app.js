@@ -41,10 +41,24 @@ export async function generateSVG(drawingConfig, options = {}) {
         }
 
         throwIfAborted();
+        const marginForContext = Number(paperForContext.margin) || 0;
+        const basePaperWidth = Number(paperForContext.width) || drawingConfig.drawingData.width;
+        const basePaperHeight = Number(paperForContext.height) || drawingConfig.drawingData.height;
+        const printableWidth = Math.max(basePaperWidth - marginForContext * 2, 1);
+        const printableHeight = Math.max(basePaperHeight - marginForContext * 2, 1);
+
+        const preserveAspect = Boolean(drawingConfig.drawingData?.preserveAspectRatio);
+        const fallbackWidth = preserveAspect
+            ? drawingConfig.drawingData.width
+            : printableWidth;
+        const fallbackHeight = preserveAspect
+            ? drawingConfig.drawingData.height
+            : printableHeight;
+
         const renderContext = options.renderContext || createRenderContext({
             paper: paperForContext,
-            drawingWidth: dynamicBounds?.width || drawingConfig.drawingData.width,
-            drawingHeight: dynamicBounds?.height || drawingConfig.drawingData.height,
+            drawingWidth: dynamicBounds?.width || fallbackWidth,
+            drawingHeight: dynamicBounds?.height || fallbackHeight,
             bounds: dynamicBounds,
             orientation: options.orientation,
             plotterArea: options.plotterArea

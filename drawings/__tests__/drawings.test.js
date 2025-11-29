@@ -274,15 +274,16 @@ describe('drawing functions', () => {
         expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
     });
 
-    it('computes Hilbert bounds per orientation', () => {
+    it('computes Hilbert bounds per orientation and margin', () => {
         const config = new HilbertConfig({ width: 50, height: 30 });
-        const landscape = config.getBounds({ paper: { width: 140, height: 100 }, orientation: 'landscape' });
-        const portrait = config.getBounds({ paper: { width: 140, height: 100 }, orientation: 'portrait' });
+        const paper = { width: 140, height: 100, margin: 5 };
+        const landscape = config.getBounds({ paper, orientation: 'landscape' });
+        const portrait = config.getBounds({ paper, orientation: 'portrait' });
 
-        expect(landscape.width).toBe(140);
-        expect(landscape.height).toBe(100);
-        expect(portrait.width).toBe(100);
-        expect(portrait.height).toBe(140);
+        expect(landscape.width).toBe(130);
+        expect(landscape.height).toBe(90);
+        expect(portrait.width).toBe(90);
+        expect(portrait.height).toBe(130);
     });
 
     it('renders calibration patterns with multiple spacing rows', () => {
