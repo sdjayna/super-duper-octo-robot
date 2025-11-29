@@ -5,7 +5,7 @@ import { applyLayerTravelLimit } from '../utils/layerTravelLimiter.js';
 import { createSVG } from '../utils/svgUtils.js';
 import { isWorkerSafeDrawing } from '../../../drawings/shared/isWorkerSafe.js';
 const SVG_NS = 'http://www.w3.org/2000/svg';
-const WORKER_TIMEOUT_MS = 2000;
+const WORKER_TIMEOUT_MS = 10000;
 const MAX_PREVIEW_LAYERS = 400;
 const TARGET_PREVIEW_LAYERS = 150;
 const USE_WORKER_RENDER = true;
@@ -153,11 +153,21 @@ export function createPreviewController({
             applyPreviewEffects(hydratedSvg, state.previewProfile);
             updatePlotterLimitOverlay(hydratedSvg, state, hydratedRenderContext);
             container.appendChild(hydratedSvg);
+            const layerCount = (renderResult?.passes || travelSummary?.totalLayers || hydratedSvg.querySelectorAll('g[inkscape\\:groupmode="layer"]').length || 0);
+            const mode = renderResult?.error ? 'main' : 'worker';
             if (debugLogger) {
-                const layerCount = (renderResult?.passes || travelSummary?.totalLayers || hydratedSvg.querySelectorAll('g[inkscape\\:groupmode="layer"]').length || 0);
-                const mode = renderResult?.error ? 'main' : 'worker';
                 const elapsed = renderResult?.elapsedMs ? ` in ${Math.round(renderResult.elapsedMs)}ms` : '';
                 debugLogger(`Preview render complete via ${mode}: ${layerCount} layer(s)${elapsed}.`);
+                const summaryMessage = buildPreviewSummary({
+                    mode,
+                    layerCount,
+                    travelSummary,
+                    passes: renderResult?.error ? null : renderResult?.passes,
+                    svg: hydratedSvg
+                });
+                if (summaryMessage) {
+                    debugLogger(summaryMessage);
+                }
             }
             populateLayerSelect(container, logDebug, { preserveDomOrder: Boolean(travelSummary) });
             document.getElementById('layerSelect').value = currentLayer;
@@ -472,22 +482,13 @@ async function runRenderGeneratorWorker(payload) {
         const progressHistory = [];
         const ackWatch = setTimeout(() => {
             logWorkerEvent('warn', 'worker ack not yet received', { waitMs: Date.now() - startedAt });
-        }, 250);
-        const waitHeartbeat = setInterval(() => {
-            logWorkerEvent('debug', 'waiting for worker response', {
-                elapsedMs: Date.now() - startedAt,
-                ackReceived,
-                workerMessages: workerMessageCount,
-                progressHistory
-            });
-        }, 500);
+        }, 1000);
         const cleanupTimers = (reason = 'unspecified') => {
             if (timeoutHandle) {
                 clearTimeout(timeoutHandle);
                 timeoutHandle = null;
             }
             clearTimeout(ackWatch);
-            clearInterval(waitHeartbeat);
             logWorkerEvent('debug', 'worker timer cleanup', {
                 reason,
                 ackReceived,
@@ -1188,5 +1189,70 @@ async function renderOnMainThread(selectedDrawing, options) {
 export const __previewWorkerInternals = {
     runRenderGeneratorWorker,
     waitForWorkerReady,
-    resetPreviewWorkerState
+    resetPreviewWorkerState,
+    WORKER_TIMEOUT_MS
 };
+
+function buildPreviewSummary({ mode, layerCount, travelSummary, passes, svg }) {
+    const travelMm = computeTravelMillimeters({ travelSummary, passes, svg });
+    const layerSuffix = layerCount === 1 ? '' : 's';
+    let message = `Plot summary via ${mode}: ${layerCount} layer${layerSuffix}`;
+    if (travelMm != null) {
+        message += `, approx ${(travelMm / 1000).toFixed(2)} m travel`;
+    }
+    if (travelSummary?.splitLayers) {
+        const splitSuffix = travelSummary.splitLayers === 1 ? '' : 's';
+        message += `, ${travelSummary.splitLayers} split layer${splitSuffix}`;
+    }
+    if (travelSummary?.limitMeters) {
+        message += ` (cap ${travelSummary.limitMeters} m)`;
+    }
+    return message;
+}
+
+function computeTravelMillimeters({ travelSummary, passes, svg }) {
+    const candidatePasses = Array.isArray(travelSummary?.passes) && travelSummary.passes.length
+        ? travelSummary.passes
+        : passes;
+    const summed = sumTravelFromPasses(candidatePasses);
+    if (summed != null) {
+        return summed;
+    }
+    return sumTravelFromSvg(svg);
+}
+
+function sumTravelFromPasses(passList) {
+    if (!Array.isArray(passList) || !passList.length) {
+        return null;
+    }
+    let total = 0;
+    let samples = 0;
+    passList.forEach(entry => {
+        const length = Number(entry?.travelMm);
+        if (Number.isFinite(length)) {
+            total += length;
+            samples += 1;
+        }
+    });
+    return samples ? total : null;
+}
+
+function sumTravelFromSvg(svg) {
+    if (!svg?.querySelectorAll) {
+        return null;
+    }
+    const nodes = svg.querySelectorAll('[data-travel-mm]');
+    if (!nodes.length) {
+        return null;
+    }
+    let total = 0;
+    let samples = 0;
+    nodes.forEach(node => {
+        const value = Number(node.getAttribute('data-travel-mm'));
+        if (Number.isFinite(value)) {
+            total += value;
+            samples += 1;
+        }
+    });
+    return samples ? total : null;
+}

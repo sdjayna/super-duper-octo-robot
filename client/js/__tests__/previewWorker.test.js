@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { __previewWorkerInternals } from '../modules/preview.js';
 
-const { runRenderGeneratorWorker, resetPreviewWorkerState } = __previewWorkerInternals;
+const { runRenderGeneratorWorker, resetPreviewWorkerState, WORKER_TIMEOUT_MS } = __previewWorkerInternals;
 
 class MockWorker {
     static instances = [];
@@ -138,7 +138,7 @@ describe('runRenderGeneratorWorker', () => {
         vi.useFakeTimers();
         const payload = createBasePayload();
         const resultPromise = runRenderGeneratorWorker(payload);
-        await vi.advanceTimersByTimeAsync(2000);
+        await vi.advanceTimersByTimeAsync(WORKER_TIMEOUT_MS);
         const outcome = await resultPromise;
         expect(outcome).toMatchObject({ error: 'worker_timeout' });
         const worker = MockWorker.latest();
