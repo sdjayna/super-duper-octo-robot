@@ -5,6 +5,29 @@ If you have an AxiDraw, a Bantam Tools NextDraw (their modern rebadge of the pla
 
 > Bantam Tools acquired and now ships the NextDraw-branded successors to AxiDraw hardware ([store](https://bantamtools.com/collections/bantam-tools-nextdraw), [story](https://medium.com/@bantamtools/a-look-back-the-axidraw-story-part-2-2cb66601c3a6)). This project is leaning hard into that future so the tooling you install today follows you onto the new machines without any workflow change.
 
+## Table of Contents
+
+- [Why This Tool Exists](#why-this-tool-exists)
+  - [Hardware compatibility & project direction](#hardware-compatibility--project-direction)
+  - [Feature Highlights](#feature-highlights)
+- [What Ships in This Repo](#what-ships-in-this-repo)
+- [Quick Start (macOS, local-first)](#quick-start-macos-local-first)
+- [Plotting Pipeline](#plotting-pipeline)
+- [Preview Worker Architecture](#preview-worker-architecture)
+- [Drawing Algorithms & Customization](#drawing-algorithms--customization)
+  - [Adding a Drawing with Codex (AI Pair Programming)](#adding-a-drawing-with-codex-ai-pair-programming)
+  - [Custom Drawing Controls](#custom-drawing-controls)
+  - [Preview Paper Colour](#preview-paper-colour)
+- [Paper Presets](#paper-presets)
+- [Color & Multi-Pen Layering](#color--multi-pen-layering)
+- [Server & Plotter Controls](#server--plotter-controls)
+- [Development & Testing](#development--testing)
+- [Roadmap & Known Issues](#roadmap--known-issues)
+- [Community, Support & Contributions](#community-support--contributions)
+- [License & Credits](#license--credits)
+- [Built with AI Pair Programming](#built-with-ai-pair-programming)
+- [Appendix: Parameter Cheatsheet](#appendix-parameter-cheatsheet)
+
 ![Drawing Control view – 2114×1259](readme-ui-drawing-control.png)
 ![Plotter Control view – 2113×1253](readme-ui-plotter-control.png)
 
