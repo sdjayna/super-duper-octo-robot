@@ -28,22 +28,27 @@
    - [ ] Add hatching angle control  
    - [ ] Add density/spacing controls
 
+4. NextDraw rollout  
+   - [ ] Add a dedicated Bantam Tools NextDraw preset in `config/plotters.json` with recommended penlift, travel envelope, and calibration notes.  
+   - [ ] Mirror any NextDraw-specific CLI flags/firmware hooks inside `server/plotter_config.py` once Bantam exposes them.  
+   - [ ] Publish a short “Switching from AxiDraw to Bantam Tools NextDraw” guide (README + docs) so new owners know the workflow is seamless.
+
 ## Medium Priority
 
-4. Finish testing story  
+5. Finish testing story  
    - [ ] Add integration tests (UI ↔ server)  
    - [ ] Add server-side tests for `/plotter`, `/plot-progress`, and `/save-svg`  
    - [ ] Add visual regression tests  
    - [ ] Add DOM-focused tests for collapsible panels + medium color select interactions  
 
-5. TypeScript adoption (longer-term)  
+6. TypeScript adoption (longer-term)  
    - [ ] Convert core files to TypeScript  
    - [ ] Add type definitions  
    - [ ] Add compile-time checks  
 
 ## Low Priority
 
-6. Documentation improvements  
+7. Documentation improvements  
    - [x] Add high-level README, architecture map, and control examples  
    - [ ] Add API documentation  
    - [ ] Improve code comments in the server/drawing helpers  

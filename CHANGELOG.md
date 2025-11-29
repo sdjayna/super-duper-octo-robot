@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Documentation updates calling out Bantam Tools NextDraw compatibility (since Bantam now stewards the AxiDraw hardware) plus a hardware-direction overview so new owners know this stack follows the updated carriage line.
 - Shared straight-skeleton hatching helper that drives bisector spokes from every polygon apex, keeps the toolpath continuous, and ships as the new global “Skeleton” hatch-style option (Photo Triangles, Voronoi, and Bouwkamp already use it for rich corner coverage).
 - New “Contour” hatch style that traces successive inset outlines inside each polygon for a layered fill.
 - Photo Triangles gained a Polygon Margin slider (0–3 mm in 0.1 mm steps) that insets each triangle before hatching so adjacent colors leave a clean gutter like Simple Perfect Rectangle.

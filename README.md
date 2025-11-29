@@ -1,12 +1,14 @@
 # Jupiter Jayna's Plotter Art Control Centre
-*A plotter-first generative art workstation that goes from browser math to multi-pen AxiDraw output without leaving the keyboard.*
+*A plotter-first generative art workstation that goes from browser math to multi-pen AxiDraw output—and now Bantam Tools NextDraw compatibility—without leaving the keyboard.*
 
-If you have an AxiDraw (or any plotter that can digest SVG layers) and love algorithmic art, this repo gives you a complete local studio: mm-accurate previews, color-aware layering, a Python server that proxies the axicli, and a set of battle-tested drawing algorithms (Bouwkamp perfect squares, Hilbert curves, phyllotaxis spirals, spirograph families, Voronoi sketches, Lorenz/Ikeda/de Jong attractors, and more). Everything ships as source, so you can bend it to your own plotting rituals or hack on it live during a stream.
+If you have an AxiDraw, a Bantam Tools NextDraw (their modern rebadge of the platform), or any plotter that can digest SVG layers and love algorithmic art, this repo gives you a complete local studio: mm-accurate previews, color-aware layering, a Python server that proxies the axicli, and a set of battle-tested drawing algorithms (Bouwkamp perfect squares, Hilbert curves, phyllotaxis spirals, spirograph families, Voronoi sketches, Lorenz/Ikeda/de Jong attractors, and more). Everything ships as source, so you can bend it to your own plotting rituals or hack on it live during a stream.
+
+> Bantam Tools acquired and now ships the NextDraw-branded successors to AxiDraw hardware ([store](https://bantamtools.com/collections/bantam-tools-nextdraw), [story](https://medium.com/@bantamtools/a-look-back-the-axidraw-story-part-2-2cb66601c3a6)). This project is leaning hard into that future so the tooling you install today follows you onto the new machines without any workflow change.
 
 ![Drawing Control view – 2114×1259](readme-ui-drawing-control.png)
 ![Plotter Control view – 2113×1253](readme-ui-plotter-control.png)
 
-> Optimized for the AxiDraw SE/A3 (penlift 3, SE servo), but nothing prevents you from wiring in another model by editing `server/plotter_config.py`.
+> Optimized for the AxiDraw SE/A3 and the Bantam Tools-branded NextDraw hardware (identical motion stack, updated vendor), but nothing prevents you from wiring in another model by editing `server/plotter_config.py`.
 
 ## Why This Tool Exists
 
@@ -14,8 +16,16 @@ If you have an AxiDraw (or any plotter that can digest SVG layers) and love algo
 - **Obsessive paper + pen modeling** - paper margins, nib widths, and medium presets are first-class citizens, so the SVG matches the sheet on your desk.
 - **Algorithm playground** - the drawing registry is tiny, modern JavaScript; adding a new tiling or curve takes one module and hot reload, and any config knobs you expose are surfaced automatically in the “Drawing Settings” panel as sliders, selects, or number inputs. Built‑in modules cover Hilbert curves, Bouwkamp tilings, phyllotaxis spirals, spirograph families, Voronoi/Lloyd sketches, calibration grids, Lissajous curves, Superformula shapes, Clifford attractors, Lorenz/Ikeda/Peter de Jong attractors, flow fields, contour maps, wave interference, circle packing, DLA clusters, Truchet tiles, sorting arcs, and Gray‑Scott (Turing) patterns.
 - **Transparency-first** - no cloud, no hidden binaries; everything from the Makefile to the SSE heartbeat loop is readable and hackable.
+- **Future-proof hardware direction** - Bantam Tools’ NextDraw machines run the same command-line toolchain as legacy AxiDraw units, so this repo treats them as first-class plotters and keeps the UI/server abstraction ready for whatever the next carriage looks like.
+
+### Hardware compatibility & project direction
+
+- **AxiDraw SE/A3** remains the default profile (penlift 3, SE servo). All the presets in `config/plotters.json` are still tuned for the stock carriage and axicli workflow.
+- **Bantam Tools NextDraw** devices (available via the [NextDraw collection](https://bantamtools.com/collections/bantam-tools-nextdraw)) use the same CLI surface, so no code changes are required—set the penlift + travel envelope once in `config/plotters.json` and keep plotting. The repo now calls out this compatibility everywhere so new owners know they can stay on this stack when moving to Bantam’s hardware line. If you want the backstory, here’s Bantam’s write-up on the acquisition: [“A look back: the AxiDraw story (part 2)”](https://medium.com/@bantamtools/a-look-back-the-axidraw-story-part-2-2cb66601c3a6).
+- **Direction of travel**: continue building local-first tooling that speaks the common AxiDraw/NextDraw CLI, with hooks ready for Bantam firmware extensions (pen calibration, travel caps) as they ship. Expect future presets + docs to talk explicitly about both names so nobody has to guess whether this repo still works with the rebranded machines.
 
 ### Feature Highlights
+- **NextDraw-ready plotting stack** – the Python server and preview controller already speak the `axicli` language Bantam retained for NextDraw, so swapping in the new hardware is literally a config change. The README, changelog, and TODO now reflect that direction so the community knows we’re marching alongside Bantam’s roadmap.
 - **Skeleton hatching everywhere** – The shared hatching helpers now expose a straight-skeleton/medial-axis mode (next to Serpentine/Scanline/None) so any drawing can trace a single continuous path per polygon, diving bisector spokes deep into acute corners before optionally outlining the boundary. Photo Triangles, Voronoi, and Bouwkamp already default to it for rich, corner-to-corner coverage.
 
 - **Tabbed control console** – switch between Drawing settings and Plotter controls without scrolling. Each panel keeps its state, so you can tweak a control, hop over to the plotter, and return without losing context.
