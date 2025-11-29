@@ -354,13 +354,13 @@ Add your own stock by copying one of the entries, tweaking the dimensions, and f
 
 ### Near-term roadmap
 
-- **NextDraw rollout** – ship a dedicated Bantam Tools NextDraw preset in `config/plotters.json`, document the migration path from legacy AxiDraw units, and plumb any new firmware flags into `server/plotter_config.py` as Bantam exposes them.
-- **Paper validation/overlay** – add explicit paper size validation + an optional preview overlay so mismatched config/paper pairs are caught before plotting.
 - **Drawing scaffolder** – provide a CLI (`npm run scaffold:drawing`) that generates boilerplate modules/tests to continue lowering the barrier for new community submissions.
+- **Integration tests** – add end-to-end coverage for `/plotter`, `/plot-progress`, `/save-svg`, and the résumé bookkeeping so server changes stay safe.
+- **Static asset hardening** – lock down the `/drawings/*` handler with canonicalized paths + explicit allowlists before we ship a public build.
 
 ### Known issues
 
-- The Python server still uses the single-threaded `HTTPServer`; `/plot-progress` streams work, but concurrent requests share that thread. Upgrading to `ThreadingHTTPServer` (or moving the SSE loop off-thread) would unblock future features.
+- The Python server still uses the single-threaded `HTTPServer`; `/plot-progress` streams work asynchronously in the UI, but concurrent requests share that thread. Upgrading to `ThreadingHTTPServer` (or moving the SSE loop off-thread) would unblock future features.
 - The `/drawings/*` static handler does not sanitize `../` segments, so a malicious URL could traverse outside the drawings directory. Canonicalization + allowlists are planned.
 - `/plotter`, `/plot-progress`, and `/save-svg` still lack integration tests; only the client/unit layers have coverage today.
 
