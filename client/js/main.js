@@ -116,10 +116,12 @@ const state = {
     previewZoomPercent: 100,
     previewPan: { x: 0, y: 0 },
     isPanning: false,
-    panStart: null
+    panStart: null,
+    currentHatchSettings: null
 };
 
 state.warnIfPaperExceedsPlotter = () => warnIfPaperExceedsPlotter(state, state.currentPaper);
+state.currentHatchSettings = getHatchSettings();
 let resumeStatus = { available: false, layer: null, layerLabel: null };
 let plotterIsRunning = false;
 
@@ -294,6 +296,7 @@ async function handleGlobalHatchChanged() {
     if (context) {
         applyHatchSettingsToConfig(context.drawingConfig);
     }
+    state.currentHatchSettings = getHatchSettings();
     await requestDraw({ forceRestart: true });
     refreshLayerSelectUI();
     updatePlotterStatus();

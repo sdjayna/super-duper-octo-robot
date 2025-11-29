@@ -4,9 +4,9 @@
 
 1. Finalize paper/medium handling  
    - [x] Centralize paper configuration management  
-   - [ ] Add paper size validation  
+   - [x] Add paper size validation  
    - [x] Improve margin handling consistency  
-   - [ ] Add paper size preview/overlay  
+   - [x] Add paper size preview/overlay  
    - [x] Standardize paper size changes across drawing types  
    - [ ] Order-safe fill clipping for overlapping polygons: before layer optimization/splitting, compute the visible portion of each polygon (subtract union of those above in the original render order) so color reordering never puts paint on top of paint. Needs robust polygon boolean ops and a fast path for non-overlapping cases.
    - [x] Minimize pen-up travel within each layer: for every color layer, build a graph using polygon centroids/endpoints and reorder the elements via a nearest-neighbor insertion pass (no path reversals) so pen-up moves between polygons/segments shrink.
@@ -28,18 +28,19 @@
    - [ ] Add hatching angle control  
    - [ ] Add density/spacing controls
 
-4. NextDraw rollout  
-   - [ ] Add a dedicated Bantam Tools NextDraw preset in `config/plotters.json` with recommended penlift, travel envelope, and calibration notes.  
-   - [ ] Mirror any NextDraw-specific CLI flags/firmware hooks inside `server/plotter_config.py` once Bantam exposes them.  
-   - [ ] Publish a short “Switching from AxiDraw to Bantam Tools NextDraw” guide (README + docs) so new owners know the workflow is seamless.
+4. Plotter presets & hardware docs  
+   - [ ] Add a dedicated Bantam Tools NextDraw preset (and any popular custom rigs) to `config/plotters.json` with penlift, pen rate, and travel envelope defaults.  
+   - [ ] Document the “switching from AxiDraw to NextDraw” workflow (JSON tweaks, servo settings, calibration tips) in README + docs.  
+   - [ ] Surface presets in the UI so users can swap hardware without editing JSON.
 
 ## Medium Priority
 
 5. Finish testing story  
-   - [ ] Add integration tests (UI ↔ server)  
-   - [ ] Add server-side tests for `/plotter`, `/plot-progress`, and `/save-svg`  
+   - [x] Add integration tests (UI ↔ server)  
+   - [x] Add server-side tests for `/plotter`, `/plot-progress`, and `/save-svg`  
    - [ ] Add visual regression tests  
    - [ ] Add DOM-focused tests for collapsible panels + medium color select interactions  
+   - [ ] Extend integration coverage to resume logs, stop/start, and multi-layer sequencing.
 
 6. TypeScript adoption (longer-term)  
    - [ ] Convert core files to TypeScript  
@@ -53,3 +54,4 @@
    - [ ] Add API documentation  
    - [ ] Improve code comments in the server/drawing helpers  
    - [ ] Add step-by-step tutorials for custom drawings (with registry workflow)  
+   - [ ] Publish a lightweight “integration test harness” walkthrough so contributors can run the new endpoint suite locally.

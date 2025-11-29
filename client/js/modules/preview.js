@@ -86,6 +86,24 @@ export function createPreviewController({
             if (debugLogger) {
                 debugLogger(`Render path: ${attemptWorker ? 'worker' : 'main'} for ${select.value}`);
             }
+            const hatchSettings = state.currentHatchSettings;
+            const workerLineOverrides = {
+                strokeWidth: state.currentStrokeWidth,
+                lineCap: state.currentLineCap,
+                lineJoin: state.currentLineJoin
+            };
+            if (hatchSettings) {
+                workerLineOverrides.spacing = hatchSettings.hatchSpacing;
+                workerLineOverrides.hatchStyle = hatchSettings.hatchStyle;
+                workerLineOverrides.hatchInset = hatchSettings.hatchInset;
+                if (typeof hatchSettings.includeBoundary !== 'undefined') {
+                    workerLineOverrides.includeBoundary = hatchSettings.includeBoundary;
+                }
+            }
+            const cleanedOverrides = Object.fromEntries(
+                Object.entries(workerLineOverrides).filter(([, value]) => typeof value !== 'undefined')
+            );
+
             const renderResult = attemptWorker
                 ? await runRenderGeneratorWorker({
                     drawingKey: select.value,
@@ -95,11 +113,7 @@ export function createPreviewController({
                     plotterArea: state.plotterSpecs?.paper,
                     maxTravelPerLayerMeters: state.maxTravelPerLayerMeters,
                     paletteOverride: state.currentPalette,
-                    lineOverrides: {
-                        strokeWidth: state.currentStrokeWidth,
-                        lineCap: state.currentLineCap,
-                        lineJoin: state.currentLineJoin
-                    },
+                    lineOverrides: cleanedOverrides,
                     abortSignal
                 })
                 : { error: 'worker_disabled', drawingKey: select.value };
