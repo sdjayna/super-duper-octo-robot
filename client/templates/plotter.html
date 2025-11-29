@@ -34,6 +34,10 @@
                 <button class="control-tab" data-target="plotterPanel">Plotter Control</button>
             </div>
             <div id="drawingPanel" class="preview-section control-panel active">
+                <header class="panel-heading">
+                    <h3>Drawing Control</h3>
+                    <p>Pick drawings, tune controls, and adjust preview behaviour.</p>
+                </header>
                 <div class="preview-controls">
                     <div class="control-row">
                         <div class="control-section half-width">
@@ -96,26 +100,6 @@
                             </label>
                         </div>
                     </div>
-                    <div class="control-section collapsible" data-role="paper-settings-section">
-                        <button id="paperSettingsToggle" class="collapsible-toggle" type="button"
-                            aria-expanded="true" aria-controls="paperSettingsContent">
-                            <span class="collapsible-title">Paper &amp; Margin</span>
-                            <span class="collapsible-icon" aria-hidden="true"></span>
-                        </button>
-                        <div id="paperSettingsContent" class="control-section-content paper-controls">
-                            <select id="paperSelect" class="plotter-button">
-                                <!-- Populated dynamically from paper config -->
-                            </select>
-                            <div id="paperDescription" class="paper-description"></div>
-                            <div class="margin-controls merged-margin-controls">
-                                <label class="margin-label" for="marginSlider">
-                                    <span>Margin</span>
-                                    <span class="drawing-control-value" id="marginValueLabel">20 mm</span>
-                                </label>
-                                <input type="range" id="marginSlider" min="0" max="100" step="1">
-                            </div>
-                        </div>
-                    </div>
                     <div class="control-section collapsible" data-role="medium-settings-section">
                         <button id="mediumSettingsToggle" class="collapsible-toggle" type="button"
                             aria-expanded="true" aria-controls="mediumSettingsContent">
@@ -148,6 +132,10 @@
                 </div>
             </div>
             <div id="plotterPanel" class="plotter-section control-panel">
+                <header class="panel-heading">
+                    <h3>Plotter Control</h3>
+                    <p>Prep paper, manage pens, and send layers to the plotter.</p>
+                </header>
                 <div class="plotter-controls">
                     <div class="control-section">
                         <h4>Plot</h4>
@@ -186,6 +174,26 @@
                             <div class="slider-group">
                                 <label for="penRateLower">Pen Rate Lower: <span id="penRateLowerValue">10</span></label>
                                 <input type="range" id="penRateLower" min="1" max="100" value="10">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="control-section collapsible" data-role="paper-settings-section">
+                        <button id="paperSettingsToggle" class="collapsible-toggle" type="button"
+                            aria-expanded="true" aria-controls="paperSettingsContent">
+                            <span class="collapsible-title">Paper &amp; Margin</span>
+                            <span class="collapsible-icon" aria-hidden="true"></span>
+                        </button>
+                        <div id="paperSettingsContent" class="control-section-content paper-controls">
+                            <select id="paperSelect" class="plotter-button">
+                                <!-- Populated dynamically from paper config -->
+                            </select>
+                            <div id="paperDescription" class="paper-description"></div>
+                            <div class="margin-controls merged-margin-controls">
+                                <label class="margin-label" for="marginSlider">
+                                    <span>Margin</span>
+                                    <span class="drawing-control-value" id="marginValueLabel">20 mm</span>
+                                </label>
+                                <input type="range" id="marginSlider" min="0" max="100" step="1">
                             </div>
                         </div>
                     </div>
