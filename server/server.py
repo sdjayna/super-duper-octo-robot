@@ -1,4 +1,4 @@
-from http.server import HTTPServer, SimpleHTTPRequestHandler
+from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 import glob
 import json
 import os
@@ -134,7 +134,8 @@ class PlotterHandler(SimpleHTTPRequestHandler):
         'mtime': None,
         'data': None
     }
-    RESUME_LOG_PATH = os.path.join('output', 'plot_resume.log')
+    OUTPUT_ROOT = 'output'
+    RESUME_LOG_NAME = 'plot_resume.log'
     resume_state_lock = threading.Lock()
     resume_state = {
         'path': None,
@@ -147,8 +148,28 @@ class PlotterHandler(SimpleHTTPRequestHandler):
     last_progress_bar = None
 
     @classmethod
+    def _default_resume_path(cls):
+        return os.path.join(cls.OUTPUT_ROOT, cls.RESUME_LOG_NAME)
+
+    @classmethod
     def _resolve_resume_path(cls, requested_path=None):
-        return requested_path or cls.RESUME_LOG_PATH
+        if requested_path:
+            return requested_path
+        return cls._default_resume_path()
+
+    @staticmethod
+    def _safe_join(base_dir, *paths):
+        if not base_dir:
+            return None
+        base_real = os.path.realpath(base_dir)
+        candidate = os.path.realpath(os.path.join(base_real, *paths))
+        try:
+            common = os.path.commonpath([candidate, base_real])
+        except ValueError:
+            return None
+        if common != base_real:
+            return None
+        return candidate
 
     @classmethod
     def _prepare_resume_file(cls, resume_path):
@@ -316,20 +337,27 @@ class PlotterHandler(SimpleHTTPRequestHandler):
             return
 
         if request_path.startswith('/drawings/'):
-            local_path = os.path.join(os.getcwd(), request_path.lstrip('/'))
-            if os.path.isfile(local_path):
+            drawings_root = os.path.join(os.getcwd(), 'drawings')
+            rel_path = request_path[len('/drawings/'):].lstrip('/')
+            safe_path = self._safe_join(drawings_root, rel_path)
+            if not safe_path:
+                self.send_error(403, "Forbidden")
+                return
+            if os.path.isfile(safe_path):
                 self.send_response(200)
-                if local_path.endswith('.js'):
+                if safe_path.endswith('.js'):
                     self.send_header('Content-Type', 'application/javascript')
-                elif local_path.endswith('.json'):
+                elif safe_path.endswith('.json'):
                     self.send_header('Content-Type', 'application/json')
                 else:
                     self.send_header('Content-Type', 'application/octet-stream')
                 self.send_header('Cache-Control', 'no-cache')
                 self.end_headers()
-                with open(local_path, 'rb') as source_file:
+                with open(safe_path, 'rb') as source_file:
                     shutil.copyfileobj(source_file, self.wfile)
                 return
+            self.send_error(404, "Not Found")
+            return
             
         # Handle CSS file requests
         if self.path.startswith('/css/'):
@@ -803,7 +831,8 @@ class PlotterHandler(SimpleHTTPRequestHandler):
             if self.path == '/save-svg':
                 try:
                     # Create output directory and drawing-specific subdirectory
-                    output_dir = os.path.join('output', data['name'])
+                    base_output = getattr(self, 'OUTPUT_ROOT', PlotterHandler.OUTPUT_ROOT)
+                    output_dir = os.path.join(base_output, data['name'])
                     try:
                         os.makedirs(output_dir, exist_ok=True)
                     except OSError as e:
@@ -914,13 +943,13 @@ def cleanup_temp_files():
     except Exception as e:
         print(f"❌ Error during cleanup: {e}")
 
-def create_server():
+def create_server(host='', port=8000):
     try:
         cleanup_temp_files()  # Add cleanup call
         PlotterHandler.bootstrap_resume_state()
-        server_address = ('', 8000)
-        httpd = HTTPServer(server_address, PlotterHandler)
-        print('🚀 Server running on http://localhost:8000')
+        server_address = (host, port)
+        httpd = ThreadingHTTPServer(server_address, PlotterHandler)
+        print(f'🚀 Server running on http://{host or "localhost"}:{httpd.server_address[1]}')
         return httpd
     except Exception as e:
         print(f"❌ Error creating server: {e}")

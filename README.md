@@ -355,14 +355,12 @@ Add your own stock by copying one of the entries, tweaking the dimensions, and f
 ### Near-term roadmap
 
 - **Drawing scaffolder** – provide a CLI (`npm run scaffold:drawing`) that generates boilerplate modules/tests to continue lowering the barrier for new community submissions.
-- **Integration tests** – add end-to-end coverage for `/plotter`, `/plot-progress`, `/save-svg`, and the résumé bookkeeping so server changes stay safe.
-- **Static asset hardening** – lock down the `/drawings/*` handler with canonicalized paths + explicit allowlists before we ship a public build.
+- **Deeper integration coverage** – now that the core endpoints are covered, expand the tests to exercise resume logs, stop/start flows, and multi-layer plotting.
+- **Plotter presets** – ship tuned Bantam Tools NextDraw + custom pen presets so users can jump between hardware profiles without editing JSON by hand.
 
 ### Known issues
 
-- The Python server still uses the single-threaded `HTTPServer`; `/plot-progress` streams work asynchronously in the UI, but concurrent requests share that thread. Upgrading to `ThreadingHTTPServer` (or moving the SSE loop off-thread) would unblock future features.
-- The `/drawings/*` static handler does not sanitize `../` segments, so a malicious URL could traverse outside the drawings directory. Canonicalization + allowlists are planned.
-- `/plotter`, `/plot-progress`, and `/save-svg` still lack integration tests; only the client/unit layers have coverage today.
+None right now—`ThreadingHTTPServer` keeps `/plot-progress` responsive, the `/drawings/*` handler now canonicalizes requests, and `/plotter`/`/plot-progress`/`/save-svg` all have integration tests. If you spot a regression, open an issue and we’ll jump on it.
 
 ## Community, Support & Contributions
 

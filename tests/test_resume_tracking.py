@@ -10,13 +10,13 @@ from server.server import PlotterHandler, PLOTTER_CONFIGS, CURRENT_PLOTTER
 class TestResumeTracking(unittest.TestCase):
     def setUp(self):
         self.temp_dir = tempfile.mkdtemp(prefix='resume_test_')
-        self.resume_file = os.path.join(self.temp_dir, 'plot_resume.log')
-        self.original_path = PlotterHandler.RESUME_LOG_PATH
-        PlotterHandler.RESUME_LOG_PATH = self.resume_file
+        self.original_output_root = PlotterHandler.OUTPUT_ROOT
+        PlotterHandler.OUTPUT_ROOT = self.temp_dir
+        self.resume_file = os.path.join(self.temp_dir, PlotterHandler.RESUME_LOG_NAME)
         PlotterHandler.clear_resume_state(remove_file=False)
 
     def tearDown(self):
-        PlotterHandler.RESUME_LOG_PATH = self.original_path
+        PlotterHandler.OUTPUT_ROOT = self.original_output_root
         PlotterHandler.clear_resume_state(remove_file=False)
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
