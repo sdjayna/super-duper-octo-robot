@@ -7,9 +7,9 @@ import { createSVG, createDrawingBuilder } from './clientAdapters.js';
  * @param {Object} params.renderContext
  * @returns {{ svg: SVGElement, builder: Object }}
  */
-export function createDrawingRuntime({ drawingConfig, renderContext }) {
+export function createDrawingRuntime({ drawingConfig, renderContext, abortSignal }) {
     const svg = createSVG(renderContext);
-    const builder = createDrawingBuilder({ svg, drawingConfig, renderContext });
+    const builder = createDrawingBuilder({ svg, drawingConfig, renderContext, abortSignal: abortSignal || renderContext?.abortSignal });
     return { svg, builder };
 }
 

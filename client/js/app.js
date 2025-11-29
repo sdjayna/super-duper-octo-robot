@@ -3,11 +3,18 @@ import { createRenderContext } from './renderContext.js';
 
 export async function generateSVG(drawingConfig, options = {}) {
     try {
+        const abortSignal = options.abortSignal;
+        const throwIfAborted = () => {
+            if (abortSignal?.aborted) {
+                throw new Error('Render aborted');
+            }
+        };
         await drawingsReady;
         if (!drawingConfig) {
             throw new Error('Drawing configuration is required');
         }
 
+        throwIfAborted();
         console.log(`Generating SVG for ${drawingConfig.name}`);
         
         const typeConfig = drawingTypes[drawingConfig.type];
@@ -20,6 +27,7 @@ export async function generateSVG(drawingConfig, options = {}) {
             typeConfig.validator(drawingConfig);
         }
 
+        throwIfAborted();
         const paperForContext = options.paper || drawingConfig.paper;
         const dynamicBounds = options.bounds
             || (typeof drawingConfig.drawingData?.getBounds === 'function'
@@ -32,6 +40,7 @@ export async function generateSVG(drawingConfig, options = {}) {
             drawingConfig.drawingData.currentBounds = dynamicBounds;
         }
 
+        throwIfAborted();
         const renderContext = options.renderContext || createRenderContext({
             paper: paperForContext,
             drawingWidth: dynamicBounds?.width || drawingConfig.drawingData.width,
@@ -40,8 +49,10 @@ export async function generateSVG(drawingConfig, options = {}) {
             orientation: options.orientation,
             plotterArea: options.plotterArea
         });
+        renderContext.abortSignal = abortSignal;
 
-        const svg = await typeConfig.drawFunction(drawingConfig, renderContext);
+        throwIfAborted();
+        const svg = await typeConfig.drawFunction(drawingConfig, renderContext, { abortSignal });
         
         if (!svg) {
             throw new Error('Failed to generate SVG');

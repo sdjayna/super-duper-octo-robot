@@ -1,6 +1,6 @@
 import { createDrawingContext } from './drawingContext.js';
 
-export function createDrawingBuilder({ svg, drawingConfig, renderContext }) {
+export function createDrawingBuilder({ svg, drawingConfig, renderContext, abortSignal }) {
     const drawingContext = createDrawingContext(svg, drawingConfig.colorPalette);
     drawingContext.defaultStrokeWidth = drawingConfig.line?.strokeWidth ?? 0.4;
 
@@ -14,6 +14,9 @@ export function createDrawingBuilder({ svg, drawingConfig, renderContext }) {
 
     return {
         appendPath(points, options = {}) {
+            if (abortSignal?.aborted) {
+                throw new Error('Render aborted');
+            }
             const lineOptions = applyLineDefaults(options);
             drawingContext.appendPath({
                 points,

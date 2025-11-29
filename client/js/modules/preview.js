@@ -1,10 +1,12 @@
 /* global Worker */
+/* global AbortController */
 import { applyPreviewEffects } from '../utils/previewEffects.js';
 import { applyLayerTravelLimit } from '../utils/layerTravelLimiter.js';
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const WORKER_TIMEOUT_MS = 12000;
 let renderWorker = null;
 let workerRequestId = 0;
+let activeAbortController = null;
 
 export function createPreviewController({
     container,
@@ -19,6 +21,10 @@ export function createPreviewController({
     let drawRequestId = 0;
 
     async function draw() {
+        cancelActiveDraw('restart');
+        const abortController = new AbortController();
+        activeAbortController = abortController;
+        const abortSignal = abortController.signal;
         const requestId = ++drawRequestId;
         setPreviewControlsDisabled(true);
         try {
@@ -49,20 +55,29 @@ export function createPreviewController({
             state.lastRenderedPaper = paperForRender;
             container.innerHTML = '';
 
+            if (abortSignal.aborted) {
+                return;
+            }
+
             const { svg, renderContext } = await generateSVG(selectedDrawing, {
                 paper: paperForRender,
                 orientation: state.currentOrientation,
-                plotterArea: state.plotterSpecs?.paper
+                plotterArea: state.plotterSpecs?.paper,
+                abortSignal
             });
 
             if (requestId !== drawRequestId) {
+                return;
+            }
+            if (abortSignal.aborted) {
                 return;
             }
             svg.setAttribute('preserveAspectRatio', 'none');
             svg.style.backgroundColor = previewColor;
             applyPreviewEffects(svg, state.previewProfile);
             const workerResult = await runWorkerOptimization(svg, {
-                maxTravelPerLayerMeters: state.maxTravelPerLayerMeters
+                maxTravelPerLayerMeters: state.maxTravelPerLayerMeters,
+                abortSignal
             });
             let travelSummary = null;
             if (workerResult?.applied) {
@@ -87,6 +102,9 @@ export function createPreviewController({
                     logDebug(`Split ${travelSummary.splitLayers} layer${suffix} to stay under ${limitDisplay} m (now ${travelSummary.totalLayers} layers).`);
                 }
             }
+            if (abortSignal.aborted) {
+                return;
+            }
             updatePlotterLimitOverlay(svg, state, renderContext);
             container.appendChild(svg);
             populateLayerSelect(container, logDebug, { preserveDomOrder: Boolean(travelSummary) });
@@ -94,10 +112,17 @@ export function createPreviewController({
             updateLayerVisibility(container, state.rulersVisible);
             state.warnIfPaperExceedsPlotter?.();
         } catch (error) {
-            console.error('Error:', error);
-            logDebug('Error generating SVG: ' + error.message, 'error');
+            if (abortSignal?.aborted || error?.message === 'Render aborted') {
+                logDebug('Render aborted', 'warn');
+            } else {
+                console.error('Error:', error);
+                logDebug('Error generating SVG: ' + error.message, 'error');
+            }
         } finally {
             setPreviewControlsDisabled(false);
+            if (activeAbortController === abortController) {
+                activeAbortController = null;
+            }
         }
     }
 
@@ -175,6 +200,14 @@ function applyMarginValue(value) {
         updateMarginControls,
         applyMarginValue
     };
+}
+
+function cancelActiveDraw() {
+    if (activeAbortController) {
+        activeAbortController.abort();
+        activeAbortController = null;
+    }
+    disposeRenderWorker();
 }
 
 function createRenderWorker() {
@@ -278,6 +311,10 @@ function runWorkerOptimization(svg, options = {}) {
     if (typeof Worker === 'undefined') {
         return null;
     }
+    const abortSignal = options.abortSignal;
+    if (abortSignal?.aborted) {
+        return null;
+    }
     const serializedLayers = serializeLayersForWorker(svg);
     if (!serializedLayers.length) {
         return null;
@@ -297,12 +334,23 @@ function runWorkerOptimization(svg, options = {}) {
             disposeRenderWorker();
             resolve(null);
         }, WORKER_TIMEOUT_MS);
+        const abortHandler = () => {
+            clearTimeout(timeout);
+            disposeRenderWorker();
+            resolve(null);
+        };
+        if (abortSignal) {
+            abortSignal.addEventListener('abort', abortHandler, { once: true });
+        }
         worker.addEventListener('message', event => {
             const data = event.data || {};
             if (data.requestId !== requestId || data.type !== 'optimizeResult') {
                 return;
             }
             clearTimeout(timeout);
+            if (abortSignal) {
+                abortSignal.removeEventListener('abort', abortHandler);
+            }
             if (data.error || !Array.isArray(data.passes)) {
                 disposeRenderWorker();
                 resolve(null);
@@ -318,9 +366,16 @@ function runWorkerOptimization(svg, options = {}) {
         }, { once: true });
         worker.addEventListener('error', () => {
             clearTimeout(timeout);
+            if (abortSignal) {
+                abortSignal.removeEventListener('abort', abortHandler);
+            }
             disposeRenderWorker();
             resolve(null);
         }, { once: true });
+        if (abortSignal?.aborted) {
+            abortHandler();
+            return;
+        }
         worker.postMessage(payload);
     });
 }
