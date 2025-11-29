@@ -2,11 +2,16 @@
 /* global AbortController */
 import { applyPreviewEffects } from '../utils/previewEffects.js';
 import { applyLayerTravelLimit } from '../utils/layerTravelLimiter.js';
+import { createSVG } from '../utils/svgUtils.js';
+import { isWorkerSafeDrawing } from '../../drawings/shared/isWorkerSafe.js';
 const SVG_NS = 'http://www.w3.org/2000/svg';
-const WORKER_TIMEOUT_MS = 12000;
+const WORKER_TIMEOUT_MS = 2000;
 const MAX_PREVIEW_LAYERS = 400;
 const TARGET_PREVIEW_LAYERS = 150;
-let renderWorker = null;
+const USE_WORKER_RENDER = true;
+let generatorWorker = null;
+let workerReadyPromise = null;
+let resolveWorkerReady = null;
 let workerRequestId = 0;
 let activeAbortController = null;
 let debugLogger = null;
@@ -44,7 +49,6 @@ export function createPreviewController({
         setPreviewControlsDisabled(true);
         try {
             logDebug('Loading drawing modules and presets…');
-            const { generateSVG } = await import('../app.js?v=' + Date.now());
             const { drawings, drawingsReady } = await import('../drawings.js?v=' + Date.now());
             await drawingsReady;
             syncDrawingStyles(drawings, state);
@@ -78,58 +82,83 @@ export function createPreviewController({
                 return;
             }
 
-            const { svg, renderContext } = await generateSVG(selectedDrawing, {
-                paper: paperForRender,
-                orientation: state.currentOrientation,
-                plotterArea: state.plotterSpecs?.paper,
-                abortSignal
-            });
-
-            if (requestId !== drawRequestId) {
-                return;
+            const attemptWorker = USE_WORKER_RENDER && isWorkerSafeDrawing(selectedDrawing);
+            if (debugLogger) {
+                debugLogger(`Render path: ${attemptWorker ? 'worker' : 'main'} for ${select.value}`);
             }
+            const renderResult = attemptWorker
+                ? await runRenderGeneratorWorker({
+                    drawingKey: select.value,
+                    controlValues: state.drawingControlValues[select.value] || {},
+                    paper: paperForRender,
+                    orientation: state.currentOrientation,
+                    plotterArea: state.plotterSpecs?.paper,
+                    maxTravelPerLayerMeters: state.maxTravelPerLayerMeters,
+                    paletteOverride: state.currentPalette,
+                    lineOverrides: {
+                        strokeWidth: state.currentStrokeWidth,
+                        lineCap: state.currentLineCap,
+                        lineJoin: state.currentLineJoin
+                    },
+                    abortSignal
+                })
+                : { error: 'worker_disabled', drawingKey: select.value };
+
             if (abortSignal.aborted) {
                 return;
             }
-            svg.setAttribute('preserveAspectRatio', 'none');
-            svg.style.backgroundColor = previewColor;
-            applyPreviewEffects(svg, state.previewProfile);
-            const workerResult = await runWorkerOptimization(svg, {
-                maxTravelPerLayerMeters: state.maxTravelPerLayerMeters,
-                abortSignal
-            });
-            let travelSummary = null;
-            if (workerResult?.applied) {
-                travelSummary = workerResult.summary;
-                if (travelSummary?.splitLayers) {
-                    const suffix = travelSummary.splitLayers === 1 ? '' : 's';
-                    const limitDisplay = Number(travelSummary.limitMeters ?? 0).toFixed(1);
-                    logDebug(`Preview split ${travelSummary.splitLayers} layer${suffix} to stay under ${limitDisplay} m (now ${travelSummary.totalLayers}).`);
-                }
-                if (Array.isArray(workerResult.warnings)) {
-                    workerResult.warnings.forEach(message => logDebug(message, 'warn'));
-                }
-            } else {
-                const layerOrdering = collectLayerOrdering(svg, logDebug);
-                travelSummary = applyLayerTravelLimit(svg, {
-                    maxTravelPerLayerMeters: state.maxTravelPerLayerMeters,
-                    orderedLayers: layerOrdering
+
+            let hydratedSvg;
+            let travelSummary;
+            let hydratedRenderContext;
+            if (!renderResult || renderResult.error) {
+                const workerError = renderResult?.error || 'unknown error';
+                const workerStack = renderResult?.stack ? ` Stack: ${renderResult.stack.slice(0, 200)}...` : '';
+                const workerKey = renderResult?.drawingKey || select.value;
+                const elapsed = renderResult?.elapsedMs ? ` after ${Math.round(renderResult.elapsedMs)}ms` : '';
+                logDebug(`Worker render failed for ${workerKey}: ${workerError}${elapsed}. Falling back to main thread.${workerStack}`, 'warn');
+                // Mirror to console for easier DevTools inspection
+                console.warn('[preview] worker render failed', { workerKey, workerError, elapsedMs: renderResult?.elapsedMs, stack: renderResult?.stack });
+                const fallbackStart = performance.now();
+                const fallback = await renderOnMainThread(selectedDrawing, {
+                    paper: paperForRender,
+                    orientation: state.currentOrientation,
+                    plotterArea: state.plotterSpecs?.paper,
+                    abortSignal
                 });
-                if (travelSummary?.splitLayers) {
-                    const suffix = travelSummary.splitLayers === 1 ? '' : 's';
-                    const limitDisplay = Number(travelSummary.limitMeters ?? 0).toFixed(1);
-                    logDebug(`Preview split ${travelSummary.splitLayers} layer${suffix} to stay under ${limitDisplay} m (now ${travelSummary.totalLayers}).`);
-                }
+                console.warn('[preview] main-thread fallback render complete', { workerKey, elapsedMs: Math.round(performance.now() - fallbackStart) });
+                hydratedSvg = fallback.svg;
+                travelSummary = fallback.travelSummary;
+                hydratedRenderContext = fallback.renderContext;
+            } else {
+                const hydrated = hydrateRenderResult({
+                    renderResult,
+                    previewColor
+                });
+                hydratedSvg = hydrated.svg;
+                travelSummary = hydrated.travelSummary;
+                hydratedRenderContext = hydrated.renderContext;
+            }
+
+            if (requestId !== drawRequestId || abortSignal.aborted) {
+                return;
             }
             if (maybeRaiseTravelLimitForPreview(travelSummary, state, logDebug)) {
                 await draw({ delayMs: 0, forceRestart: true });
                 return;
             }
-            if (abortSignal.aborted) {
-                return;
+
+            hydratedSvg.setAttribute('preserveAspectRatio', 'none');
+            hydratedSvg.style.backgroundColor = previewColor;
+            applyPreviewEffects(hydratedSvg, state.previewProfile);
+            updatePlotterLimitOverlay(hydratedSvg, state, hydratedRenderContext);
+            container.appendChild(hydratedSvg);
+            if (debugLogger) {
+                const layerCount = (renderResult?.passes || travelSummary?.totalLayers || hydratedSvg.querySelectorAll('g[inkscape\\:groupmode="layer"]').length || 0);
+                const mode = renderResult?.error ? 'main' : 'worker';
+                const elapsed = renderResult?.elapsedMs ? ` in ${Math.round(renderResult.elapsedMs)}ms` : '';
+                debugLogger(`Preview render complete via ${mode}: ${layerCount} layer(s)${elapsed}.`);
             }
-            updatePlotterLimitOverlay(svg, state, renderContext);
-            container.appendChild(svg);
             populateLayerSelect(container, logDebug, { preserveDomOrder: Boolean(travelSummary) });
             document.getElementById('layerSelect').value = currentLayer;
             updateLayerVisibility(container, state.rulersVisible);
@@ -274,50 +303,55 @@ function cancelActiveDraw(reason = '') {
         activeAbortController.abort();
         activeAbortController = null;
     }
-    disposeRenderWorker();
+    disposeGeneratorWorker(reason || 'cancel_active_draw');
 }
 
-function createRenderWorker() {
-    if (renderWorker) {
-        renderWorker.terminate();
+function getGeneratorWorker() {
+    if (generatorWorker) {
+        console.debug('[preview] worker reuse existing instance');
+        return generatorWorker;
     }
-    renderWorker = new Worker(new URL('../workers/renderWorker.js', import.meta.url), { type: 'module' });
-    return renderWorker;
-}
-
-function disposeRenderWorker() {
-    if (renderWorker) {
-        renderWorker.terminate();
-        renderWorker = null;
-    }
-}
-
-function serializeLayersForWorker(svg) {
-    const drawingLayer = svg.querySelector('[data-role="drawing-content"]');
-    if (!drawingLayer) {
-        return [];
-    }
-    const groups = Array.from(drawingLayer.children || []).filter(
-        node => node?.getAttribute?.('inkscape:groupmode') === 'layer'
-    );
-    return groups.map((group, index) => {
-        const baseOrderAttr = group.getAttribute('data-layer-order');
-        const baseOrder = Number.isFinite(Number(baseOrderAttr)) ? Number(baseOrderAttr) : index;
-        const paths = Array.from(group.querySelectorAll('path')).map(path => ({
-            d: path.getAttribute('d') || '',
-            strokeWidth: path.getAttribute('stroke-width'),
-            strokeLinecap: path.getAttribute('stroke-linecap'),
-            strokeLinejoin: path.getAttribute('stroke-linejoin'),
-            stroke: path.getAttribute('stroke') || group.getAttribute('stroke') || null
-        }));
-        return {
-            baseOrder,
-            baseLabel: group.getAttribute('data-layer-base') || extractLayerBaseName(group),
-            label: group.getAttribute('inkscape:label') || '',
-            stroke: group.getAttribute('stroke') || null,
-            paths
+    const cacheBust = `?ts=${Date.now()}`;
+    generatorWorker = new Worker(new URL(`../workers/renderGenerator.js${cacheBust}`, import.meta.url), { type: 'module' });
+    console.debug('[preview] worker spawned renderGenerator', { cacheBust });
+    generatorWorker.addEventListener('message', handleWorkerReadySignal);
+    workerReadyPromise = new Promise(resolve => {
+        resolveWorkerReady = (value) => {
+            resolve(value);
+            resolveWorkerReady = null;
         };
     });
+    return generatorWorker;
+}
+
+function handleWorkerReadySignal(event) {
+    if (event?.data?.type === 'workerReady' && resolveWorkerReady) {
+        console.debug('[preview] worker ready signal received', event.data);
+        event?.currentTarget?.removeEventListener('message', handleWorkerReadySignal);
+        resolveWorkerReady(Date.now());
+    }
+}
+
+function disposeGeneratorWorker(reason = 'unspecified') {
+    if (generatorWorker) {
+        console.debug('[preview] worker disposing instance', { reason });
+        generatorWorker.terminate();
+        generatorWorker = null;
+        workerReadyPromise = null;
+        resolveWorkerReady = null;
+    } else {
+        console.debug('[preview] worker dispose skipped (no active worker)', { reason });
+    }
+}
+
+function waitForWorkerReady() {
+    if (!generatorWorker) {
+        return Promise.resolve();
+    }
+    if (!workerReadyPromise) {
+        workerReadyPromise = Promise.resolve();
+    }
+    return workerReadyPromise;
 }
 
 function rebuildDrawingLayer(svg, workerPasses) {
@@ -377,79 +411,217 @@ function buildPathData(points = []) {
     }, '').trim();
 }
 
-function runWorkerOptimization(svg, options = {}) {
-    if (typeof Worker === 'undefined') {
-        return null;
-    }
-    const abortSignal = options.abortSignal;
-    if (abortSignal?.aborted) {
-        return null;
-    }
-    const serializedLayers = serializeLayersForWorker(svg);
-    if (!serializedLayers.length) {
-        return null;
-    }
-    const worker = createRenderWorker();
-    const requestId = ++workerRequestId;
-    const payload = {
-        type: 'optimize',
-        requestId,
-        payload: {
-            layers: serializedLayers,
-            maxTravelPerLayerMeters: options.maxTravelPerLayerMeters
-        }
+function hydrateRenderResult({ renderResult, previewColor }) {
+    const renderContext = {
+        paperWidth: renderResult?.svgInfo?.paperWidth,
+        paperHeight: renderResult?.svgInfo?.paperHeight,
+        margin: renderResult?.svgInfo?.margin ?? 0,
+        orientation: renderResult?.svgInfo?.orientation
     };
+    const svg = createSVG(renderContext);
+    svg.setAttribute('preserveAspectRatio', 'none');
+    svg.style.backgroundColor = previewColor;
+    rebuildDrawingLayer(svg, renderResult?.passes || []);
+    return { svg, travelSummary: renderResult?.travelSummary, renderContext };
+}
+
+async function runRenderGeneratorWorker(payload) {
+    if (typeof Worker === 'undefined') {
+        console.warn('[preview] worker unavailable: global Worker missing');
+        return { error: 'worker_unavailable' };
+    }
+    const { abortSignal, ...workerPayload } = payload;
+    if (abortSignal?.aborted) {
+        console.warn('[preview] worker render skipped; abort signal already set', { drawingKey: workerPayload?.drawingKey });
+        return { error: 'render_aborted' };
+    }
+    const workerPreviouslyActive = Boolean(generatorWorker);
+    const worker = getGeneratorWorker();
+    await waitForWorkerReady();
+    const requestId = ++workerRequestId;
+    const startedAt = Date.now();
+    const logWorkerEvent = (level, message, extra = {}) => {
+        const method = console[level] || console.log;
+        method.call(console, `[preview] worker ${message}`, {
+            requestId,
+            drawingKey: workerPayload.drawingKey,
+            elapsedMs: Date.now() - startedAt,
+            ...extra
+        });
+    };
+    logWorkerEvent('debug', 'runRenderGeneratorWorker invoked', {
+        payloadKeys: Object.keys(workerPayload || {}),
+        abortRegistered: Boolean(abortSignal),
+        workerPreviouslyActive
+    });
+    const message = {
+        type: 'render',
+        requestId,
+        payload: workerPayload
+    };
+    console.info('[preview] worker request start', { requestId, drawingKey: workerPayload.drawingKey, timeoutMs: WORKER_TIMEOUT_MS, payloadSummary: { hasControls: Boolean(workerPayload.controlValues && Object.keys(workerPayload.controlValues).length) } });
     return new Promise(resolve => {
-        const timeout = setTimeout(() => {
-            disposeRenderWorker();
-            resolve(null);
+        let timeoutHandle = null;
+        let ackReceived = false;
+        let workerMessageCount = 0;
+        const progressHistory = [];
+        const ackWatch = setTimeout(() => {
+            logWorkerEvent('warn', 'worker ack not yet received', { waitMs: Date.now() - startedAt });
+        }, 250);
+        const waitHeartbeat = setInterval(() => {
+            logWorkerEvent('debug', 'waiting for worker response', {
+                elapsedMs: Date.now() - startedAt,
+                ackReceived,
+                workerMessages: workerMessageCount,
+                progressHistory
+            });
+        }, 500);
+        const cleanupTimers = (reason = 'unspecified') => {
+            if (timeoutHandle) {
+                clearTimeout(timeoutHandle);
+                timeoutHandle = null;
+            }
+            clearTimeout(ackWatch);
+            clearInterval(waitHeartbeat);
+            logWorkerEvent('debug', 'worker timer cleanup', {
+                reason,
+                ackReceived,
+                workerMessages: workerMessageCount,
+                progressHistorySnapshot: [...progressHistory]
+            });
+        };
+        timeoutHandle = setTimeout(() => {
+            cleanupTimers('timeout');
+            disposeGeneratorWorker('timeout');
+            logWorkerEvent('warn', 'timeout triggered', { timeoutMs: WORKER_TIMEOUT_MS });
+            resolve({ error: 'worker_timeout', elapsedMs: Date.now() - startedAt, timeoutMs: WORKER_TIMEOUT_MS });
         }, WORKER_TIMEOUT_MS);
         const abortHandler = () => {
-            clearTimeout(timeout);
-            disposeRenderWorker();
-            resolve(null);
+            cleanupTimers('abort');
+            disposeGeneratorWorker('abort');
+            logWorkerEvent('warn', 'abort signaled');
+            resolve({ error: 'render_aborted', elapsedMs: Date.now() - startedAt });
         };
         if (abortSignal) {
             abortSignal.addEventListener('abort', abortHandler, { once: true });
         }
-        worker.addEventListener('message', event => {
+        const handleMessage = event => {
             const data = event.data || {};
-            if (data.requestId !== requestId || data.type !== 'optimizeResult') {
-                return;
-            }
-            clearTimeout(timeout);
-            if (abortSignal) {
-                abortSignal.removeEventListener('abort', abortHandler);
-            }
-            if (data.error || !Array.isArray(data.passes)) {
-                disposeRenderWorker();
-                resolve(null);
-                return;
-            }
-            rebuildDrawingLayer(svg, data.passes);
-            if (Array.isArray(data.passes) && data.passes.length > MAX_PREVIEW_LAYERS && debugLogger) {
-                debugLogger(`Preview capped at ${MAX_PREVIEW_LAYERS} of ${data.passes.length} layers (export keeps all).`, 'warn');
-            }
-            disposeRenderWorker();
-            resolve({
-                applied: true,
-                summary: data.summary,
-                warnings: data.summary?.warnings || []
+            workerMessageCount += 1;
+            logWorkerEvent('debug', 'worker message received', {
+                rawType: data.type,
+                incomingRequestId: data.requestId,
+                matchesRequest: data.requestId === requestId
             });
-        }, { once: true });
-        worker.addEventListener('error', () => {
-            clearTimeout(timeout);
+            if (data.requestId !== requestId) {
+                logWorkerEvent('debug', 'message for different request received', {
+                    incomingRequestId: data.requestId,
+                    messageType: data.type
+                });
+                if (data.type === 'workerReady') {
+                    console.info('[preview] worker ready handshake', data);
+                } else if (data.type === 'workerAck') {
+                    console.info('[preview] worker ack (non-active request)', data);
+                }
+                return;
+            }
+            if (data.type === 'workerAck') {
+                ackReceived = true;
+                clearTimeout(ackWatch);
+                logWorkerEvent('info', 'worker ack received', { ackType: data.ackType });
+                return;
+            }
+            if (data.type === 'renderProgress') {
+                progressHistory.push(data.stage);
+                if (debugLogger) {
+                    debugLogger(`Worker stage: ${data.stage} for ${data.drawingKey || 'unknown'}`);
+                }
+                logWorkerEvent('info', `progress: ${data.stage}`, { passCount: data.passCount });
+                return;
+            }
+            if (data.type === 'renderResult') {
+                cleanupTimers('result');
+                if (abortSignal) {
+                    abortSignal.removeEventListener('abort', abortHandler);
+                }
+                worker.removeEventListener('message', handleMessage);
+                worker.removeEventListener('messageerror', handleMessageError);
+                if (data.error) {
+                    disposeGeneratorWorker('result_error');
+                    logWorkerEvent('warn', 'worker result error', { error: data.error, receivedElapsedMs: data.elapsedMs });
+                    resolve({ error: data.error, stack: data.stack, drawingKey: data.drawingKey, elapsedMs: data.elapsedMs });
+                    return;
+                }
+                logWorkerEvent('info', 'result ok', { resultElapsedMs: data.elapsedMs, passCount: data?.passes?.length || data?.travelSummary?.totalLayers });
+                resolve({
+                    svgInfo: data.svgInfo,
+                    passes: data.passes || (data.travelSummary?.passes) || [],
+                    travelSummary: data.travelSummary,
+                    elapsedMs: data.elapsedMs,
+                    drawingKey: data.drawingKey
+                });
+                return;
+            }
+            logWorkerEvent('warn', 'unknown worker message type', { data });
+        };
+        worker.addEventListener('message', handleMessage);
+        const handleMessageError = event => {
+            logWorkerEvent('error', 'messageerror from worker', { event });
+            cleanupTimers('messageerror');
             if (abortSignal) {
                 abortSignal.removeEventListener('abort', abortHandler);
             }
-            disposeRenderWorker();
-            resolve(null);
+            worker.removeEventListener('message', handleMessage);
+            worker.removeEventListener('messageerror', handleMessageError);
+            disposeGeneratorWorker('messageerror');
+            resolve({ error: 'worker_messageerror', elapsedMs: Date.now() - startedAt });
+        };
+        worker.addEventListener('messageerror', handleMessageError);
+        worker.addEventListener('error', (event) => {
+            cleanupTimers('worker_error_event');
+            if (abortSignal) {
+                abortSignal.removeEventListener('abort', abortHandler);
+            }
+            worker.removeEventListener('message', handleMessage);
+            worker.removeEventListener('messageerror', handleMessageError);
+            disposeGeneratorWorker('worker_error_event');
+            const messageText = event?.message || 'worker_error';
+            logWorkerEvent('error', 'worker event error', { message: messageText, errorEvent: event });
+            resolve({ error: messageText });
         }, { once: true });
         if (abortSignal?.aborted) {
             abortHandler();
             return;
         }
-        worker.postMessage(payload);
+        try {
+            if (typeof structuredClone === 'function') {
+                try {
+                    structuredClone(message.payload);
+                } catch (cloneError) {
+                    logWorkerEvent('error', 'structuredClone check failed', { cloneError });
+                }
+            } else {
+                logWorkerEvent('debug', 'structuredClone unavailable for payload preflight');
+            }
+            logWorkerEvent('debug', 'posting render request to worker', {
+                payloadPreview: {
+                    drawingKey: workerPayload?.drawingKey,
+                    hasPaper: Boolean(workerPayload?.paper),
+                    hasPlotterArea: Boolean(workerPayload?.plotterArea),
+                    hasOverrides: Boolean(workerPayload?.paletteOverride || workerPayload?.lineOverrides),
+                    maxTravelPerLayerMeters: workerPayload?.maxTravelPerLayerMeters ?? null
+                }
+            });
+            worker.postMessage(message);
+            logWorkerEvent('debug', 'postMessage dispatched successfully');
+        } catch (postError) {
+            cleanupTimers('post_message_failed');
+            logWorkerEvent('error', 'postMessage failed', { postError });
+            if (abortSignal) {
+                abortSignal.removeEventListener('abort', abortHandler);
+            }
+            resolve({ error: 'post_message_failed', stack: postError?.stack, drawingKey: workerPayload.drawingKey });
+        }
     });
 }
 
@@ -603,39 +775,6 @@ function populateLayerSelect(container, logDebug, options = {}) {
     }
 }
 
-function collectLayerOrdering(svg, logDebug) {
-    if (!svg) {
-        return [];
-    }
-    const layers = Array.from(svg.querySelectorAll('g[inkscape\\:groupmode="layer"]'));
-    const layerInfo = [];
-    layers.forEach(layer => {
-        if (layer.children.length === 0) {
-            return;
-        }
-        const metadata = computeLayerMetadata(layer);
-        if (metadata) {
-            metadata.element = layer;
-            layerInfo.push(metadata);
-        }
-    });
-    if (!layerInfo.length) {
-        return [];
-    }
-    const orderedLayers = orderLayersByDistance(layerInfo);
-    if (logDebug && orderedLayers.optimized && orderedLayers.length > 1) {
-        const orderSummary = orderedLayers.map(layer => layer.label).join(' → ');
-        logDebug(`Optimized layer sequence: ${orderSummary}`);
-    }
-    orderedLayers.forEach((entry, idx) => {
-        if (entry.element) {
-            entry.element.setAttribute('data-layer-order', String(idx));
-            entry.element.setAttribute('data-layer-base', extractLayerBaseName(entry.element));
-        }
-    });
-    return orderedLayers;
-}
-
 function updateLayerVisibility(container, rulersVisible) {
     const svg = container.querySelector('svg');
     if (!svg) return;
@@ -719,13 +858,6 @@ function computeLayerMetadata(layer) {
         rects,
         element: layer
     };
-}
-
-function extractLayerBaseName(layer) {
-    const label = layer?.getAttribute?.('inkscape:label') || '';
-    const dashIndex = label.indexOf('-');
-    const suffix = dashIndex >= 0 ? label.slice(dashIndex + 1).trim() : label.trim();
-    return suffix || 'Layer';
 }
 
 function extractSamplePoints(root) {
@@ -1026,9 +1158,24 @@ function maybeRaiseTravelLimitForPreview(summary, state, logDebug) {
             }
         }
     }
-        if (logDebug) {
-            const nextText = proposed === null ? '∞' : `${Math.round(proposed)} m`;
-            logDebug(`Auto-raised preview travel cap to ${nextText} to keep layers under ${MAX_PREVIEW_LAYERS} (would be ${totalLayers}).`, 'warn');
-        }
-        return true;
+    if (logDebug) {
+        const nextText = proposed === null ? '∞' : `${Math.round(proposed)} m`;
+        logDebug(`Auto-raised preview travel cap to ${nextText} to keep layers under ${MAX_PREVIEW_LAYERS} (would be ${totalLayers}).`, 'warn');
     }
+    return true;
+}
+
+async function renderOnMainThread(selectedDrawing, options) {
+    const { generateSVG } = await import('../app.js?v=' + Date.now());
+    const { svg, renderContext } = await generateSVG(selectedDrawing, options);
+    const travelSummary = applyLayerTravelLimit(svg, {
+        maxTravelPerLayerMeters: options.maxTravelPerLayerMeters,
+        orderedLayers: null
+    });
+    if (travelSummary?.splitLayers) {
+        const suffix = travelSummary.splitLayers === 1 ? '' : 's';
+        const limitDisplay = Number(travelSummary.limitMeters ?? 0).toFixed(1);
+        debugLogger?.(`Preview split ${travelSummary.splitLayers} layer${suffix} to stay under ${limitDisplay} m (now ${travelSummary.totalLayers}).`);
+    }
+    return { svg, renderContext, travelSummary };
+}

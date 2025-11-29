@@ -1,7 +1,7 @@
 import { drawingTypes, registerDrawing, addDrawingPreset } from './drawingRegistry.js';
 
 const DRAWINGS_MANIFEST_PATH = '/drawings-manifest.json';
-const isBrowserEnvironment = typeof window !== 'undefined' && typeof fetch === 'function';
+const isBrowserEnvironment = typeof fetch === 'function';
 let loadPromise = null;
 
 function registerDrawingDefinition(definition) {

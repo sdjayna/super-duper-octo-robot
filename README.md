@@ -108,6 +108,28 @@ make test      # runs the Vitest suite (client + helpers)
 5. **Monitor progress** - the log panel shows real-time output, estimated times, and completion/error markers; SSE keeps the UI hot even if the process is long-running.
 6. **Archive outputs** - every successful save lands in `output/<drawing>/<timestamp>.svg` with configuration comments so you can reproduce the run later.
 
+## Preview Worker Architecture
+
+The preview tab does all heavy lifting inside a dedicated web worker so the UI stays responsive even when a drawing builds tens of thousands of paths. The moving pieces:
+
+- **Main thread controller** (`client/js/modules/preview.js`)
+  - Spawns `client/js/workers/renderGenerator.js` when the app boots.
+  - Waits for an explicit `workerReady` handshake before posting any render payload (to avoid racing the worker bootstrap).
+  - Wraps every render request in a watchdog that logs a request id, acks, and per-stage heartbeats. If the worker stalls, the UI falls back to the main-thread renderer.
+  - Cancels active renders via `AbortController`, mirrors progress to the in-app log, and rewrites the preview SVG layers once the worker returns `passes` + `travelSummary`.
+
+- **Render worker** (`client/js/workers/renderGenerator.js`)
+  - Imports the shared adapters from `drawings/shared/clientAdapters.js` and `drawings/shared/dataAdapters.js` so drawing modules can reuse the same builder utilities and palette math without DOM access.
+  - Responds to `render` messages by fetching the drawing manifest, hydrating the requested drawing config, applying control/palette overrides, and calling `client/js/app.js -> generateSVG`.
+  - Emits `renderProgress` stages (`dispatch_received`, `start`, `manifest_fetch_start`, `drawings_loaded`, `generate_*`, `travel_done`) that show up in the UI log.
+  - Returns lightweight layer data (`passes`, `svgInfo`, `travelSummary`) that the main thread hydrates back into DOM nodes.
+  - Handles errors centrally (`messageerror`, `unhandledrejection`, `error`) and posts an explanatory `renderResult` so the controller can fall back gracefully.
+
+- **Worker safety switch** (`drawings/shared/isWorkerSafe.js`)
+  - Some drawings rely on DOM APIs or browser-only features. `isWorkerSafeDrawing` guards those by keeping an allowlist in `drawings/shared/isWorkerSafe.js`; if a drawing isn’t safe, the preview renderer skips the worker entirely and stays on the main thread.
+
+When debugging: open DevTools and watch the `[preview] worker …` and `[renderGenerator] …` logs. Every render request logs its id, ack status, and progress stages so you can pinpoint timeouts or missing imports instantly.
+
 ## Drawing Algorithms & Customization
 
 Drop new experiments in `drawings/core/` (first-party) or `drawings/community/` (user-contributed) and they auto-register with the UI on the next reload. Each module exports a definition built with `defineDrawing`, so there’s very little wiring:
