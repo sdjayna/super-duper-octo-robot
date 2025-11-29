@@ -143,7 +143,7 @@
                             <span class="collapsible-title">Plot</span>
                             <span class="collapsible-icon" aria-hidden="true"></span>
                         </button>
-                        <div id="plotSectionContent" class="control-section-content">
+                        <div id="plotSectionContent" class="control-section-content column">
                             <select id="layerSelect">
                                 <option value="all">Show All Layers</option>
                             </select>
@@ -158,14 +158,14 @@
                             <span class="collapsible-title">Setup</span>
                             <span class="collapsible-icon" aria-hidden="true"></span>
                         </button>
-                        <div id="setupSectionContent" class="control-section-content">
+                        <div id="setupSectionContent" class="control-section-content column">
                             <div class="setup-buttons">
                                 <button id="plotterHome" class="plotter-button" title="Return plotter to home position"><span class="setup-icon">🏠</span></button>
                                 <button id="plotterCycle" class="plotter-button" title="Cycle pen up and down"><span class="setup-icon">∞</span></button>
                                 <button id="plotterAlign" class="plotter-button" title="Align pen with paper"><span class="setup-icon">⚏</span></button>
                                 <button id="plotterToggle" class="plotter-button" title="Toggle pen position"><span class="setup-icon">⇅</span></button>
                                 <button id="plotterDisableMotors" class="plotter-button" title="Turn off plotter motors">
-                                    <span class="power-icon" style="color: #d32f2f;">⏻</span>
+                                    <span class="power-icon">⏻</span>
                                 </button>
                                 <button id="toggleMute" class="plotter-button" title="Toggle completion sound">
                                     <span class="speaker-icon">🔊</span>
@@ -193,7 +193,7 @@
                             <span class="collapsible-title">Paper &amp; Margin</span>
                             <span class="collapsible-icon" aria-hidden="true"></span>
                         </button>
-                        <div id="paperSettingsContent" class="control-section-content paper-controls">
+                        <div id="paperSettingsContent" class="control-section-content paper-controls column">
                             <select id="paperSelect" class="plotter-button">
                                 <!-- Populated dynamically from paper config -->
                             </select>
@@ -213,7 +213,7 @@
                             <span class="collapsible-title">Travel Limits</span>
                             <span class="collapsible-icon" aria-hidden="true"></span>
                         </button>
-                        <div id="travelSectionContent" class="control-section-content">
+                        <div id="travelSectionContent" class="control-section-content column">
                             <div class="slider-group">
                                 <label for="maxTravelPerLayer">Max Travel Per Layer: <span id="maxTravelPerLayerValue">5 m</span></label>
                                 <input type="range" id="maxTravelPerLayer" min="1" max="101" step="1" value="5">
