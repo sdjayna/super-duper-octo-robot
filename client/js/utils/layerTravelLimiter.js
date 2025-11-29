@@ -3,12 +3,19 @@ import { getDrawingLayer } from './svgUtils.js';
 const MM_PER_METER = 1000;
 const EPSILON = 1e-6;
 
+function travelDebug(message, payload = {}) {
+    if (typeof console?.debug === 'function') {
+        console.debug('[layerTravelLimiter]', message, payload);
+    }
+}
+
 export function applyLayerTravelLimit(svg, options = {}) {
     if (!svg) {
         return null;
     }
     const limitMeters = Number(options.maxTravelPerLayerMeters);
     if (!Number.isFinite(limitMeters) || limitMeters <= 0) {
+        travelDebug('skip (no limit)', { limitMeters });
         return null;
     }
     const limitMillimeters = limitMeters * MM_PER_METER;
@@ -16,11 +23,13 @@ export function applyLayerTravelLimit(svg, options = {}) {
     try {
         drawingLayer = getDrawingLayer(svg);
     } catch {
+        travelDebug('skip (missing drawing layer)');
         return null;
     }
     const originalLayers = Array.from(drawingLayer.children).filter(
         node => node?.getAttribute?.('inkscape:groupmode') === 'layer'
     );
+    travelDebug('starting pass', { limitMeters, layerCount: originalLayers.length });
     if (!originalLayers.length) {
         return {
             limitMeters,
@@ -46,6 +55,12 @@ export function applyLayerTravelLimit(svg, options = {}) {
         const baseOrder = Number.isFinite(baseOrderValue) ? baseOrderValue : fallbackOrder++;
         const baseName = layer.getAttribute('data-layer-base') || getLayerBaseName(layer);
         const buckets = buildLayerBuckets(layer, limitMillimeters);
+        travelDebug('layer processed', {
+            label: baseName,
+            baseOrder,
+            bucketCount: buckets.length,
+            bucketTravel: buckets.map(bucket => bucket.totalLength)
+        });
         if (!buckets.length) {
             layer.remove();
             return;
@@ -101,6 +116,7 @@ export function applyLayerTravelLimit(svg, options = {}) {
         drawingLayer.appendChild(entry.node);
     });
 
+    travelDebug('completed pass', { rebuiltLayers: rebuiltLayers.length, splitLayers });
     return {
         limitMeters,
         limitMillimeters,

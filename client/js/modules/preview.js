@@ -105,6 +105,11 @@ export function createPreviewController({
                 Object.entries(workerLineOverrides).filter(([, value]) => typeof value !== 'undefined')
             );
 
+            console.debug('[preview] render invocation', {
+                drawingKey: select.value,
+                useWorker: attemptWorker,
+                maxTravelLimit: state.maxTravelPerLayerMeters
+            });
             const renderResult = attemptWorker
                 ? await runRenderGeneratorWorker({
                     drawingKey: select.value,
@@ -139,6 +144,7 @@ export function createPreviewController({
                     paper: paperForRender,
                     orientation: state.currentOrientation,
                     plotterArea: state.plotterSpecs?.paper,
+                    maxTravelPerLayerMeters: state.maxTravelPerLayerMeters,
                     abortSignal
                 });
                 console.warn('[preview] main-thread fallback render complete', { workerKey, elapsedMs: Math.round(performance.now() - fallbackStart) });
@@ -1255,6 +1261,10 @@ function maybeRaiseTravelLimitForPreview(summary, state, logDebug) {
 
 async function renderOnMainThread(selectedDrawing, options) {
     const { generateSVG } = await import('../app.js?v=' + Date.now());
+    console.debug('[preview] renderOnMainThread invoked', {
+        drawing: selectedDrawing?.name,
+        maxTravelPerLayerMeters: options.maxTravelPerLayerMeters
+    });
     const { svg, renderContext } = await generateSVG(selectedDrawing, options);
     const travelSummary = applyLayerTravelLimit(svg, {
         maxTravelPerLayerMeters: options.maxTravelPerLayerMeters,

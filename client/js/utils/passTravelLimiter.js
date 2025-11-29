@@ -1,6 +1,12 @@
 const MM_PER_METER = 1000;
 const EPSILON = 1e-6;
 
+function passDebug(message, payload = {}) {
+    if (typeof console?.debug === 'function') {
+        console.debug('[passTravelLimiter]', message, payload);
+    }
+}
+
 function clamp01(value) {
     if (value <= 0) return 0;
     if (value >= 1) return 1;
@@ -71,6 +77,7 @@ function buildBuckets(paths = [], limitMm) {
 export function splitPassesByTravel(passes = [], maxTravelMeters) {
     const limitMeters = Number(maxTravelMeters);
     if (!Number.isFinite(limitMeters) || limitMeters <= 0) {
+        passDebug('skip (no limit)', { limitMeters });
         return {
             passes: passes.slice(),
             limitMeters: null,
@@ -81,10 +88,16 @@ export function splitPassesByTravel(passes = [], maxTravelMeters) {
     const limitMm = limitMeters * MM_PER_METER;
     const rebuilt = [];
     let splitLayers = 0;
+    passDebug('begin split', { limitMeters, passCount: passes.length });
 
     passes.forEach(pass => {
         const explodedPaths = explodePathsByLimit(pass.paths || [], limitMm);
         const buckets = buildBuckets(explodedPaths, limitMm);
+        passDebug('pass buckets', {
+            baseLabel: pass.baseLabel,
+            totalBuckets: buckets.length,
+            bucketTravel: buckets.map(bucket => bucket.totalLength)
+        });
         if (!buckets.length) {
             return;
         }
@@ -109,7 +122,7 @@ export function splitPassesByTravel(passes = [], maxTravelMeters) {
         }
         return 0;
     });
-
+    passDebug('split complete', { rebuiltCount: rebuilt.length, splitLayers });
     return {
         passes: rebuilt,
         limitMeters,
