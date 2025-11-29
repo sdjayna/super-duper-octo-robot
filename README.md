@@ -99,6 +99,10 @@ make test      # runs the Vitest suite (client + helpers)
 | `make clean`   | Removes temp files, venv, and `node_modules`                        |
 | `make manifest`| Rebuilds `drawings/manifest.json` after adding drawings             |
 
+### Contributor Notes
+
+- Please coordinate with the repo owner before committing or pushing changes; never publish work without explicit confirmation.
+
 ## Plotting Pipeline
 
 1. **Pick a drawing** - Bouwkamp codes, phyllotaxis spirals, spirograph families, Voronoi sketches, or Hilbert curves ship as presets; each exposes paper, margin, and color controls.

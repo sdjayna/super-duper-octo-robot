@@ -39,6 +39,23 @@ class ImplicitLineWalkersConfig extends SizedDrawingConfig {
         this.jitter = clampNumber(params.jitter, WALKER_LIMITS.jitter.min, WALKER_LIMITS.jitter.max, WALKER_LIMITS.jitter.default);
         this.layerCount = clampInteger(params.layerCount, WALKER_LIMITS.layerCount.min, WALKER_LIMITS.layerCount.max, WALKER_LIMITS.layerCount.default);
         this.seed = clampInteger(params.seed, WALKER_LIMITS.seed.min, WALKER_LIMITS.seed.max, WALKER_LIMITS.seed.default);
+
+        this.getBounds = ({ paper, orientation } = {}) => {
+            const margin = Number(paper?.margin) || 0;
+            const rawWidth = Number(paper?.width) || this.width;
+            const rawHeight = Number(paper?.height) || this.height;
+            const printableWidth = Math.max(rawWidth - margin * 2, 1);
+            const printableHeight = Math.max(rawHeight - margin * 2, 1);
+            const isPortrait = orientation === 'portrait';
+            const longer = Math.max(printableWidth, printableHeight);
+            const shorter = Math.min(printableWidth, printableHeight);
+            return {
+                minX: 0,
+                minY: 0,
+                width: isPortrait ? shorter : longer,
+                height: isPortrait ? longer : shorter
+            };
+        };
     }
 }
 
@@ -112,6 +129,9 @@ function traceWalker({ startX, startY, targetValue, config, rng, width, height }
         const delta = fieldValue(x, y, config) - targetValue;
         x -= grad.x * delta * 0.2;
         y -= grad.y * delta * 0.2;
+
+        x = Math.min(Math.max(x, 0), width);
+        y = Math.min(Math.max(y, 0), height);
 
         path.push({ x, y });
 

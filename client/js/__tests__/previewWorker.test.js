@@ -3,6 +3,20 @@ import { __previewWorkerInternals } from '../modules/preview.js';
 
 const { runRenderGeneratorWorker, resetPreviewWorkerState, WORKER_TIMEOUT_MS } = __previewWorkerInternals;
 
+const queueMicrotaskSafe = globalThis.queueMicrotask || ((fn) => Promise.resolve().then(fn));
+const AbortControllerPolyfill = globalThis.AbortController || class {
+    constructor() {
+        this.signal = {
+            aborted: false,
+            addEventListener: vi.fn()
+        };
+    }
+
+    abort() {
+        this.signal.aborted = true;
+    }
+};
+
 class MockWorker {
     static instances = [];
 
@@ -15,7 +29,7 @@ class MockWorker {
         this.postedMessages = [];
         this.terminated = false;
         MockWorker.instances.push(this);
-        queueMicrotask(() => {
+        queueMicrotaskSafe(() => {
             this.dispatchMessage({ type: 'workerReady', ts: Date.now() });
         });
     }
@@ -57,10 +71,11 @@ class MockWorker {
     }
 }
 
-const OriginalWorker = global.Worker;
+let originalWorker;
+let originalAbortController;
 
 function createBasePayload(overrides = {}) {
-    const controller = new AbortController();
+    const controller = new AbortControllerPolyfill();
     return {
         drawingKey: 'test-drawing',
         controlValues: {},
@@ -79,16 +94,24 @@ describe('runRenderGeneratorWorker', () => {
     beforeEach(() => {
         resetPreviewWorkerState();
         MockWorker.reset();
+        originalWorker = global.Worker;
+        originalAbortController = global.AbortController;
         global.Worker = MockWorker;
+        global.AbortController = AbortControllerPolyfill;
     });
 
     afterEach(() => {
         resetPreviewWorkerState();
         MockWorker.reset();
-        if (OriginalWorker) {
-            global.Worker = OriginalWorker;
+        if (originalWorker) {
+            global.Worker = originalWorker;
         } else {
             delete global.Worker;
+        }
+        if (originalAbortController) {
+            global.AbortController = originalAbortController;
+        } else {
+            delete global.AbortController;
         }
         vi.useRealTimers();
     });
@@ -146,7 +169,7 @@ describe('runRenderGeneratorWorker', () => {
     });
 
     it('short-circuits when abort signal already fired', async () => {
-        const controller = new AbortController();
+        const controller = new AbortControllerPolyfill();
         controller.abort();
         const outcome = await runRenderGeneratorWorker(createBasePayload({ abortSignal: controller.signal }));
         expect(outcome).toMatchObject({ error: 'render_aborted' });

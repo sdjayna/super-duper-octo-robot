@@ -605,15 +605,6 @@ async function runRenderGeneratorWorker(payload) {
             return;
         }
         try {
-            if (typeof structuredClone === 'function') {
-                try {
-                    structuredClone(message.payload);
-                } catch (cloneError) {
-                    logWorkerEvent('error', 'structuredClone check failed', { cloneError });
-                }
-            } else {
-                logWorkerEvent('debug', 'structuredClone unavailable for payload preflight');
-            }
             logWorkerEvent('debug', 'posting render request to worker', {
                 payloadPreview: {
                     drawingKey: workerPayload?.drawingKey,

@@ -2,7 +2,6 @@ import { setClientAdapters, resetClientAdapters } from '../../../drawings/shared
 import * as dataAdapters from '../../../drawings/shared/dataAdapters.js';
 
 const workerBootStartedAt = Date.now();
-let lastMessageReceivedAt = null;
 function workerDebug(level, message, extra = {}) {
     const logger = console[level] || console.log;
     logger.call(console, `[renderGenerator] ${message}`, { ...extra, uptimeMs: Date.now() - workerBootStartedAt });
@@ -40,7 +39,6 @@ const pendingRenderQueue = [];
 let bootstrapComplete = false;
 
 self.addEventListener('message', event => {
-    lastMessageReceivedAt = Date.now();
     const { type, requestId, payload } = event.data || {};
     try {
         workerDebug('info', 'incoming message', {
