@@ -30,10 +30,16 @@ export function createDrawingBuilder({ svg, drawingConfig, renderContext, abortS
     const palette = drawingConfig.colorPalette || colorPalettes.defaultPalette || {};
     const colorManager = new ColorManager(palette);
     const layersByColor = new Map();
+    const colorLookup = new Map();
+    Object.values(palette || {}).forEach(entry => {
+        if (entry?.hex) {
+            colorLookup.set(String(entry.hex).toLowerCase(), entry);
+        }
+    });
 
     function ensureLayer(colorHex) {
         if (!layersByColor.has(colorHex)) {
-            const colorEntry = palette[colorHex] || {};
+            const colorEntry = colorLookup.get(String(colorHex).toLowerCase()) || {};
             const index = layersByColor.size;
             layersByColor.set(colorHex, {
                 color: colorHex,

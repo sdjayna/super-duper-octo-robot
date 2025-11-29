@@ -1,8 +1,16 @@
 import { createDrawingContext } from './drawingContext.js';
 
 export function createDrawingBuilder({ svg, drawingConfig, renderContext, abortSignal }) {
-    const drawingContext = createDrawingContext(svg, drawingConfig.colorPalette);
+    const palette = drawingConfig.colorPalette || {};
+    const drawingContext = createDrawingContext(svg, palette);
     drawingContext.defaultStrokeWidth = drawingConfig.line?.strokeWidth ?? 0.4;
+    const paletteEntries = Object.values(palette || {});
+    const colorLookup = new Map();
+    paletteEntries.forEach(entry => {
+        if (entry?.hex) {
+            colorLookup.set(String(entry.hex).toLowerCase(), entry);
+        }
+    });
 
     const applyLineDefaults = (options = {}) => ({
         strokeWidth: options.strokeWidth ?? drawingConfig.line?.strokeWidth,
@@ -11,6 +19,10 @@ export function createDrawingBuilder({ svg, drawingConfig, renderContext, abortS
         geometry: options.geometry,
         strokeColor: options.strokeColor
     });
+    const getPaletteEntry = (hex) => {
+        if (!hex) return null;
+        return colorLookup.get(String(hex).toLowerCase()) || null;
+    };
 
     return {
         appendPath(points, options = {}) {
@@ -18,10 +30,15 @@ export function createDrawingBuilder({ svg, drawingConfig, renderContext, abortS
                 throw new Error('Render aborted');
             }
             const lineOptions = applyLineDefaults(options);
-            drawingContext.appendPath({
+            const pathPayload = {
                 points,
                 ...lineOptions
-            });
+            };
+            const entry = getPaletteEntry(lineOptions.strokeColor);
+            if (entry?.name) {
+                pathPayload.colorName = entry.name;
+            }
+            drawingContext.appendPath(pathPayload);
         },
         projectPoints(points) {
             return renderContext.projectPoints(points);
