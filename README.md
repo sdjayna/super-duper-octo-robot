@@ -1,7 +1,7 @@
 # Jupiter Jayna's Plotter Art Control Centre
 *A plotter-first generative art workstation that goes from browser math to multi-pen AxiDraw output—and now Bantam Tools NextDraw compatibility—without leaving the keyboard.*
 
-If you have an AxiDraw, a Bantam Tools NextDraw (their modern rebadge of the platform), or any plotter that can digest SVG layers and love algorithmic art, this repo gives you a complete local studio: mm-accurate previews, color-aware layering, a Python server that proxies the axicli, and a set of battle-tested drawing algorithms (Bouwkamp perfect squares, Hilbert curves, phyllotaxis spirals, spirograph families, Voronoi sketches, Lorenz/Ikeda/de Jong attractors, and more). Everything ships as source, so you can bend it to your own plotting rituals or hack on it live during a stream.
+If you have an AxiDraw, a Bantam Tools NextDraw (their modern rebadge of the platform), or any plotter that can digest SVG layers and love algorithmic art, this repo gives you a complete local studio: mm-accurate previews, color-aware layering, a Python server that proxies the axicli, and a set of battle-tested drawing algorithms. The active gallery is intentionally focused on our hatching studies—perfect rectangles (Bouwkamp), photo triangle mosaics, Voronoi sketches, and implicit line walkers—while the rest of the legacy modules now live under `drawings/disabled` so you can re-enable them locally without letting the manifest rediscover them. Everything ships as source, so you can bend it to your own plotting rituals or hack on it live during a stream.
 
 > Bantam Tools acquired and now ships the NextDraw-branded successors to AxiDraw hardware ([store](https://bantamtools.com/collections/bantam-tools-nextdraw), [story](https://medium.com/@bantamtools/a-look-back-the-axidraw-story-part-2-2cb66601c3a6)). This project is leaning hard into that future so the tooling you install today follows you onto the new machines without any workflow change.
 
@@ -73,8 +73,8 @@ If you have an AxiDraw, a Bantam Tools NextDraw (their modern rebadge of the pla
 - **Config data** - `config/papers.json` and `config/mediums.json` describing margins, stroke widths, nib metadata, color palettes, and optional default preview colors.
 - **Output pipeline** - timestamped SVGs in `output/` with configuration comments plus Inkscape-compatible layers ready for plotting or archival.
 - **Docs + tooling** - Makefile, Vitest setup, TODO/CHANGELOG/CONTRIBUTING, and a reference screenshot so people know what they’re installing.
-- **Drawings** - a top-level `drawings/` directory split into `core/` (maintained algorithms), `community/` (user-contributed experiments), and `shared/` helpers so contributions don’t need to dig through the client bundle.
-    - Core set currently includes Bouwkamp perfect squares, Hilbert curves, phyllotaxis spirals, spirograph families, Voronoi sketches, Lissajous curves, Superformula shapes, Clifford attractors, Lorenz/Ikeda/Peter de Jong attractors, flow fields, contour maps, wave interference, circle packing, DLA clusters, Truchet tiles, sorting arcs, Gray‑Scott/Turing patterns, and the Calibration Patterns grid for paper/medium tuning.
+- **Drawings** - a top-level `drawings/` directory split into `core/` (currently the focused quartet: Bouwkamp perfect rectangle, Photo Triangles, Voronoi, and implicit line walkers), `community/` (user-contributed experiments that still ship), `disabled/` (archived drawings kept out of the manifest but available for local hacking), and `shared/` helpers so contributions don’t need to dig through the client bundle.
+    - Want one of the legacy modules (Hilbert, spirograph families, flow fields, etc.) back? Move it from `drawings/disabled/<core|community>` into the active folder, rebuild `drawings/manifest.json`, and it will reappear instantly.
 
 ```
 ├── client/
@@ -82,8 +82,9 @@ If you have an AxiDraw, a Bantam Tools NextDraw (their modern rebadge of the pla
 │   ├── static/css/styles.css
 │   └── templates/plotter.html
 ├── drawings/
-│   ├── core/                # First-party drawing definitions
-│   ├── community/           # User contributed drawings
+│   ├── core/                # Active first-party drawing definitions
+│   ├── community/           # Active user contributed drawings
+│   ├── disabled/            # Archived drawings kept out of the manifest
 │   ├── shared/              # Config bases + helpers + adapters
 │   └── manifest.json        # Prebuilt manifest consumed by the loader
 ├── server/
@@ -295,6 +296,14 @@ export const hilbertDrawing = attachControls(defineDrawing({
 | `description`     | Appears under the control to guide users.                                                               |
 
 Overrides live alongside the drawing config, so a slider change sticks even if you swap stock, toggle rulers, or revisit the drawing later in the session.
+
+### Hatching vs. line-only drawings
+
+Global hatch controls only make sense when a drawing emits closed polygons. Every `defineDrawing` call now accepts a `features` object (default `{ supportsHatching: true }`) that flows through the registry, preview worker, and UI:
+
+- Set `features: { supportsHatching: false }` on line-only drawings (implicit walkers, attractors, contour-only studies). The hatch panel disappears, the preview skips hatch overrides, and the draw function can stay focused on raw line paths.
+- Leave the default for polygon-heavy drawings (Bouwkamp, Photo Triangles, Voronoi) so the hatch sliders keep working. The preview automatically applies the current global settings right before rendering.
+- Want to stash an experimental drawing without deleting it? Move the file into `drawings/disabled/<core|community>` so it won’t be included in `drawings/manifest.json` until you intentionally move it back and run `make manifest`.
 
 ### Preview Paper Colour
 

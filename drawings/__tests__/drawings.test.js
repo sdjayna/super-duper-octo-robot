@@ -2,40 +2,22 @@
  * @vitest-environment jsdom
  */
 
-import { describe, it, expect, beforeAll } from 'vitest';
-import { createRenderContext } from '../../client/js/renderContext.js';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { createTestPalette, createTestRenderContext, createTestDrawingConfig } from '../../client/js/__tests__/helpers/drawingTestUtils.js';
 
 const palette = createTestPalette();
 
 let drawBouwkampCode;
-let drawHilbertCurve;
-let HilbertConfig;
-let drawCalibrationPatterns;
-let CalibrationConfig;
-let drawLissajous;
-let drawSuperformula;
-let drawClifford;
-let drawTuringPatterns;
-let drawPhyllotaxis;
-let drawSpirograph;
 let drawVoronoiSketch;
 let VoronoiConfig;
 let drawPhotoTriangleMosaic;
 let PhotoTriangleConfig;
 let photoTriangleTestUtils;
-let drawFlowField;
-let drawLorenzAttractor;
-let drawIkedaAttractor;
-let drawDeJongAttractor;
-let drawContourMap;
-let drawWaveInterference;
-let drawCirclePacking;
-let drawTruchetTiles;
-let drawSortingArcs;
+let drawImplicitLineWalkers;
+let originalFetch;
 
 beforeAll(async () => {
-    const originalFetch = global.fetch;
+    originalFetch = global.fetch;
     global.fetch = async (resource) => {
         const url = typeof resource === 'string' ? resource : '';
         if (url.includes('plotters')) {
@@ -77,30 +59,18 @@ beforeAll(async () => {
 
     await import('../../client/js/drawingRegistry.js');
     ({ drawBouwkampCode } = await import('../core/bouwkamp.js'));
-    ({ drawHilbertCurve, HilbertConfig } = await import('../community/hilbert.js'));
-    ({ drawCalibrationPatterns, CalibrationConfig } = await import('../core/calibration.js'));
-    ({ drawLissajous } = await import('../core/lissajous.js'));
-    ({ drawSuperformula } = await import('../core/superformula.js'));
-    ({ drawClifford } = await import('../core/clifford.js'));
-    ({ drawTuringPatterns } = await import('../core/turing.js'));
-    ({ drawPhyllotaxis } = await import('../core/phyllotaxis.js'));
-    ({ drawSpirograph } = await import('../core/spirograph.js'));
     ({ drawVoronoiSketch, VoronoiConfig } = await import('../core/voronoi.js'));
     ({ drawPhotoTriangleMosaic, PhotoTriangleConfig, __TEST_ONLY__: photoTriangleTestUtils } = await import('../core/photoTriangles.js'));
-    ({ drawFlowField } = await import('../core/flowField.js'));
-    ({ drawLorenzAttractor } = await import('../core/lorenz.js'));
-    ({ drawIkedaAttractor } = await import('../core/ikeda.js'));
-    ({ drawDeJongAttractor } = await import('../core/dejong.js'));
-    ({ drawContourMap } = await import('../core/contour.js'));
-    ({ drawWaveInterference } = await import('../core/waveInterference.js'));
-    ({ drawCirclePacking } = await import('../core/circlePacking.js'));
-    ({ drawTruchetTiles } = await import('../core/truchet.js'));
-    ({ drawSortingArcs } = await import('../core/sortingArcs.js'));
-
-    global.fetch = originalFetch;
+    ({ drawImplicitLineWalkers } = await import('../core/implicitLineWalkers.js'));
 });
 
-describe('drawing functions', () => {
+afterAll(() => {
+    if (originalFetch) {
+        global.fetch = originalFetch;
+    }
+});
+
+describe('focused drawings', () => {
     it('renders Bouwkamp drawing with selectable hatch styles', () => {
         const buildConfig = (overrides = {}) => createTestDrawingConfig({
             drawingData: {
@@ -148,78 +118,6 @@ describe('drawing functions', () => {
         const portraitBounds = config.getBounds({ paper, orientation: 'portrait' });
         expect(landscapeBounds.width / landscapeBounds.height).toBeCloseTo(297 / 210, 3);
         expect(portraitBounds.width / portraitBounds.height).toBeCloseTo(210 / 297, 3);
-    });
-
-    it('renders a photo triangle mosaic with hatch-aware output', async () => {
-        photoTriangleTestUtils.setImageSamplerFactory(async () => ({
-            sample: () => ({ r: 120, g: 160, b: 200, brightness: 0.5 }),
-            buildWeightTable: () => ({
-                cumulative: Float64Array.from([1, 2, 3, 4]),
-                width: 2,
-                height: 2,
-                totalWeight: 4,
-                avgBrightness: 0.5,
-                darkShare: 0.5
-            })
-        }));
-        const baseParams = {
-            width: 160,
-            height: 120,
-            triangleCount: 200,
-            imageDataUrl: 'data:image/png;base64,test'
-        };
-        const scanlineConfig = new PhotoTriangleConfig(baseParams);
-        const outlineConfig = new PhotoTriangleConfig(baseParams);
-        const skeletonConfig = new PhotoTriangleConfig(baseParams);
-        const renderContext = createTestRenderContext({ drawingWidth: 160, drawingHeight: 120 });
-        const scanlineDrawing = createTestDrawingConfig({
-            drawingData: scanlineConfig,
-            colorPalette: palette,
-            line: { strokeWidth: 0.25, hatchStyle: 'scanline', spacing: 1.5, hatchInset: 0.2, includeBoundary: false }
-        });
-        const outlineDrawing = createTestDrawingConfig({
-            drawingData: outlineConfig,
-            colorPalette: palette,
-            line: { strokeWidth: 0.25, hatchStyle: 'none' }
-        });
-        const skeletonDrawing = createTestDrawingConfig({
-            drawingData: skeletonConfig,
-            colorPalette: palette,
-            line: { strokeWidth: 0.25, hatchStyle: 'skeleton' }
-        });
-        const scanlineSvg = await drawPhotoTriangleMosaic(scanlineDrawing, renderContext);
-        const outlineSvg = await drawPhotoTriangleMosaic(outlineDrawing, renderContext);
-        const skeletonSvg = await drawPhotoTriangleMosaic(skeletonDrawing, renderContext);
-        expect(scanlineSvg.querySelectorAll('path').length).toBeGreaterThan(0);
-        expect(outlineSvg.querySelectorAll('path').length).toBeGreaterThan(0);
-        const scanlinePathData = scanlineSvg.querySelector('path')?.getAttribute('d');
-        const outlinePathData = outlineSvg.querySelector('path')?.getAttribute('d');
-        const skeletonPathData = skeletonSvg.querySelector('path')?.getAttribute('d');
-        expect(scanlinePathData).toBeTruthy();
-        expect(outlinePathData).toBeTruthy();
-        expect(skeletonPathData).toBeTruthy();
-        expect(scanlinePathData).not.toBe(outlinePathData);
-        expect(skeletonPathData).not.toBe(scanlinePathData);
-        expect(skeletonSvg.querySelectorAll('path').length).toBeGreaterThan(0);
-        photoTriangleTestUtils.resetImageSamplerFactory();
-    });
-
-    it('locks to the uploaded photo aspect ratio when enabled', () => {
-        const config = new PhotoTriangleConfig({ width: 200, height: 150 });
-        config.setImageMetadata({ aspectRatio: 16 / 9, width: 1600, height: 900, source: 'mock' });
-        const bounds = config.getBounds({ paper: { width: 300, height: 200, margin: 5 }, orientation: 'landscape' });
-        expect(bounds.width / bounds.height).toBeCloseTo(16 / 9, 3);
-    });
-
-    it('falls back to paper proportions when aspect locking is disabled', () => {
-        const config = new PhotoTriangleConfig({ width: 200, height: 150, matchPhotoAspectRatio: false });
-        config.setImageMetadata({ aspectRatio: 4 / 3, width: 800, height: 600, source: 'mock' });
-        const paper = { width: 420, height: 297, margin: 10 };
-        const bounds = config.getBounds({ paper, orientation: 'portrait' });
-        const printableWidth = Math.max(paper.width - paper.margin * 2, 1);
-        const printableHeight = Math.max(paper.height - paper.margin * 2, 1);
-        const expectedRatio = Math.min(printableWidth, printableHeight) / Math.max(printableWidth, printableHeight);
-        expect(bounds.width / bounds.height).toBeCloseTo(expectedRatio, 3);
     });
 
     it('applies hatch styles to Voronoi cells', () => {
@@ -272,345 +170,95 @@ describe('drawing functions', () => {
         expect(insetPaths.some(pathData => !baselinePaths.includes(pathData))).toBe(true);
     });
 
-    it('renders a Hilbert curve centered on the paper', () => {
-        const paper = { width: 100, height: 80, margin: 5 };
-        const hilbertData = new HilbertConfig({ level: 2, paper });
-        const drawingConfig = {
-            drawingData: hilbertData,
-            paper,
-            line: { strokeWidth: 0.2 },
-            colorPalette: palette
+    it('renders a photo triangle mosaic with hatch-aware output', async () => {
+        photoTriangleTestUtils.setImageSamplerFactory(async () => ({
+            sample: () => ({ r: 120, g: 160, b: 200, brightness: 0.5 }),
+            buildWeightTable: () => ({
+                cumulative: Float64Array.from([1, 2, 3, 4]),
+                width: 2,
+                height: 2,
+                totalWeight: 4,
+                avgBrightness: 0.5,
+                darkShare: 0.5
+            })
+        }));
+        const baseParams = {
+            width: 160,
+            height: 120,
+            triangleCount: 200,
+            imageDataUrl: 'data:image/png;base64,test'
         };
-
-        const renderContext = createRenderContext({
-            paper,
-            drawingWidth: hilbertData.bounds.width,
-            drawingHeight: hilbertData.bounds.height
+        const scanlineConfig = new PhotoTriangleConfig(baseParams);
+        const outlineConfig = new PhotoTriangleConfig(baseParams);
+        const skeletonConfig = new PhotoTriangleConfig(baseParams);
+        const renderContext = createTestRenderContext({ drawingWidth: 160, drawingHeight: 120 });
+        const scanlineDrawing = createTestDrawingConfig({
+            drawingData: scanlineConfig,
+            colorPalette: palette,
+            line: { strokeWidth: 0.25, hatchStyle: 'scanline', spacing: 1.5, hatchInset: 0.2, includeBoundary: false }
         });
-
-        const svg = drawHilbertCurve(drawingConfig, renderContext);
-        expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
+        const outlineDrawing = createTestDrawingConfig({
+            drawingData: outlineConfig,
+            colorPalette: palette,
+            line: { strokeWidth: 0.25, hatchStyle: 'none' }
+        });
+        const skeletonDrawing = createTestDrawingConfig({
+            drawingData: skeletonConfig,
+            colorPalette: palette,
+            line: { strokeWidth: 0.25, hatchStyle: 'skeleton' }
+        });
+        const scanlineSvg = await drawPhotoTriangleMosaic(scanlineDrawing, renderContext);
+        const outlineSvg = await drawPhotoTriangleMosaic(outlineDrawing, renderContext);
+        const skeletonSvg = await drawPhotoTriangleMosaic(skeletonDrawing, renderContext);
+        expect(scanlineSvg.querySelectorAll('path').length).toBeGreaterThan(0);
+        expect(outlineSvg.querySelectorAll('path').length).toBeGreaterThan(0);
+        const scanlinePathData = scanlineSvg.querySelector('path')?.getAttribute('d');
+        const outlinePathData = outlineSvg.querySelector('path')?.getAttribute('d');
+        const skeletonPathData = skeletonSvg.querySelector('path')?.getAttribute('d');
+        expect(scanlinePathData).toBeTruthy();
+        expect(outlinePathData).toBeTruthy();
+        expect(skeletonPathData).toBeTruthy();
+        expect(scanlinePathData).not.toBe(outlinePathData);
+        expect(skeletonPathData).not.toBe(scanlinePathData);
+        photoTriangleTestUtils.resetImageSamplerFactory();
     });
 
-    it('computes Hilbert bounds per orientation and margin', () => {
-        const config = new HilbertConfig({ width: 50, height: 30 });
-        const paper = { width: 140, height: 100, margin: 5 };
-        const landscape = config.getBounds({ paper, orientation: 'landscape' });
-        const portrait = config.getBounds({ paper, orientation: 'portrait' });
-
-        expect(landscape.width).toBe(130);
-        expect(landscape.height).toBe(90);
-        expect(portrait.width).toBe(90);
-        expect(portrait.height).toBe(130);
+    it('locks to the uploaded photo aspect ratio when enabled', () => {
+        const config = new PhotoTriangleConfig({ width: 200, height: 150 });
+        config.setImageMetadata({ aspectRatio: 16 / 9, width: 1600, height: 900, source: 'mock' });
+        const bounds = config.getBounds({ paper: { width: 300, height: 200, margin: 5 }, orientation: 'landscape' });
+        expect(bounds.width / bounds.height).toBeCloseTo(16 / 9, 3);
     });
 
-    it('renders calibration patterns with multiple spacing rows', () => {
-        const paper = { width: 200, height: 200, margin: 10 };
-        const calibrationData = new CalibrationConfig({
-            minSpacing: 0.2,
-            maxSpacing: 1,
-            samples: 3,
-            tilePadding: 2,
-            patternScale: 1,
-            width: 180,
-            height: 180
-        });
-        const drawingConfig = {
-            drawingData: calibrationData,
-            paper,
-            line: { strokeWidth: 0.3 },
-            colorPalette: palette
-        };
-        const renderContext = createRenderContext({
-            paper,
-            drawingWidth: calibrationData.bounds.width,
-            drawingHeight: calibrationData.bounds.height
-        });
-        const svg = drawCalibrationPatterns(drawingConfig, renderContext);
-        expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
-        expect(svg.querySelectorAll('text').length).toBeGreaterThan(0);
+    it('falls back to paper proportions when aspect locking is disabled', () => {
+        const config = new PhotoTriangleConfig({ width: 200, height: 150, matchPhotoAspectRatio: false });
+        config.setImageMetadata({ aspectRatio: 4 / 3, width: 800, height: 600, source: 'mock' });
+        const paper = { width: 420, height: 297, margin: 10 };
+        const bounds = config.getBounds({ paper, orientation: 'portrait' });
+        const printableWidth = Math.max(paper.width - paper.margin * 2, 1);
+        const printableHeight = Math.max(paper.height - paper.margin * 2, 1);
+        const expectedRatio = Math.min(printableWidth, printableHeight) / Math.max(printableWidth, printableHeight);
+        expect(bounds.width / bounds.height).toBeCloseTo(expectedRatio, 3);
     });
 
-    it('renders Lissajous curves', () => {
+    it('renders implicit line walkers as pure linework', () => {
         const drawingConfig = createTestDrawingConfig({
             drawingData: {
-                freqA: 3,
-                freqB: 2,
-                phase: Math.PI / 2,
-                amplitude: 0.9,
-                samples: 600
+                walkerCount: 200,
+                stepSize: 0.8,
+                stepsPerWalker: 80,
+                curvatureLimit: 0.5,
+                fieldFrequency: 0.01,
+                thresholdDrift: 0.1,
+                jitter: 0.05,
+                layerCount: 2,
+                seed: 123
             },
-            line: { strokeWidth: 0.3 },
+            line: { strokeWidth: 0.18, hatchStyle: 'scanline' },
             colorPalette: palette
         });
-        const renderContext = createTestRenderContext({ drawingWidth: 200, drawingHeight: 200 });
-        const svg = drawLissajous(drawingConfig, renderContext);
-        expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
-    });
-
-    it('renders Superformula shapes', () => {
-        const drawingConfig = createTestDrawingConfig({
-            drawingData: {
-                m: 7,
-                n1: 0.2,
-                n2: 1.7,
-                n3: 1.7,
-                a: 1,
-                b: 1,
-                samples: 600,
-                scale: 0.9
-            },
-            line: { strokeWidth: 0.35 },
-            colorPalette: palette
-        });
-        const renderContext = createTestRenderContext({ drawingWidth: 200, drawingHeight: 200 });
-        const svg = drawSuperformula(drawingConfig, renderContext);
-        expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
-    });
-
-    it('renders Clifford attractors', () => {
-        const drawingConfig = createTestDrawingConfig({
-            drawingData: {
-                a: -1.4,
-                b: 1.6,
-                c: 1.0,
-                d: 0.7,
-                iterations: 5000,
-                noise: 0
-            },
-            line: { strokeWidth: 0.2 },
-            colorPalette: palette
-        });
-        const renderContext = createTestRenderContext({ drawingWidth: 200, drawingHeight: 200 });
-        const svg = drawClifford(drawingConfig, renderContext);
-        expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
-    });
-
-    it('renders Turing patterns', () => {
-        const drawingConfig = createTestDrawingConfig({
-            drawingData: {
-                feed: 0.034,
-                kill: 0.063,
-                diffusionU: 0.16,
-                diffusionV: 0.08,
-                steps: 50,
-                resolution: 28,
-                threshold: 0.2
-            },
-            line: { strokeWidth: 0.15 },
-            colorPalette: palette
-        });
-        const renderContext = createTestRenderContext({ drawingWidth: 100, drawingHeight: 100 });
-        const svg = drawTuringPatterns(drawingConfig, renderContext);
-        expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
-    });
-
-    it('renders phyllotaxis spirals', () => {
-        const drawingConfig = createTestDrawingConfig({
-            drawingData: {
-                divergence: 137.5,
-                radialStep: 4,
-                pointCount: 200,
-                jitter: 0.1,
-                connect: false
-            },
-            line: { strokeWidth: 0.2 },
-            colorPalette: palette
-        });
-        const renderContext = createTestRenderContext({ drawingWidth: 200, drawingHeight: 200 });
-        const svg = drawPhyllotaxis(drawingConfig, renderContext);
-        expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
-    });
-
-    it('renders spirograph curves', () => {
-        const drawingConfig = createTestDrawingConfig({
-            drawingData: {
-                R: 80,
-                r: 25,
-                d: 65,
-                samples: 600,
-                layers: 2,
-                layerOffset: Math.PI / 6,
-                mode: 'hypotrochoid'
-            },
-            line: { strokeWidth: 0.3 },
-            colorPalette: palette
-        });
-        const renderContext = createTestRenderContext({ drawingWidth: 220, drawingHeight: 220 });
-        const svg = drawSpirograph(drawingConfig, renderContext);
-        expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
-    });
-
-    it('renders Voronoi sketches', () => {
-        const drawingConfig = createTestDrawingConfig({
-            drawingData: {
-                pointCount: 25,
-                relaxationPasses: 1,
-                neighbors: 3,
-                boundary: 'rect',
-                jitter: 0.2,
-                seed: 5
-            },
-            line: { strokeWidth: 0.2 },
-            colorPalette: palette
-        });
-        const renderContext = createTestRenderContext({ drawingWidth: 220, drawingHeight: 150 });
-        const svg = drawVoronoiSketch(drawingConfig, renderContext);
-        expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
-    });
-
-    it('renders flow fields', () => {
-        const drawingConfig = createTestDrawingConfig({
-            drawingData: {
-                noiseScale: 0.01,
-                stepLength: 2.5,
-                particleCount: 80,
-                steps: 60,
-                lineJitter: 0.1,
-                noiseSeed: 99
-            },
-            line: { strokeWidth: 0.2 },
-            colorPalette: palette
-        });
-        const renderContext = createTestRenderContext({ drawingWidth: 200, drawingHeight: 120 });
-        const svg = drawFlowField(drawingConfig, renderContext);
-        expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
-    });
-
-    it('renders Lorenz attractors', () => {
-        const drawingConfig = createTestDrawingConfig({
-            drawingData: {
-                sigma: 10,
-                rho: 28,
-                beta: 8 / 3,
-                dt: 0.01,
-                steps: 12000,
-                smoothing: 0.05
-            },
-            line: { strokeWidth: 0.2 },
-            colorPalette: palette
-        });
-        const renderContext = createTestRenderContext({ drawingWidth: 200, drawingHeight: 180 });
-        const svg = drawLorenzAttractor(drawingConfig, renderContext);
-        expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
-    });
-
-    it('renders Ikeda attractors', () => {
-        const drawingConfig = createTestDrawingConfig({
-            drawingData: {
-                u: 0.918,
-                steps: 15000,
-                smoothing: 0.02
-            },
-            line: { strokeWidth: 0.2 },
-            colorPalette: palette
-        });
-        const renderContext = createTestRenderContext({ drawingWidth: 200, drawingHeight: 180 });
-        const svg = drawIkedaAttractor(drawingConfig, renderContext);
-        expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
-    });
-
-    it('renders Peter de Jong attractors', () => {
-        const drawingConfig = createTestDrawingConfig({
-            drawingData: {
-                a: -1.4,
-                b: 1.6,
-                c: -1.2,
-                d: 0.7,
-                steps: 20000,
-                smoothing: 0.03
-            },
-            line: { strokeWidth: 0.2 },
-            colorPalette: palette
-        });
-        const renderContext = createTestRenderContext({ drawingWidth: 200, drawingHeight: 180 });
-        const svg = drawDeJongAttractor(drawingConfig, renderContext);
-        expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
-    });
-
-    it('renders contour maps', () => {
-        const drawingConfig = createTestDrawingConfig({
-            drawingData: {
-                frequency: 0.01,
-                octaves: 3,
-                thresholdSpacing: 0.2,
-                thresholdCount: 5,
-                seed: 50
-            },
-            line: { strokeWidth: 0.2 },
-            colorPalette: palette
-        });
-        const renderContext = createTestRenderContext({ drawingWidth: 300, drawingHeight: 200 });
-        const svg = drawContourMap(drawingConfig, renderContext);
-        expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
-    });
-
-    it('renders wave interference contours', () => {
-        const drawingConfig = createTestDrawingConfig({
-            drawingData: {
-                emitterCount: 5,
-                wavelength: 130,
-                thresholdSpacing: 0.25,
-                thresholdCount: 4,
-                seed: 72
-            },
-            line: { strokeWidth: 0.2 },
-            colorPalette: palette
-        });
-        const renderContext = createTestRenderContext({ drawingWidth: 380, drawingHeight: 260 });
-        const svg = drawWaveInterference(drawingConfig, renderContext);
-        expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
-    });
-
-    it('renders circle packing', () => {
-        const drawingConfig = createTestDrawingConfig({
-            drawingData: {
-                minRadius: 4,
-                maxRadius: 16,
-                circleCount: 200,
-                spacingFactor: 1.1,
-                seed: 33
-            },
-            line: { strokeWidth: 0.2 },
-            colorPalette: palette
-        });
-        const renderContext = createTestRenderContext({ drawingWidth: 300, drawingHeight: 220 });
-        const svg = drawCirclePacking(drawingConfig, renderContext);
-        expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
-    });
-
-    it('renders Truchet tiles', () => {
-        const drawingConfig = createTestDrawingConfig({
-            drawingData: {
-                columns: 20,
-                rows: 30,
-                motifCount: 2,
-                rotationBias: 0.8,
-                seed: 5
-            },
-            line: { strokeWidth: 0.2 },
-            colorPalette: palette
-        });
-        const renderContext = createTestRenderContext({ drawingWidth: 300, drawingHeight: 200 });
-        const svg = drawTruchetTiles(drawingConfig, renderContext);
-        expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
-    });
-
-    it('renders sorting arcs', () => {
-        const drawingConfig = createTestDrawingConfig({
-            drawingData: {
-                arraySize: 80,
-                algorithm: 'bubble',
-                shuffleStrength: 0.2,
-                arcHeight: 40,
-                lineWidth: 0.18,
-                seed: 21
-            },
-            line: { strokeWidth: 0.18 },
-            colorPalette: palette
-        });
-        const renderContext = createTestRenderContext({ drawingWidth: 320, drawingHeight: 200 });
-        const svg = drawSortingArcs(drawingConfig, renderContext);
+        const renderContext = createTestRenderContext({ drawingWidth: 200, drawingHeight: 140 });
+        const svg = drawImplicitLineWalkers(drawingConfig, renderContext);
         expect(svg.querySelectorAll('path').length).toBeGreaterThan(0);
     });
 });

@@ -95,13 +95,16 @@ export function createPreviewController({
                     ? 'requires main thread (photo/image inputs)'
                     : 'disabled globally';
             }
-            const hatchSettings = state.currentHatchSettings;
+            const drawingSupportsHatching = selectedDrawing?.features?.supportsHatching !== false
+                && state.currentDrawingSupportsHatching !== false;
+            state.currentDrawingSupportsHatching = drawingSupportsHatching;
+            const hatchSettings = drawingSupportsHatching ? state.currentHatchSettings : null;
             const workerLineOverrides = {
                 strokeWidth: state.currentStrokeWidth,
                 lineCap: state.currentLineCap,
                 lineJoin: state.currentLineJoin
             };
-            if (hatchSettings) {
+            if (drawingSupportsHatching && hatchSettings) {
                 workerLineOverrides.spacing = hatchSettings.hatchSpacing;
                 workerLineOverrides.hatchStyle = hatchSettings.hatchStyle;
                 workerLineOverrides.hatchInset = hatchSettings.hatchInset;

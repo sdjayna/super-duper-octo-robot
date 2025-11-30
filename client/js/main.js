@@ -49,6 +49,7 @@ const DEFAULT_PAPER_COLOR = '#ffffff';
 const CONTROL_STORAGE_KEY = 'drawingControlValues';
 const DRAWING_STORAGE_KEY = 'selectedDrawingKey';
 const MEDIUM_STORAGE_KEY = 'selectedMediumId';
+const PREVIEW_ZOOM_STORAGE_KEY = 'previewZoomPercent';
 const TRAVEL_LIMIT_MIN_METERS = 1;
 const TRAVEL_LIMIT_MAX_METERS = 100;
 const TRAVEL_LIMIT_INFINITE_SLIDER_VALUE = TRAVEL_LIMIT_MAX_METERS + 1;
@@ -124,11 +125,12 @@ const state = {
     disabledColorsByMedium: loadDisabledColorPrefs(),
     maxTravelPerLayerMeters: null,
     activeLayerColorNames: new Set(),
-    previewZoomPercent: 100,
+    previewZoomPercent: loadPreviewZoomFromStorage(),
     previewPan: { x: 0, y: 0 },
     isPanning: false,
     panStart: null,
-    currentHatchSettings: null
+    currentHatchSettings: null,
+    currentDrawingSupportsHatching: true
 };
 
 state.warnIfPaperExceedsPlotter = () => warnIfPaperExceedsPlotter(state, state.currentPaper);
@@ -162,6 +164,7 @@ function applyResumeStatus(status = {}) {
 function applyPreviewZoom(percent) {
     const clamped = Math.min(Math.max(Math.round(percent / 10) * 10, 10), 1000);
     state.previewZoomPercent = clamped;
+    persistPreviewZoom(clamped);
     const scale = clamped / 100;
     applyPreviewTransform(scale);
     if (previewZoomSlider) {
@@ -323,12 +326,32 @@ registerSectionToggle({
     label: 'Toggle travel limit controls'
 });
 
+function updateHatchControlsVisibility(supportsHatching = true) {
+    if (!hatchSettingsSection) {
+        return;
+    }
+    const shouldHide = !supportsHatching;
+    const isCollapsed = hatchSettingsSection.classList.contains('collapsed');
+    hatchSettingsSection.hidden = shouldHide;
+    hatchSettingsSection.setAttribute('aria-hidden', shouldHide ? 'true' : 'false');
+    if (hatchSettingsToggle) {
+        hatchSettingsToggle.disabled = shouldHide;
+        hatchSettingsToggle.setAttribute('aria-expanded', shouldHide ? 'false' : String(!isCollapsed));
+    }
+    if (hatchSettingsContent) {
+        hatchSettingsContent.hidden = shouldHide ? true : isCollapsed;
+    }
+}
+
+updateHatchControlsVisibility(state.currentDrawingSupportsHatching);
+
 async function handleGlobalHatchChanged() {
     const context = await getDrawingControlContext();
-    if (context) {
-        applyHatchSettingsToConfig(context.drawingConfig);
-    }
+    const supportsHatching = context?.supportsHatching !== false;
     state.currentHatchSettings = getHatchSettings();
+    if (!supportsHatching) {
+        return;
+    }
     await requestDraw({ forceRestart: true });
     refreshLayerSelectUI();
     updatePlotterStatus();
@@ -366,6 +389,33 @@ function loadControlValuesFromStorage() {
         return raw ? JSON.parse(raw) : {};
     } catch {
         return {};
+    }
+}
+
+function loadPreviewZoomFromStorage() {
+    if (typeof window === 'undefined' || !window.localStorage) {
+        return 100;
+    }
+    try {
+        const stored = window.localStorage.getItem(PREVIEW_ZOOM_STORAGE_KEY);
+        const parsed = Number(stored);
+        if (Number.isFinite(parsed)) {
+            return Math.min(Math.max(Math.round(parsed), 10), 1000);
+        }
+    } catch {
+        // ignore parsing errors
+    }
+    return 100;
+}
+
+function persistPreviewZoom(percent) {
+    if (typeof window === 'undefined' || !window.localStorage) {
+        return;
+    }
+    try {
+        window.localStorage.setItem(PREVIEW_ZOOM_STORAGE_KEY, String(percent));
+    } catch {
+        // ignore storage failures
     }
 }
 
@@ -804,11 +854,14 @@ async function getDrawingControlContext() {
         logDebug(`No drawing config found for ${drawingKey}`, 'error');
         return null;
     }
-    applyHatchSettingsToConfig(drawingConfig);
+    const supportsHatching = drawingConfig.features?.supportsHatching !== false;
+    if (supportsHatching) {
+        applyHatchSettingsToConfig(drawingConfig);
+    }
     const controls = drawingTypes[drawingConfig.type]?.controls
         || drawingConfig.controls
         || [];
-    return { drawingKey, drawingConfig, controls };
+    return { drawingKey, drawingConfig, controls, supportsHatching };
 }
 
 async function applyStoredControlValues(context) {
@@ -856,6 +909,9 @@ function getControlValue(context, control) {
 
 async function applyDrawingControlsState() {
     const context = await getDrawingControlContext();
+    const supportsHatching = context?.supportsHatching !== false;
+    state.currentDrawingSupportsHatching = supportsHatching;
+    updateHatchControlsVisibility(supportsHatching);
     await applyStoredControlValues(context);
     return context;
 }

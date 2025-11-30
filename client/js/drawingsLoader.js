@@ -18,7 +18,8 @@ function registerDrawingDefinition(definition) {
         configClass: definition.configClass,
         drawFunction: definition.drawFunction,
         validator: definition.validator,
-        controls: definition.controls
+        controls: definition.controls,
+        features: definition.features
     });
 
     (definition.presets || []).forEach(preset => {

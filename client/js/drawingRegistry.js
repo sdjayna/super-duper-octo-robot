@@ -3,7 +3,18 @@ import { loadPaperConfig } from './paperConfig.js';
 export const drawingTypes = {};
 export const drawings = {};
 
-export function registerDrawing({ id, name, configClass, drawFunction, validator, controls = [] }) {
+const DEFAULT_FEATURE_FLAGS = {
+    supportsHatching: true
+};
+
+function normalizeFeatures(features = {}) {
+    return {
+        ...DEFAULT_FEATURE_FLAGS,
+        ...(features || {})
+    };
+}
+
+export function registerDrawing({ id, name, configClass, drawFunction, validator, controls = [], features = {} }) {
     if (!id) {
         throw new Error('Drawing id is required');
     }
@@ -11,12 +22,14 @@ export function registerDrawing({ id, name, configClass, drawFunction, validator
         throw new Error(`Drawing type "${id}" is already registered`);
     }
     const resolvedControls = controls && controls.length ? controls : (configClass.availableControls || []);
+    const resolvedFeatures = normalizeFeatures(features);
     drawingTypes[id] = {
         name,
         configClass,
         drawFunction,
         validator,
-        controls: resolvedControls
+        controls: resolvedControls,
+        features: resolvedFeatures
     };
     return drawingTypes[id];
 }
@@ -33,8 +46,10 @@ export class DrawingConfig {
         this.paper = params.paper || {};
         this.line = params.line || {};
         this.colorPalette = params.colorPalette;
-        const typeControls = drawingTypes[this.type]?.controls || [];
+        const typeEntry = drawingTypes[this.type];
+        const typeControls = typeEntry?.controls || [];
         this.controls = typeControls;
+        this.features = normalizeFeatures(typeEntry?.features);
         this.drawingData = this.createDrawingData(params);
     }
 

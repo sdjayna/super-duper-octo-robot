@@ -1,7 +1,7 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-Source for the browser UI lives in `client/js` with templates under `client/templates/plotter.html` and static assets in `client/static`. Drawing definitions are split between `drawings/core`, `drawings/community`, and shared helpers in `drawings/shared`; rebuild `drawings/manifest.json` whenever you add a module. The Python bridge plus CLI wrappers reside inside `server/` and `bin/`, while paper and medium presets sit in `config/`. Automated tests live beside the client code in `client/js/__tests__`, and generated SVGs are written to `output/` for archival. Preview heuristics live in `client/js/utils/paperProfile.js` and `client/js/utils/previewEffects.js`; any change there should be mirrored with tests under `drawings/shared/__tests__` or `client/js/utils/__tests__`. When adding new papers or mediums, update the corresponding JSON entry, adjust preview+plotter overrides in `paperProfile.js`, and expand `drawings/shared/__tests__/previewProfile.test.js` with representative cases.
+Source for the browser UI lives in `client/js` with templates under `client/templates/plotter.html` and static assets in `client/static`. Active drawing definitions now live only in `drawings/core` (first-party) and `drawings/community` (experiments that ship); any retired modules must be moved into `drawings/disabled/<core|community>` so the loader/manifest never rediscovers them. Shared helpers stay in `drawings/shared`; rebuild `drawings/manifest.json` whenever you add or remove an active module. The Python bridge plus CLI wrappers reside inside `server/` and `bin/`, while paper and medium presets sit in `config/`. Automated tests live beside the client code in `client/js/__tests__`, and generated SVGs are written to `output/` for archival. Preview heuristics live in `client/js/utils/paperProfile.js` and `client/js/utils/previewEffects.js`; any change there should be mirrored with tests under `drawings/shared/__tests__` or `client/js/utils/__tests__`. When adding new papers or mediums, update the corresponding JSON entry, adjust preview+plotter overrides in `paperProfile.js`, and expand `drawings/shared/__tests__/previewProfile.test.js` with representative cases.
 
 ## Build, Test, and Development Commands
 - `make install`: Creates the Python venv, installs Node modules, and builds the drawings manifest so the UI can boot.
@@ -27,6 +27,12 @@ JavaScript files are ES modules with 4-space indentation, `camelCase` functions 
 - Wherever feasible, emit geometry in distinct layers mapped to the available colors in the selected medium by reusing the shared color-group helpers so each palette entry becomes its own layer.
 - When polygons are present, provide a hatch-fill control when practical. Serpentine hatch is the only supported fill style today, so wire the option up to that routine until additional algorithms exist.
 - Drawings that need palette-specific colouring (e.g., Photo Triangles) must pass `strokeColor` overrides into `builder.appendPath` so each triangle/segment is forced into the nearest palette layer; never invent colors the current medium cannot plot.
+- Line-only drawings (implicit line walkers, future attractors, etc.) must set `features: { supportsHatching: false }` in their `defineDrawing` call so the UI automatically hides the hatch controls, and they should leave `line.hatchStyle` set to `'none'`. Hatched drawings keep the default `supportsHatching: true` so the global sliders stay active.
+
+### Hatching-compatible vs. line-only drawings
+- Every drawing definition accepts a `features` object (default `{ supportsHatching: true }`). Mark line drawings with `supportsHatching: false` so the loader, preview worker, and UI skip hatch overrides entirely.
+- Do not conditionally mutate hatch settings in the draw function when the flag is false—the UI already strips the global overrides.
+- When you re-enable an archived hatched drawing, move it back from `drawings/disabled` into `drawings/core` and leave `supportsHatching` true so the hatch panel stays wired up.
 
 ### Paper, Mediums, Preview Profiles, and Plotter Defaults
 - Paper definitions belong in `config/papers.json` and must include descriptive metadata (`description`, `finish`, `absorbency`, `surfaceStrength`, weight, colour, notes). This copy renders directly in the UI, so keep it succinct and accurate. Set the `texture` field (`smooth`, `grain`, `vellum`, `gesso`, etc.) so the preview can layer the right texture overlay. Paper colour is driven only from config; there’s no manual paper-colour control in the UI. `client/js/utils/paperUtils.js` already exposes helpers for colour/texture and plotter warnings—reuse those instead of duplicating math in `main.js`.
@@ -46,10 +52,11 @@ JavaScript files are ES modules with 4-space indentation, `camelCase` functions 
 - All npm scripts run under `/bin/bash` (see repo `.npmrc`), so any future shell snippets should assume bash semantics. Git commands can now run from scripts safely.
 
 ### Adding a New Drawing
-1. Create `drawings/<core|community>/<name>.js` exporting a `defineDrawing` plus optional `attachControls` setup. Use existing modules (e.g., `drawings/core/calibration.js`) as templates.
+1. Create `drawings/<core|community>/<name>.js` exporting a `defineDrawing` plus optional `attachControls` setup. Use existing modules (e.g., `drawings/core/bouwkamp.js`) as templates.
 2. Register at least one preset so the drawing appears in the UI by default.
-3. Update `drawings/manifest.json` (or run `npm run build:drawings`) to include the new module, then add targeted unit tests in `drawings/__tests__` if behaviour is complex.
-4. Document user-facing features in README/CHANGELOG when appropriate.
+3. If the drawing is line-only, pass `features: { supportsHatching: false }`; otherwise inherit the default. Keep paused/legacy drawings in `drawings/disabled` and only move files back into `drawings/core` or `drawings/community` when they should reappear in the manifest.
+4. Update `drawings/manifest.json` (or run `npm run build:drawings`) to include the new module, then add targeted unit tests in `drawings/__tests__` if behaviour is complex.
+5. Document user-facing features in README/CHANGELOG when appropriate.
 
 ## Testing Guidelines
 Use Vitest for client and drawing helpers; colocate specs as `*.test.js` under `client/js/__tests__` or a sibling `__tests__` directory near the module. For every new drawing or utility, add focused tests that stub paper configs the way `drawingRegistry.test.js` does. Aim for deterministic seeds, and cover boundary cases such as margin parsing or layer toggles. When changes touch the Python server, add integration mocks or doc updates explaining manual verification until a Python test harness is added.

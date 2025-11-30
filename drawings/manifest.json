@@ -1,53 +1,9 @@
 {
-  "version": "9095dcca519a",
+  "version": "a75b3ed6b16c",
   "drawings": [
-    {
-      "group": "community",
-      "path": "/drawings/community/hilbert.js"
-    },
     {
       "group": "core",
       "path": "/drawings/core/bouwkamp.js"
-    },
-    {
-      "group": "core",
-      "path": "/drawings/core/calibration.js"
-    },
-    {
-      "group": "core",
-      "path": "/drawings/core/circlePacking.js"
-    },
-    {
-      "group": "core",
-      "path": "/drawings/core/clifford.js"
-    },
-    {
-      "group": "core",
-      "path": "/drawings/core/contour.js"
-    },
-    {
-      "group": "core",
-      "path": "/drawings/core/dejong.js"
-    },
-    {
-      "group": "core",
-      "path": "/drawings/core/flowField.js"
-    },
-    {
-      "group": "core",
-      "path": "/drawings/core/fourierKnots.js"
-    },
-    {
-      "group": "core",
-      "path": "/drawings/core/fractalCirclePacking.js"
-    },
-    {
-      "group": "core",
-      "path": "/drawings/core/fractalInversionLace.js"
-    },
-    {
-      "group": "core",
-      "path": "/drawings/core/ikeda.js"
     },
     {
       "group": "core",
@@ -55,64 +11,12 @@
     },
     {
       "group": "core",
-      "path": "/drawings/core/lissajous.js"
-    },
-    {
-      "group": "core",
-      "path": "/drawings/core/lorenz.js"
-    },
-    {
-      "group": "core",
       "path": "/drawings/core/photoTriangles.js"
     },
     {
       "group": "core",
-      "path": "/drawings/core/phyllotaxis.js"
-    },
-    {
-      "group": "core",
-      "path": "/drawings/core/reactionDiffusionIsosurfaces.js"
-    },
-    {
-      "group": "core",
-      "path": "/drawings/core/sortingArcs.js"
-    },
-    {
-      "group": "core",
-      "path": "/drawings/core/spirograph.js"
-    },
-    {
-      "group": "core",
-      "path": "/drawings/core/stratifiedOrbitalFields.js"
-    },
-    {
-      "group": "core",
-      "path": "/drawings/core/subdivisionFiligree.js"
-    },
-    {
-      "group": "core",
-      "path": "/drawings/core/superformula.js"
-    },
-    {
-      "group": "core",
-      "path": "/drawings/core/truchet.js"
-    },
-    {
-      "group": "core",
-      "path": "/drawings/core/turing.js"
-    },
-    {
-      "group": "core",
       "path": "/drawings/core/voronoi.js"
-    },
-    {
-      "group": "core",
-      "path": "/drawings/core/wavefrontExtrusion.js"
-    },
-    {
-      "group": "core",
-      "path": "/drawings/core/waveInterference.js"
     }
   ],
-  "generatedAt": "2025-11-29T21:53:48.977Z"
+  "generatedAt": "2025-11-30T00:21:31.481Z"
 }

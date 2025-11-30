@@ -290,6 +290,9 @@ const implicitLineWalkerDefinition = attachControls(defineDrawing({
     name: 'Implicit Line-Walkers',
     configClass: ImplicitLineWalkersConfig,
     drawFunction: drawImplicitLineWalkers,
+    features: {
+        supportsHatching: false
+    },
     presets: [
         {
             key: 'implicitWalkers',

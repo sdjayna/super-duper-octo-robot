@@ -54,11 +54,11 @@ We use GitHub issues to track public bugs. Report a bug by [opening a new issue]
 
 ## Adding a Drawing
 
-1. Decide whether the drawing belongs in `drawings/core/` (maintained presets) or `drawings/community/` (user experiments).
+1. Decide whether the drawing belongs in `drawings/core/` (maintained presets) or `drawings/community/` (user experiments). If it’s not ready for users yet, stash it under `drawings/disabled/<core|community>` so the manifest doesn’t pick it up until you move it back.
 2. Create a module that exports:
    - A config class extending `SizedDrawingConfig` / `PointCloudDrawingConfig` from `drawings/shared/kit.js`.
    - A `draw` function that receives `(drawingConfig, renderContext)` and returns an SVG using `createDrawingRuntime` (also from the kit).
-   - A definition created via `defineDrawing({ id, name, configClass, drawFunction, presets })` and exported as the default export.
+   - A definition created via `defineDrawing({ id, name, configClass, drawFunction, presets, features })` and exported as the default export. Mark line-only drawings with `features: { supportsHatching: false }` so the UI hides the hatch controls automatically.
 3. Add at least one preset so the UI shows a selectable example.
 4. Run `make manifest` (or `npm run build:drawings`) to refresh `drawings/manifest.json` so the loader picks up your new file.
 5. Add or update tests in `tests/drawings.test.js` (or a dedicated spec) to cover the new logic.

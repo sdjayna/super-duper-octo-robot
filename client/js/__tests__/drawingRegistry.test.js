@@ -42,4 +42,17 @@ describe('drawing registry', () => {
         expect(config.paper.width).toBe(210);
         expect(config.paper.margin).toBe(10);
     });
+
+    it('propagates feature flags to registry entries and presets', () => {
+        registerDrawing({
+            id: 'lineOnly',
+            name: 'Line Only',
+            configClass: StubConfig,
+            drawFunction: () => {},
+            features: { supportsHatching: false }
+        });
+        const preset = addDrawingPreset('lineOnlyPreset', 'Line Only Preset', { type: 'lineOnly', line: {}, colorPalette: {} });
+        expect(drawingTypes.lineOnly.features.supportsHatching).toBe(false);
+        expect(preset.features.supportsHatching).toBe(false);
+    });
 });

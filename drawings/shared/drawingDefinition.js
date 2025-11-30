@@ -1,4 +1,8 @@
-export function defineDrawing({ id, name, configClass, drawFunction, validator = null, presets = [], controls = [] }) {
+const DEFAULT_FEATURE_FLAGS = {
+    supportsHatching: true
+};
+
+export function defineDrawing({ id, name, configClass, drawFunction, validator = null, presets = [], controls = [], features = {} }) {
     if (!id) {
         throw new Error('Drawing definition requires an id');
     }
@@ -14,6 +18,10 @@ export function defineDrawing({ id, name, configClass, drawFunction, validator =
 
     const normalizedControls = Array.isArray(controls) ? controls : [];
     configClass.availableControls = normalizedControls;
+    const normalizedFeatures = {
+        ...DEFAULT_FEATURE_FLAGS,
+        ...(features || {})
+    };
 
     return {
         id,
@@ -22,6 +30,7 @@ export function defineDrawing({ id, name, configClass, drawFunction, validator =
         drawFunction,
         validator,
         presets,
-        controls: normalizedControls
+        controls: normalizedControls,
+        features: normalizedFeatures
     };
 }
