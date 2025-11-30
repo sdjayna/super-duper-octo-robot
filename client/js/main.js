@@ -161,12 +161,8 @@ function applyResumeStatus(status = {}) {
     updateResumeButtonState();
 }
 
-function clampZoomPercent(percent) {
-    return Math.min(Math.max(Math.round(percent / 10) * 10, 10), 1000);
-}
-
 function applyPreviewZoom(percent) {
-    const clamped = clampZoomPercent(percent);
+    const clamped = Math.min(Math.max(Math.round(percent / 10) * 10, 10), 1000);
     state.previewZoomPercent = clamped;
     persistPreviewZoom(clamped);
     const scale = clamped / 100;
@@ -185,27 +181,6 @@ function applyPreviewTransform(scaleOverride) {
         const { x, y } = state.previewPan;
         previewContainer.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
     }
-}
-
-function applyZoomAtPoint(percent, clientX, clientY) {
-    const targetPercent = clampZoomPercent(percent);
-    const previousPercent = state.previewZoomPercent;
-    if (targetPercent === previousPercent) {
-        return;
-    }
-    const prevScale = previousPercent / 100;
-    const nextScale = targetPercent / 100;
-    if (previewContainer && prevScale > 0 && Number.isFinite(clientX) && Number.isFinite(clientY)) {
-        const rect = previewContainer.getBoundingClientRect();
-        const offsetX = clientX - rect.left;
-        const offsetY = clientY - rect.top;
-        const scaleRatio = nextScale / prevScale;
-        state.previewPan = {
-            x: state.previewPan.x + offsetX * (1 - scaleRatio),
-            y: state.previewPan.y + offsetY * (1 - scaleRatio)
-        };
-    }
-    applyPreviewZoom(targetPercent);
 }
 
 function resetPreviewPan() {
@@ -1773,7 +1748,7 @@ if (previewContainer) {
         event.preventDefault();
         const delta = event.deltaY;
         const step = delta < 0 ? 10 : -10;
-        applyZoomAtPoint(state.previewZoomPercent + step, event.clientX, event.clientY);
+        applyPreviewZoom(state.previewZoomPercent + step);
     }, { passive: false });
 }
 
