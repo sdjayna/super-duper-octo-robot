@@ -38,6 +38,32 @@ class ProgressStreamHandlerTests(unittest.TestCase):
         self.assertEqual(message, 'CLI_PROGRESS')
         self.assertAlmostEqual(payload.get('progress'), 0.42)
 
+    def test_plot_progress_resets_keepalive_flag(self):
+        class FailingWriter:
+            def __init__(self):
+                self.wrote = False
+
+            def write(self, _):
+                self.wrote = True
+                raise BrokenPipeError()
+
+            def flush(self):
+                pass
+
+        handler = PlotterHandler.__new__(PlotterHandler)
+        handler.path = '/plot-progress'
+        handler.wfile = FailingWriter()
+        handler.send_response = lambda *_: None
+        handler.send_header = lambda *_: None
+        handler.end_headers = lambda: None
+        PlotterHandler.keep_sse_alive = False
+        PlotterHandler.sse_connections = set()
+
+        handler.do_GET()
+
+        self.assertTrue(handler.wfile.wrote)
+        PlotterHandler.keep_sse_alive = True
+
 
 if __name__ == '__main__':
     unittest.main()

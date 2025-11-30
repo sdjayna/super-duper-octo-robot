@@ -309,6 +309,7 @@ class PlotterHandler(SimpleHTTPRequestHandler):
             
             # Add this connection to the set
             PlotterHandler.sse_connections.add(self)
+            PlotterHandler.keep_sse_alive = True
             
             try:
                 while PlotterHandler.keep_sse_alive:
@@ -323,7 +324,7 @@ class PlotterHandler(SimpleHTTPRequestHandler):
                 print("Client disconnected from SSE")
             finally:
                 # Remove connection when client disconnects
-                PlotterHandler.sse_connections.remove(self)
+                PlotterHandler.sse_connections.discard(self)
             return
         if self.path == '/resume-status':
             status = self.get_resume_status()

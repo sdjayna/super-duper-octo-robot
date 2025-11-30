@@ -3,15 +3,39 @@ let lastProgressBar = '';
 let jsonProgressActive = false;
 const PROGRESS_PERCENT_REGEX = /^(\d+(?:\.\d+)?)%/;
 
+function normalizeFraction(rawValue) {
+    if (typeof rawValue !== 'number' || Number.isNaN(rawValue)) {
+        return null;
+    }
+    const normalized = rawValue > 1 ? rawValue / 100 : rawValue;
+    return Math.min(1, Math.max(0, normalized));
+}
+
+export function normalizeProgressValue(rawValue) {
+    if (typeof rawValue === 'number') {
+        return normalizeFraction(rawValue);
+    }
+    if (typeof rawValue === 'string') {
+        const trimmed = rawValue.trim().replace(/%$/, '');
+        if (!trimmed) {
+            return null;
+        }
+        const parsed = Number.parseFloat(trimmed);
+        if (Number.isNaN(parsed)) {
+            return null;
+        }
+        return normalizeFraction(parsed);
+    }
+    return null;
+}
+
 function parsePercentFromStatus(status) {
     if (typeof status !== 'string') {
         return null;
     }
     const match = status.match(PROGRESS_PERCENT_REGEX);
     if (!match) return null;
-    const value = parseFloat(match[1]);
-    if (Number.isNaN(value)) return null;
-    return Math.min(1, Math.max(0, value / 100));
+    return normalizeProgressValue(match[0]);
 }
 
 export function startProgressListener({ logDebug, logProgress, onPlotReady, playCompletionSiren }) {
@@ -43,8 +67,8 @@ export function startProgressListener({ logDebug, logProgress, onPlotReady, play
                     const status = payload && typeof payload === 'object'
                         ? (payload.status || payload.message || 'Plotting')
                         : 'Plotting';
-                    const percent = payload && typeof payload.progress === 'number'
-                        ? payload.progress
+                    const percent = payload
+                        ? normalizeProgressValue(payload.progress)
                         : null;
                     const pctLabel = typeof percent === 'number'
                         ? ` ${(percent * 100).toFixed(1)}%`
