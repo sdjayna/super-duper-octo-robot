@@ -19,7 +19,13 @@ export class BouwkampConfig extends SizedDrawingConfig {
             throw new Error('Bouwkamp code must be an array');
         }
         validateBouwkampCode(code);
-        const resolvedParams = { ...params, width: code[1], height: code[2] };
+        const preserveAspectRatio = params.preserveAspectRatio !== false;
+        const resolvedParams = {
+            ...params,
+            preserveAspectRatio,
+            width: code[1],
+            height: code[2]
+        };
         super(resolvedParams);
         this.order = code[0];
         this.squares = code.slice(3);
@@ -40,6 +46,13 @@ export function drawBouwkampCode(drawingConfig, renderContext) {
         ? drawingConfig.line.hatchStyle
         : 'serpentine';
     const { svg, builder } = createDrawingRuntime({ drawingConfig, renderContext });
+    const fillPaper = bouwkamp.preserveAspectRatio === false;
+    const targetBounds = renderContext.bounds || {
+        width: bouwkamp.width,
+        height: bouwkamp.height
+    };
+    const fillScaleX = fillPaper ? (targetBounds.width / bouwkamp.width) : 1;
+    const fillScaleY = fillPaper ? (targetBounds.height / bouwkamp.height) : 1;
 
     const helper = new Array(900).fill(0);
 
@@ -53,13 +66,14 @@ export function drawBouwkampCode(drawingConfig, renderContext) {
 
         const position = { x: i, y: helper[i] };
         const size = bouwkamp.squares[rect];
-        const vertexGap = drawingConfig.line.vertexGap;
-        
+        const vertexGap = Number(drawingConfig.line?.vertexGap ?? 0);
+        const insetSize = Math.max(size - 2 * vertexGap, 0);
+
         const rectData = {
-            x: position.x + vertexGap,
-            y: position.y + vertexGap,
-            width: size - 2 * vertexGap,
-            height: size - 2 * vertexGap
+            x: (position.x + vertexGap) * fillScaleX,
+            y: (position.y + vertexGap) * fillScaleY,
+            width: insetSize * fillScaleX,
+            height: insetSize * fillScaleY
         };
         const projectedRect = builder.projectRect(rectData);
         const polygon = rectToPolygon(projectedRect);
@@ -121,6 +135,14 @@ export const bouwkampControls = [
         default: 0.2,
         valueType: 'number',
         description: 'Inset distance from each square edge before the hatch starts (creates a clean border)'
+    },
+    {
+        id: 'fitToMargin',
+        label: 'Fit to Margin',
+        target: 'drawingData.preserveAspectRatio',
+        inputType: 'checkbox',
+        default: true,
+        description: 'Check to fit the rectangle to the paper margins. Uncheck to keep the original Bouwkamp proportions.'
     }
 ];
 
