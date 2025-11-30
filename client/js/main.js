@@ -9,6 +9,7 @@ import { resolvePreviewProfile, evaluatePreviewWarnings, resolvePlotterDefaults 
 import { normalizePaperColor, getPaperColor, getPaperTextureClass, computePlotterWarning } from './utils/paperUtils.js';
 import { filterPaletteByDisabledColors, loadDisabledColorPrefs, saveDisabledColorPrefs } from './utils/paletteUtils.js';
 import { collectLayerColorNames, applyColorUsageHighlight } from './utils/layerColorUsage.js';
+import { loadPlotterSettings, persistPlotterSettings as persistPlotterSettingsToStorage } from './utils/plotterSettingsStorage.js';
 
 window.logDebug = logDebug;
 initLogTabs();
@@ -97,6 +98,12 @@ const hatchLinkControl = document.getElementById('hatchLinkControl');
 const resumeButton = document.getElementById('plotterResumePlot');
 const maxTravelSlider = document.getElementById('maxTravelPerLayer');
 const maxTravelValueLabel = document.getElementById('maxTravelPerLayerValue');
+const penPosDownInput = document.getElementById('penPosDown');
+const penPosDownValueLabel = document.getElementById('penPosDownValue');
+const penPosUpInput = document.getElementById('penPosUp');
+const penPosUpValueLabel = document.getElementById('penPosUpValue');
+const penRateLowerInput = document.getElementById('penRateLower');
+const penRateLowerValueLabel = document.getElementById('penRateLowerValue');
 const previewZoomSlider = document.getElementById('previewZoomSlider');
 const previewZoomValue = document.getElementById('previewZoomValue');
 const previewContainer = document.getElementById('svgContainer');
@@ -107,6 +114,7 @@ const previewOverlay = document.getElementById('previewOverlay');
 const previewZoomBar = document.querySelector('.zoom-control');
 const layerFocusToggle = document.getElementById('layerFocusToggle');
 const layerFocusContainer = document.querySelector('.layer-focus-toggle');
+let persistedPlotterSettings = loadPlotterSettings();
 
 const state = {
     paperConfig: null,
@@ -141,6 +149,7 @@ const state = {
 
 state.warnIfPaperExceedsPlotter = () => warnIfPaperExceedsPlotter(state, state.currentPaper);
 state.currentHatchSettings = getHatchSettings();
+applyPersistedPlotterSettings();
 let resumeStatus = { available: false, layer: null, layerLabel: null };
 let plotterIsRunning = false;
 
@@ -617,6 +626,14 @@ function persistLayerFocusPreference(enabled) {
     } catch {
         // ignore
     }
+}
+
+function hasPersistedPlotterSetting(key) {
+    return Object.prototype.hasOwnProperty.call(persistedPlotterSettings || {}, key);
+}
+
+function updatePersistedPlotterSettings(updates = {}) {
+    persistedPlotterSettings = persistPlotterSettingsToStorage(updates);
 }
 
 function setLayerSelectValue(value, options = {}) {
@@ -1348,15 +1365,13 @@ function updatePlotterDefaults() {
         mediumId: state.currentMediumId
     }) || {};
 
-    const slider = document.getElementById('penRateLower');
-    const valueLabel = document.getElementById('penRateLowerValue');
-    if (slider && valueLabel && typeof penRateLower === 'number') {
-        slider.value = penRateLower;
-        valueLabel.textContent = penRateLower;
+    if (penRateLowerInput && penRateLowerValueLabel && typeof penRateLower === 'number' && !hasPersistedPlotterSetting('penRateLower')) {
+        penRateLowerInput.value = String(penRateLower);
+        penRateLowerValueLabel.textContent = penRateLower;
         logDebug(`Pen Rate Lower auto-set to ${penRateLower} for ${state.currentPaper.name}`);
     }
 
-    if (typeof maxTravelPerLayerMeters === 'number') {
+    if (typeof maxTravelPerLayerMeters === 'number' && !hasPersistedPlotterSetting('maxTravelPerLayerMeters')) {
         applyMaxTravelLimit(maxTravelPerLayerMeters, { silent: true });
         logDebug(`Max travel per layer auto-set to ${formatTravelMeters(state.maxTravelPerLayerMeters)} for ${state.currentPaper.name}`);
     }
@@ -1671,9 +1686,17 @@ document.getElementById('toggleRulers').addEventListener('click', () => {
 });
 
 // Pen rate lower slider
-document.getElementById('penRateLower').addEventListener('input', (e) => {
-    document.getElementById('penRateLowerValue').textContent = e.target.value;
-});
+if (penRateLowerInput) {
+    penRateLowerInput.addEventListener('input', (event) => {
+        if (penRateLowerValueLabel) {
+            penRateLowerValueLabel.textContent = event.target.value;
+        }
+        const numeric = clampPenValue(event.target.value);
+        if (numeric !== null) {
+            updatePersistedPlotterSettings({ penRateLower: numeric });
+        }
+    });
+}
 
 // Plotter control functions
 async function sendPlotterCommand(command, data = {}) {
@@ -1771,31 +1794,43 @@ document.getElementById('toggleMute').addEventListener('click', () => {
 });
 
 // Pen position sliders
-document.getElementById('penPosDown').addEventListener('input', (e) => {
-    const downValue = parseInt(e.target.value);
-    const upValue = parseInt(document.getElementById('penPosUp').value);
-    
-    // Ensure down position is less than up position
-    if (downValue >= upValue) {
-        e.target.value = upValue - 1;
-        document.getElementById('penPosDownValue').textContent = upValue - 1;
-    } else {
-        document.getElementById('penPosDownValue').textContent = downValue;
-    }
-});
+if (penPosDownInput) {
+    penPosDownInput.addEventListener('input', (event) => {
+        const downValue = parseInt(event.target.value, 10);
+        const upValue = parseInt(penPosUpInput?.value ?? '0', 10);
+        if (Number.isFinite(downValue) && Number.isFinite(upValue) && downValue >= upValue) {
+            event.target.value = String(upValue - 1);
+            if (penPosDownValueLabel) {
+                penPosDownValueLabel.textContent = upValue - 1;
+            }
+        } else if (penPosDownValueLabel) {
+            penPosDownValueLabel.textContent = Number.isFinite(downValue) ? downValue : '';
+        }
+        const resolved = clampPenValue(penPosDownInput.value);
+        if (resolved !== null) {
+            updatePersistedPlotterSettings({ penPosDown: resolved });
+        }
+    });
+}
 
-document.getElementById('penPosUp').addEventListener('input', (e) => {
-    const upValue = parseInt(e.target.value);
-    const downValue = parseInt(document.getElementById('penPosDown').value);
-    
-    // Ensure up position is greater than down position
-    if (upValue <= downValue) {
-        e.target.value = downValue + 1;
-        document.getElementById('penPosUpValue').textContent = downValue + 1;
-    } else {
-        document.getElementById('penPosUpValue').textContent = upValue;
-    }
-});
+if (penPosUpInput) {
+    penPosUpInput.addEventListener('input', (event) => {
+        const upValue = parseInt(event.target.value, 10);
+        const downValue = parseInt(penPosDownInput?.value ?? '0', 10);
+        if (Number.isFinite(upValue) && Number.isFinite(downValue) && upValue <= downValue) {
+            event.target.value = String(downValue + 1);
+            if (penPosUpValueLabel) {
+                penPosUpValueLabel.textContent = downValue + 1;
+            }
+        } else if (penPosUpValueLabel) {
+            penPosUpValueLabel.textContent = Number.isFinite(upValue) ? upValue : '';
+        }
+        const resolved = clampPenValue(penPosUpInput.value);
+        if (resolved !== null) {
+            updatePersistedPlotterSettings({ penPosUp: resolved });
+        }
+    });
+}
 
 if (maxTravelSlider) {
     maxTravelSlider.addEventListener('input', (event) => {
@@ -1806,6 +1841,7 @@ if (maxTravelSlider) {
         if (!updated) {
             return;
         }
+        updatePersistedPlotterSettings({ maxTravelPerLayerMeters: state.maxTravelPerLayerMeters });
         await requestDraw({ forceRestart: true });
         refreshLayerSelectUI();
         if (state.maxTravelPerLayerMeters === null) {
@@ -2017,39 +2053,69 @@ function clampPenValue(value) {
     return Math.min(100, Math.max(0, Math.round(numeric)));
 }
 
-function applyPenDefaults(defaults = {}) {
-    const downInput = document.getElementById('penPosDown');
-    const upInput = document.getElementById('penPosUp');
-    const downLabel = document.getElementById('penPosDownValue');
-    const upLabel = document.getElementById('penPosUpValue');
-    const penRateInput = document.getElementById('penRateLower');
-    const penRateLabel = document.getElementById('penRateLowerValue');
+function applyPersistedPlotterSettings() {
+    if (!persistedPlotterSettings || typeof persistedPlotterSettings !== 'object') {
+        persistedPlotterSettings = {};
+        return;
+    }
+    if (hasPersistedPlotterSetting('maxTravelPerLayerMeters')) {
+        const storedLimit = persistedPlotterSettings.maxTravelPerLayerMeters;
+        if (storedLimit === null) {
+            applyMaxTravelLimit(TRAVEL_LIMIT_INFINITE_SLIDER_VALUE, { silent: true });
+        } else {
+            applyMaxTravelLimit(storedLimit, { silent: true });
+        }
+    }
+    const storedPenDown = clampPenValue(persistedPlotterSettings.penPosDown);
+    if (storedPenDown !== null && penPosDownInput && penPosDownValueLabel) {
+        penPosDownInput.value = String(storedPenDown);
+        penPosDownValueLabel.textContent = storedPenDown;
+    }
+    let storedPenUp = clampPenValue(persistedPlotterSettings.penPosUp);
+    if (storedPenUp !== null && penPosUpInput && penPosUpValueLabel) {
+        const currentDown = clampPenValue(penPosDownInput?.value) ?? 0;
+        if (storedPenUp <= currentDown) {
+            storedPenUp = Math.min(100, currentDown + 1);
+        }
+        penPosUpInput.value = String(storedPenUp);
+        penPosUpValueLabel.textContent = storedPenUp;
+    }
+    const storedPenRate = clampPenValue(persistedPlotterSettings.penRateLower);
+    if (storedPenRate !== null && penRateLowerInput && penRateLowerValueLabel) {
+        penRateLowerInput.value = String(storedPenRate);
+        penRateLowerValueLabel.textContent = storedPenRate;
+    }
+}
 
-    if (downInput && downLabel && typeof defaults.penPosDown === 'number') {
+function applyPenDefaults(defaults = {}) {
+    if (!defaults) {
+        return;
+    }
+    if (penPosDownInput && penPosDownValueLabel && typeof defaults.penPosDown === 'number' && !hasPersistedPlotterSetting('penPosDown')) {
         const downValue = clampPenValue(defaults.penPosDown);
         if (downValue !== null) {
-            downInput.value = String(downValue);
-            downLabel.textContent = downValue;
+            penPosDownInput.value = String(downValue);
+            penPosDownValueLabel.textContent = downValue;
         }
     }
 
-    if (upInput && upLabel && typeof defaults.penPosUp === 'number') {
+    if (penPosUpInput && penPosUpValueLabel && typeof defaults.penPosUp === 'number' && !hasPersistedPlotterSetting('penPosUp')) {
         let upValue = clampPenValue(defaults.penPosUp);
-        const currentDown = clampPenValue(document.getElementById('penPosDown')?.value) ?? 0;
+        const currentDown = clampPenValue(penPosDownInput?.value) ?? 0;
         if (upValue !== null) {
             if (upValue <= currentDown) {
                 upValue = Math.min(100, currentDown + 1);
             }
-            upInput.value = String(upValue);
-            upLabel.textContent = upValue;
+            penPosUpInput.value = String(upValue);
+            penPosUpValueLabel.textContent = upValue;
         }
     }
 
-    if (penRateInput && penRateLabel && typeof defaults.penRateLower === 'number') {
+    if (penRateLowerInput && penRateLowerValueLabel && typeof defaults.penRateLower === 'number' && !hasPersistedPlotterSetting('penRateLower')) {
         const rateValue = clampPenValue(defaults.penRateLower);
         if (rateValue !== null) {
-            penRateInput.value = String(rateValue);
-            penRateLabel.textContent = rateValue;
+            penRateLowerInput.value = String(rateValue);
+            penRateLowerValueLabel.textContent = rateValue;
         }
     }
 }
