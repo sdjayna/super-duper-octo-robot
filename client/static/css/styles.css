@@ -429,6 +429,27 @@ rect.plotter-limit {
     margin: 0;
 }
 
+.layer-focus-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #444;
+    margin-top: 4px;
+}
+
+.layer-focus-toggle input {
+    margin: 0;
+}
+
+#svgContainer .layer-focus-target {
+    opacity: 1;
+}
+
+#svgContainer .layer-focus-muted {
+    opacity: 0.18;
+}
+
 .hatch-controls {
     flex-direction: column;
     gap: 8px;

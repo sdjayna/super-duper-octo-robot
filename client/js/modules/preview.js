@@ -251,7 +251,7 @@ export function createPreviewController({
             }
             populateLayerSelect(container, logDebug, { preserveDomOrder: Boolean(travelSummary) });
             document.getElementById('layerSelect').value = currentLayer;
-            updateLayerVisibility(container, state.rulersVisible);
+            updateLayerVisibility(container, state);
             state.warnIfPaperExceedsPlotter?.();
         } catch (error) {
             if (abortSignal?.aborted || error?.message === 'Render aborted') {
@@ -341,7 +341,7 @@ export function createPreviewController({
         await draw();
         populateLayerSelect(container, logDebug);
         restoreLayerSelection(previousLayer);
-        updateLayerVisibility(container, state.rulersVisible);
+        updateLayerVisibility(container, state);
     }
 
     function updateMarginControls(paper) {
@@ -378,7 +378,7 @@ function applyMarginValue(value) {
         stopRefresh,
         toggleRefresh,
         toggleOrientation,
-        updateLayerVisibility: () => updateLayerVisibility(container, state.rulersVisible),
+        updateLayerVisibility: () => updateLayerVisibility(container, state),
         populateLayerSelect: () => populateLayerSelect(container, logDebug),
         updateMarginControls,
         applyMarginValue
@@ -884,18 +884,30 @@ function populateLayerSelect(container, logDebug, options = {}) {
     }
 }
 
-function updateLayerVisibility(container, rulersVisible) {
+function updateLayerVisibility(container, state = {}) {
     const svg = container.querySelector('svg');
     if (!svg) return;
-    const selectedLayer = document.getElementById('layerSelect').value;
+    const layerSelect = document.getElementById('layerSelect');
+    const selectedLayer = layerSelect ? layerSelect.value : 'all';
+    const focusEnabled = Boolean(state?.isLayerFocusEnabled) && selectedLayer !== 'all';
     const layers = svg.querySelectorAll('g[inkscape\\:groupmode="layer"]');
     layers.forEach(layer => {
-        const label = layer.getAttribute('inkscape:label');
+        const label = layer.getAttribute('inkscape:label') || '';
         const layerIndex = label.split('-')[0];
-        layer.style.display = (selectedLayer === 'all' || layerIndex === selectedLayer) ? '' : 'none';
+        const matchesSelection = selectedLayer === 'all' || layerIndex === selectedLayer;
+        if (focusEnabled) {
+            const isTargetLayer = layerIndex === selectedLayer;
+            layer.style.display = '';
+            layer.classList.toggle('layer-focus-target', isTargetLayer);
+            layer.classList.toggle('layer-focus-muted', !isTargetLayer);
+        } else {
+            layer.classList.remove('layer-focus-target', 'layer-focus-muted');
+            layer.style.display = matchesSelection ? '' : 'none';
+        }
     });
 
     const previewElements = svg.querySelectorAll('.preview-only');
+    const rulersVisible = state?.rulersVisible !== false;
     previewElements.forEach(element => {
         element.style.display = rulersVisible ? '' : 'none';
     });

@@ -102,6 +102,7 @@ const previewResetButton = document.getElementById('previewReset');
 const previewFitButton = document.getElementById('previewFit');
 const previewOverlay = document.getElementById('previewOverlay');
 const previewZoomBar = document.querySelector('.zoom-control');
+const layerFocusToggle = document.getElementById('layerFocusToggle');
 
 const state = {
     paperConfig: null,
@@ -130,7 +131,8 @@ const state = {
     isPanning: false,
     panStart: null,
     currentHatchSettings: null,
-    currentDrawingSupportsHatching: true
+    currentDrawingSupportsHatching: true,
+    isLayerFocusEnabled: false
 };
 
 state.warnIfPaperExceedsPlotter = () => warnIfPaperExceedsPlotter(state, state.currentPaper);
@@ -612,6 +614,26 @@ function refreshLayerSelectUI() {
     populateLayerSelect();
     updateActiveLayerColorsFromSelect();
     updateMediumColorUsageHighlight();
+    syncLayerFocusToggleState();
+}
+
+function syncLayerFocusToggleState() {
+    if (!layerFocusToggle) {
+        return;
+    }
+    const layerSelect = document.getElementById('layerSelect');
+    const hasSelectableLayers = Boolean(layerSelect) && layerSelect.options.length > 1;
+    layerFocusToggle.disabled = !hasSelectableLayers;
+    if (!hasSelectableLayers) {
+        const wasEnabled = state.isLayerFocusEnabled;
+        state.isLayerFocusEnabled = false;
+        layerFocusToggle.checked = false;
+        if (wasEnabled) {
+            updateLayerVisibility();
+        }
+        return;
+    }
+    layerFocusToggle.checked = state.isLayerFocusEnabled;
 }
 
 function loadColorUtilsModule() {
@@ -1475,11 +1497,23 @@ document.getElementById('layerSelect').addEventListener('change', (e) => {
     updateResumeButtonState();
     e.target.blur();
 });
+if (layerFocusToggle) {
+    layerFocusToggle.addEventListener('change', (event) => {
+        if (event.target.disabled) {
+            return;
+        }
+        state.isLayerFocusEnabled = event.target.checked;
+        updateLayerVisibility();
+    });
+}
 exportButton.addEventListener('click', exportSvg);
 document.getElementById('updateSvg').addEventListener('click', updateSvg);
 document.getElementById('toggleRefresh').addEventListener('click', toggleRefresh);
 document.getElementById('toggleDebug').addEventListener('click', toggleDebugPanel);
-document.getElementById('toggleOrientation').addEventListener('click', toggleOrientation);
+document.getElementById('toggleOrientation').addEventListener('click', async () => {
+    await toggleOrientation();
+    refreshLayerSelectUI();
+});
 document.getElementById('marginSlider').addEventListener('input', async (e) => {
     if (applyMarginValue(e.target.value)) {
         state.warnIfPaperExceedsPlotter();
