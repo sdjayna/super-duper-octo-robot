@@ -50,6 +50,8 @@ const CONTROL_STORAGE_KEY = 'drawingControlValues';
 const DRAWING_STORAGE_KEY = 'selectedDrawingKey';
 const MEDIUM_STORAGE_KEY = 'selectedMediumId';
 const PREVIEW_ZOOM_STORAGE_KEY = 'previewZoomPercent';
+const CONTROL_TAB_STORAGE_KEY = 'activeControlPanel';
+const LAYER_SELECTION_STORAGE_KEY = 'selectedLayerValue';
 const TRAVEL_LIMIT_MIN_METERS = 1;
 const TRAVEL_LIMIT_MAX_METERS = 100;
 const TRAVEL_LIMIT_INFINITE_SLIDER_VALUE = TRAVEL_LIMIT_MAX_METERS + 1;
@@ -547,6 +549,74 @@ function persistSelectedDrawing(key) {
     } catch {
         // ignore
     }
+}
+
+function loadActiveControlTab() {
+    if (typeof window === 'undefined' || !window.localStorage) {
+        return null;
+    }
+    try {
+        return window.localStorage.getItem(CONTROL_TAB_STORAGE_KEY);
+    } catch {
+        return null;
+    }
+}
+
+function persistActiveControlTab(tabId) {
+    if (typeof window === 'undefined' || !window.localStorage || !tabId) {
+        return;
+    }
+    try {
+        window.localStorage.setItem(CONTROL_TAB_STORAGE_KEY, tabId);
+    } catch {
+        // ignore
+    }
+}
+
+function loadStoredLayerSelection() {
+    if (typeof window === 'undefined' || !window.localStorage) {
+        return null;
+    }
+    try {
+        return window.localStorage.getItem(LAYER_SELECTION_STORAGE_KEY);
+    } catch {
+        return null;
+    }
+}
+
+function persistLayerSelection(layerValue) {
+    if (typeof window === 'undefined' || !window.localStorage) {
+        return;
+    }
+    try {
+        window.localStorage.setItem(LAYER_SELECTION_STORAGE_KEY, layerValue);
+    } catch {
+        // ignore
+    }
+}
+
+function setLayerSelectValue(value, options = {}) {
+    const layerSelect = document.getElementById('layerSelect');
+    if (!layerSelect) {
+        return 'all';
+    }
+    const desired = typeof value === 'string' ? value : 'all';
+    const hasOption = Array.from(layerSelect.options).some(option => option.value === desired);
+    const resolved = hasOption ? desired : 'all';
+    layerSelect.value = resolved;
+    if (options.persist !== false) {
+        persistLayerSelection(resolved);
+    }
+    return resolved;
+}
+
+function restoreStoredLayerSelection() {
+    const stored = loadStoredLayerSelection();
+    const resolved = stored ? setLayerSelectValue(stored, { persist: false }) : setLayerSelectValue('all', { persist: false });
+    if (resolved !== stored) {
+        persistLayerSelection(resolved);
+    }
+    return resolved;
 }
 
 function populateMediumColorSelect(mediumId, mediumMetadata = {}) {
@@ -1450,7 +1520,7 @@ async function initialize() {
         isInitializing = false;
         await draw({ delayMs: 0, forceRestart: false });
         refreshLayerSelectUI();
-        document.getElementById('layerSelect').value = 'all';
+        restoreStoredLayerSelection();
         updateLayerVisibility();
         updatePlotterStatus();
         logDebug('Initial draw complete. Auto-refresh is off.');
@@ -1469,7 +1539,7 @@ select.addEventListener('change', async () => {
     await refreshDrawingControlsUI();
     refreshLayerSelectUI();
     // Set layer select to "all" when drawing changes
-    document.getElementById('layerSelect').value = 'all';
+    setLayerSelectValue('all');
     updateLayerVisibility();
     updatePlotterStatus();
     persistSelectedDrawing(select.value);
@@ -1495,6 +1565,7 @@ document.getElementById('layerSelect').addEventListener('change', (e) => {
     updateLayerVisibility();
     updatePlotterStatus();  // Add this line to update plotter button states
     updateResumeButtonState();
+    persistLayerSelection(e.target.value);
     e.target.blur();
 });
 if (layerFocusToggle) {
@@ -1521,7 +1592,7 @@ document.getElementById('marginSlider').addEventListener('input', async (e) => {
     }
 });
 
-function setActiveControlPanel(targetId) {
+function setActiveControlPanel(targetId, options = {}) {
     controlTabs.forEach(tab => {
         const isTarget = tab.dataset.target === targetId;
         tab.classList.toggle('active', isTarget);
@@ -1529,6 +1600,9 @@ function setActiveControlPanel(targetId) {
     controlPanels.forEach(panel => {
         panel.classList.toggle('active', panel.id === targetId);
     });
+    if (options.persist !== false) {
+        persistActiveControlTab(targetId);
+    }
 }
 
 controlTabs.forEach(tab => {
@@ -1536,6 +1610,15 @@ controlTabs.forEach(tab => {
         setActiveControlPanel(tab.dataset.target);
     });
 });
+
+const storedTabId = loadActiveControlTab();
+const defaultTabTarget = controlTabs[0]?.dataset?.target || 'drawingPanel';
+const tabToActivate = (storedTabId && document.getElementById(storedTabId))
+    ? storedTabId
+    : defaultTabTarget;
+if (tabToActivate) {
+    setActiveControlPanel(tabToActivate, { persist: false });
+}
 
 // Ruler visibility toggle
 document.getElementById('toggleRulers').addEventListener('click', () => {
