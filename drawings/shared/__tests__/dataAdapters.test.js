@@ -33,12 +33,13 @@ function createBuilder(overrides = {}) {
         line: { strokeWidth: 0.4 },
         ...overrides.drawingConfig
     };
-    return createDrawingBuilder({
+    const builder = createDrawingBuilder({
         svg,
         drawingConfig,
         renderContext: overrides.renderContext,
         abortSignal: overrides.abortSignal
     });
+    return { builder, svg };
 }
 
 describe('dataAdapters createDrawingBuilder', () => {
@@ -55,7 +56,7 @@ describe('dataAdapters createDrawingBuilder', () => {
                 height: rect.height * 2
             }))
         };
-        const builder = createBuilder({ renderContext });
+        const { builder } = createBuilder({ renderContext });
         const points = [{ x: 1, y: 2 }];
         const rect = { x: 5, y: 6, width: 7, height: 8 };
 
@@ -69,11 +70,36 @@ describe('dataAdapters createDrawingBuilder', () => {
     });
 
     it('falls back to raw numeric projection when renderContext missing', () => {
-        const builder = createBuilder();
+        const { builder } = createBuilder();
         const points = builder.projectPoints([{ x: '3', y: '4' }]);
         const rect = builder.projectRect({ x: '5', y: '6', width: '7', height: '8' });
 
         expect(points).toEqual([{ x: 3, y: 4 }]);
         expect(rect).toEqual({ x: 5, y: 6, width: 7, height: 8 });
+    });
+
+    it('orders paths within a layer to reduce travel distance', () => {
+        const { builder, svg } = createBuilder();
+        const strokeColor = '#111111';
+
+        builder.appendPath([{ x: 90, y: 10 }, { x: 95, y: 15 }], { strokeColor });
+        builder.appendPath([{ x: 50, y: 10 }, { x: 55, y: 15 }], { strokeColor });
+        builder.appendPath([{ x: 5, y: 10 }, { x: 10, y: 15 }], { strokeColor });
+
+        const layer = svg.layers[0];
+        const order = layer.paths.map(path => path.points[0].x);
+        expect(order).toEqual([5, 50, 90]);
+    });
+
+    it('reverses a path when necessary to shorten travel', () => {
+        const { builder, svg } = createBuilder();
+        const strokeColor = '#111111';
+
+        builder.appendPath([{ x: 0, y: 0 }, { x: 2, y: 0 }], { strokeColor });
+        builder.appendPath([{ x: 10, y: 0 }, { x: 4, y: 0 }], { strokeColor });
+
+        const layer = svg.layers[0];
+        expect(layer.paths[0].points).toEqual([{ x: 0, y: 0 }, { x: 2, y: 0 }]);
+        expect(layer.paths[1].points).toEqual([{ x: 4, y: 0 }, { x: 10, y: 0 }]);
     });
 });

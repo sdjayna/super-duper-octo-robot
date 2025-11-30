@@ -39,17 +39,82 @@ function evaluateInsertion(entries, orientation) {
 function selectOrientation(entry, entries) {
     const forward = {
         reversed: false,
+        points: entry.originalPoints,
         start: entry.originalPoints[0],
         end: entry.originalPoints[entry.originalPoints.length - 1]
     };
+    const reversedPoints = entry.originalPoints.slice().reverse();
+    const backward = {
+        reversed: true,
+        points: reversedPoints,
+        start: reversedPoints[0],
+        end: reversedPoints[reversedPoints.length - 1]
+    };
+    const forwardPlacement = evaluateInsertion(entries, forward);
+    const backwardPlacement = evaluateInsertion(entries, backward);
+    if (backwardPlacement.cost < forwardPlacement.cost) {
+        return {
+            orientation: backward,
+            placement: backwardPlacement
+        };
+    }
     return {
         orientation: forward,
-        placement: evaluateInsertion(entries, forward)
+        placement: forwardPlacement
     };
 }
 
 export function createLayerTravelOptimizer(colorGroups) {
     const layerState = new Map();
+
+    function reorderGroupChildren(group, order) {
+        if (!group || !order?.length) {
+            return;
+        }
+        const fragment = document.createDocumentFragment();
+        order.forEach(entry => {
+            if (entry?.pathElement?.parentNode === group) {
+                fragment.appendChild(entry.pathElement);
+            }
+        });
+        group.appendChild(fragment);
+    }
+
+function resequenceEntries(state, group) {
+    const entries = state?.entries;
+    if (!Array.isArray(entries) || entries.length < 3) {
+        return;
+    }
+    const remaining = entries.slice();
+    const ordered = [];
+    const first = remaining.shift();
+    if (first) {
+        ordered.push(first);
+    }
+    let current = first;
+    while (remaining.length && current) {
+        let bestIndex = 0;
+        let bestDistance = Number.POSITIVE_INFINITY;
+        for (let i = 0; i < remaining.length; i += 1) {
+            const candidate = remaining[i];
+            const distance = distanceBetween(current.end, candidate.start);
+            if (distance < bestDistance) {
+                bestDistance = distance;
+                bestIndex = i;
+            }
+        }
+        current = remaining.splice(bestIndex, 1)[0];
+        if (current) {
+            ordered.push(current);
+        }
+    }
+    if (!ordered.length) {
+        return;
+    }
+    const finalSequence = ordered.concat(remaining);
+    state.entries = finalSequence;
+    reorderGroupChildren(group, finalSequence);
+}
 
     function registerPath({ color, points, pathElement }) {
         if (!colorGroups[color] || !pathElement || !Array.isArray(points)) {
@@ -64,10 +129,10 @@ export function createLayerTravelOptimizer(colorGroups) {
             pathElement
         };
         const state = layerState.get(color) || { entries: [] };
-        const { placement } = selectOrientation(entry, state.entries);
-        const orientedPoints = entry.originalPoints;
-        entry.start = orientedPoints[0];
-        entry.end = orientedPoints[orientedPoints.length - 1];
+        const { orientation, placement } = selectOrientation(entry, state.entries);
+        const orientedPoints = orientation.points;
+        entry.start = orientation.start;
+        entry.end = orientation.end;
         state.entries.splice(placement.index, 0, entry);
         layerState.set(color, state);
         updatePathData(entry.pathElement, orientedPoints);
@@ -75,6 +140,7 @@ export function createLayerTravelOptimizer(colorGroups) {
         const group = colorGroups[color];
         const referenceNode = group.children[placement.index] || null;
         group.insertBefore(entry.pathElement, referenceNode);
+        resequenceEntries(state, group);
     }
 
     return {

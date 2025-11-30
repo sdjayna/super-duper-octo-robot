@@ -50,7 +50,7 @@ describe('layerTravelOptimizer', () => {
         expect(order[2]).toBe(farRight);
     });
 
-    it('preserves original orientation while reordering', () => {
+    it('reverses a path when doing so shortens travel distance', () => {
         const svg = document.createElementNS(SVG_NS, 'svg');
         const group = document.createElementNS(SVG_NS, 'g');
         svg.appendChild(group);
@@ -69,9 +69,7 @@ describe('layerTravelOptimizer', () => {
             points: [{ x: 10, y: 0 }, { x: 4, y: 0 }]
         });
 
-        const order = Array.from(group.children);
-        const paths = order.map(path => path.getAttribute('d'));
-        expect(paths).toContain('M 0 0 L 2 0');
-        expect(paths).toContain('M 10 0 L 4 0');
+        expect(first.getAttribute('d')).toBe('M 0 0 L 2 0');
+        expect(second.getAttribute('d')).toBe('M 4 0 L 10 0');
     });
 });
