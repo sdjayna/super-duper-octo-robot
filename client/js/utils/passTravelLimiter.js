@@ -74,15 +74,23 @@ function buildBuckets(paths = [], limitMm) {
     return buckets;
 }
 
+function sumPassTravel(paths = []) {
+    return paths.reduce((total, path) => total + polylineLength(path?.points || []), 0);
+}
+
 export function splitPassesByTravel(passes = [], maxTravelMeters) {
     const limitMeters = Number(maxTravelMeters);
     if (!Number.isFinite(limitMeters) || limitMeters <= 0) {
         passDebug('skip (no limit)', { limitMeters });
+        const decorated = passes.map(pass => ({
+            ...pass,
+            travelMm: sumPassTravel(pass?.paths || [])
+        }));
         return {
-            passes: passes.slice(),
+            passes: decorated,
             limitMeters: null,
             splitLayers: 0,
-            totalLayers: passes.length
+            totalLayers: decorated.length
         };
     }
     const limitMm = limitMeters * MM_PER_METER;

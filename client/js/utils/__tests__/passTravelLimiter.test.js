@@ -20,6 +20,7 @@ describe('splitPassesByTravel', () => {
         expect(result.totalLayers).toBe(1);
         expect(result.passes).toHaveLength(1);
         expect(result.passes[0].paths[0].points).toEqual(passes[0].paths[0].points);
+        expect(result.passes[0].travelMm).toBeCloseTo(1000);
     });
 
     it('splits passes when travel exceeds the provided limit', () => {
@@ -34,7 +35,10 @@ describe('splitPassesByTravel', () => {
         expect(result.limitMeters).toBe(1);
         expect(result.splitLayers).toBe(1);
         expect(result.totalLayers).toBeGreaterThan(1);
-        expect(result.passes.every(entry => polylineLength(entry.paths[0].points) <= 1000 + 1e-3)).toBe(true);
+        expect(result.passes.every(entry => {
+            const length = polylineLength(entry.paths[0].points);
+            return Number.isFinite(entry.travelMm) && entry.travelMm <= 1000 + 1e-3 && length <= 1000 + 1e-3;
+        })).toBe(true);
         const labels = result.passes.map(entry => entry.label);
         expect(labels).toEqual([
             'Long Layer (pass 1/4)',
