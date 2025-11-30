@@ -105,6 +105,7 @@ const previewFitButton = document.getElementById('previewFit');
 const previewOverlay = document.getElementById('previewOverlay');
 const previewZoomBar = document.querySelector('.zoom-control');
 const layerFocusToggle = document.getElementById('layerFocusToggle');
+const layerFocusContainer = document.querySelector('.layer-focus-toggle');
 
 const state = {
     paperConfig: null,
@@ -607,6 +608,9 @@ function setLayerSelectValue(value, options = {}) {
     if (options.persist !== false) {
         persistLayerSelection(resolved);
     }
+    if (typeof syncLayerFocusToggleState === 'function') {
+        syncLayerFocusToggleState();
+    }
     return resolved;
 }
 
@@ -693,8 +697,12 @@ function syncLayerFocusToggleState() {
     }
     const layerSelect = document.getElementById('layerSelect');
     const hasSelectableLayers = Boolean(layerSelect) && layerSelect.options.length > 1;
-    layerFocusToggle.disabled = !hasSelectableLayers;
-    if (!hasSelectableLayers) {
+    const isSpecificLayerSelected = hasSelectableLayers && layerSelect.value !== 'all';
+    if (layerFocusContainer) {
+        layerFocusContainer.hidden = !isSpecificLayerSelected;
+    }
+    layerFocusToggle.disabled = !isSpecificLayerSelected;
+    if (!isSpecificLayerSelected) {
         const wasEnabled = state.isLayerFocusEnabled;
         state.isLayerFocusEnabled = false;
         layerFocusToggle.checked = false;
@@ -1566,6 +1574,7 @@ document.getElementById('layerSelect').addEventListener('change', (e) => {
     updatePlotterStatus();  // Add this line to update plotter button states
     updateResumeButtonState();
     persistLayerSelection(e.target.value);
+    syncLayerFocusToggleState();
     e.target.blur();
 });
 if (layerFocusToggle) {
