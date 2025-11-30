@@ -33,6 +33,11 @@ JavaScript files are ES modules with 4-space indentation, `camelCase` functions 
 - Every drawing definition accepts a `features` object (default `{ supportsHatching: true }`). Mark line drawings with `supportsHatching: false` so the loader, preview worker, and UI skip hatch overrides entirely.
 - Do not conditionally mutate hatch settings in the draw function when the flag is false—the UI already strips the global overrides.
 - When you re-enable an archived hatched drawing, move it back from `drawings/disabled` into `drawings/core` and leave `supportsHatching` true so the hatch panel stays wired up.
+- When a drawing needs to optionally “fit to margin” (e.g., the Bouwkamp/Perfect Rectangle preset), expose a boolean control (`line.fitToMargin` or similar) and wire it to the drawing config’s bounds. In practice:
+  - Give the config its own flag (e.g., `fitToMargin`) rather than overloading `preserveAspectRatio`.
+  - In `getBounds`, honor the flag by returning the full printable width/height (paper minus margin) using the current orientation (swap axes for portrait). This ensures the render context sees the exact size the drawing should fill.
+  - Inside the draw function, scale the layout manually when the flag is on (as `drawBouwkampCode` does by multiplying each square’s x/y/width/height by the ratio between target bounds and the original Bouwkamp dimensions). That way, “Fit to Margin” fills both axes while the unchecked state preserves the canonical aspect ratio.
+  - Always test both orientations and zero-margin scenarios so the control behaves consistently.
 
 ### Paper, Mediums, Preview Profiles, and Plotter Defaults
 - Paper definitions belong in `config/papers.json` and must include descriptive metadata (`description`, `finish`, `absorbency`, `surfaceStrength`, weight, colour, notes). This copy renders directly in the UI, so keep it succinct and accurate. Set the `texture` field (`smooth`, `grain`, `vellum`, `gesso`, etc.) so the preview can layer the right texture overlay. Paper colour is driven only from config; there’s no manual paper-colour control in the UI. `client/js/utils/paperUtils.js` already exposes helpers for colour/texture and plotter warnings—reuse those instead of duplicating math in `main.js`.
