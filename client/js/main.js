@@ -52,6 +52,7 @@ const MEDIUM_STORAGE_KEY = 'selectedMediumId';
 const PREVIEW_ZOOM_STORAGE_KEY = 'previewZoomPercent';
 const CONTROL_TAB_STORAGE_KEY = 'activeControlPanel';
 const LAYER_SELECTION_STORAGE_KEY = 'selectedLayerValue';
+const LAYER_FOCUS_STORAGE_KEY = 'layerFocusEnabled';
 const TRAVEL_LIMIT_MIN_METERS = 1;
 const TRAVEL_LIMIT_MAX_METERS = 100;
 const TRAVEL_LIMIT_INFINITE_SLIDER_VALUE = TRAVEL_LIMIT_MAX_METERS + 1;
@@ -135,7 +136,7 @@ const state = {
     panStart: null,
     currentHatchSettings: null,
     currentDrawingSupportsHatching: true,
-    isLayerFocusEnabled: false
+    isLayerFocusEnabled: loadLayerFocusPreference()
 };
 
 state.warnIfPaperExceedsPlotter = () => warnIfPaperExceedsPlotter(state, state.currentPaper);
@@ -596,6 +597,28 @@ function persistLayerSelection(layerValue) {
     }
 }
 
+function loadLayerFocusPreference() {
+    if (typeof window === 'undefined' || !window.localStorage) {
+        return false;
+    }
+    try {
+        return window.localStorage.getItem(LAYER_FOCUS_STORAGE_KEY) === 'true';
+    } catch {
+        return false;
+    }
+}
+
+function persistLayerFocusPreference(enabled) {
+    if (typeof window === 'undefined' || !window.localStorage) {
+        return;
+    }
+    try {
+        window.localStorage.setItem(LAYER_FOCUS_STORAGE_KEY, enabled ? 'true' : 'false');
+    } catch {
+        // ignore
+    }
+}
+
 function setLayerSelectValue(value, options = {}) {
     const layerSelect = document.getElementById('layerSelect');
     if (!layerSelect) {
@@ -706,6 +729,7 @@ function syncLayerFocusToggleState() {
         const wasEnabled = state.isLayerFocusEnabled;
         state.isLayerFocusEnabled = false;
         layerFocusToggle.checked = false;
+        persistLayerFocusPreference(false);
         if (wasEnabled) {
             updateLayerVisibility();
         }
@@ -1583,6 +1607,7 @@ if (layerFocusToggle) {
             return;
         }
         state.isLayerFocusEnabled = event.target.checked;
+        persistLayerFocusPreference(state.isLayerFocusEnabled);
         updateLayerVisibility();
     });
 }
