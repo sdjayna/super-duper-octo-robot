@@ -21,3 +21,4 @@
 - [x] Add a focus-layer toggle that dims other palette layers so a single color path can be inspected before plotting.
 - [ ] Surface an estimated pen-travel distance and runtime in the Messages panel for better per-plot planning.
 - [ ] Provide a stroke-density preview overlay for line drawings to highlight potential smudge zones.
+- [ ] When the selected paper exceeds the plotter’s travel, compute the exact offset (e.g., “shift 15 mm left, 10 mm up”) so the user can align the sheet and keep the drawing centered even on oversized stock.
