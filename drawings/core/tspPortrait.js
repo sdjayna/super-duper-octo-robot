@@ -9,14 +9,16 @@ import { clampInteger, clampNumber } from '../shared/utils/paramMath.js';
 import { createSeededRandom } from '../shared/utils/noiseUtils.js';
 
 const TSP_LIMITS = {
-    pointCount: { min: 800, max: 100000, default: 20000 },
-    sampleResolution: { min: 256, max: 2048, default: 1024 },
+    pointCount: { min: 800, max: 200000, default: 35000 },
+    sampleResolution: { min: 256, max: 3072, default: 1400 },
     shadeWeight: { min: 0, max: 1, default: 0.7 },
     edgeWeight: { min: 0, max: 1, default: 0.3 },
     smoothingPasses: { min: 0, max: 3, default: 1 },
     smoothingWindow: { min: 0, max: 8, default: 2 },
     twoOptPasses: { min: 0, max: 3, default: 1 },
     headTightness: { min: 0, max: 1, default: 0.35 },
+    maskThreshold: { min: 0, max: 1, default: 0.25 },
+    maskFeather: { min: 0, max: 8, default: 2 },
     seed: { min: 1, max: 9999, default: 2024 }
 };
 
@@ -35,6 +37,8 @@ class TspPortraitConfig extends SizedDrawingConfig {
         this.smoothingWindow = clampInteger(params.smoothingWindow, TSP_LIMITS.smoothingWindow.min, TSP_LIMITS.smoothingWindow.max, TSP_LIMITS.smoothingWindow.default);
         this.twoOptPasses = clampInteger(params.twoOptPasses, TSP_LIMITS.twoOptPasses.min, TSP_LIMITS.twoOptPasses.max, TSP_LIMITS.twoOptPasses.default);
         this.headTightness = clampNumber(params.headTightness, TSP_LIMITS.headTightness.min, TSP_LIMITS.headTightness.max, TSP_LIMITS.headTightness.default);
+        this.maskThreshold = clampNumber(params.maskThreshold, TSP_LIMITS.maskThreshold.min, TSP_LIMITS.maskThreshold.max, TSP_LIMITS.maskThreshold.default);
+        this.maskFeather = clampInteger(params.maskFeather, TSP_LIMITS.maskFeather.min, TSP_LIMITS.maskFeather.max, TSP_LIMITS.maskFeather.default);
         this.seed = clampInteger(params.seed, TSP_LIMITS.seed.min, TSP_LIMITS.seed.max, TSP_LIMITS.seed.default);
         this.matchPhotoAspectRatio = params.matchPhotoAspectRatio !== false;
         this.imageDataUrl = typeof params.imageDataUrl === 'string' ? params.imageDataUrl : '';
@@ -156,7 +160,58 @@ function computeEdgeMap(gray, width, height) {
     return edges;
 }
 
-function buildHeadMask(gray, width, height, tightness) {
+function floodFillMask(values, width, height, seed, threshold) {
+    const mask = new Float32Array(width * height);
+    const visited = new Uint8Array(width * height);
+    const clampSeedX = Math.min(Math.max(Math.round(seed.x), 0), width - 1);
+    const clampSeedY = Math.min(Math.max(Math.round(seed.y), 0), height - 1);
+    const seedIdx = clampSeedY * width + clampSeedX;
+    if (values[seedIdx] < threshold) {
+        return mask;
+    }
+    const stack = [seedIdx];
+    while (stack.length) {
+        const idx = stack.pop();
+        if (visited[idx]) continue;
+        visited[idx] = 1;
+        if (values[idx] < threshold) continue;
+        mask[idx] = 1;
+        const x = idx % width;
+        const y = (idx - x) / width;
+        if (x > 0) stack.push(idx - 1);
+        if (x < width - 1) stack.push(idx + 1);
+        if (y > 0) stack.push(idx - width);
+        if (y < height - 1) stack.push(idx + width);
+    }
+    return mask;
+}
+
+function blurMask(mask, width, height, passes) {
+    if (passes <= 0) return;
+    const tmp = new Float32Array(mask.length);
+    for (let pass = 0; pass < passes; pass++) {
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                let sum = 0;
+                let count = 0;
+                for (let ky = -1; ky <= 1; ky++) {
+                    const ny = y + ky;
+                    if (ny < 0 || ny >= height) continue;
+                    for (let kx = -1; kx <= 1; kx++) {
+                        const nx = x + kx;
+                        if (nx < 0 || nx >= width) continue;
+                        sum += mask[ny * width + nx];
+                        count++;
+                    }
+                }
+                tmp[y * width + x] = sum / count;
+            }
+        }
+        mask.set(tmp);
+    }
+}
+
+function buildHeadMask(gray, width, height, tightness, threshold, feather) {
     let totalWeight = 0;
     let cx = 0;
     let cy = 0;
@@ -164,9 +219,7 @@ function buildHeadMask(gray, width, height, tightness) {
     for (let i = 0; i < shade.length; i++) {
         shade[i] = 1 - gray[i];
     }
-    const values = Array.from(shade);
-    values.sort((a, b) => a - b);
-    const cutoff = values[Math.max(0, Math.floor(values.length * 0.65) - 1)] || 0;
+    const cutoff = Math.max(0, Math.min(1, threshold || 0));
     for (let i = 0; i < shade.length; i++) {
         if (shade[i] < cutoff) {
             continue;
@@ -205,6 +258,15 @@ function buildHeadMask(gray, width, height, tightness) {
         const ny = (y - cy) / ry;
         const d2 = nx * nx + ny * ny;
         mask[i] = d2 <= 1 ? 1 : Math.exp(-Math.max(0, d2 - 1) * 1.5);
+    }
+    if (cutoff > 0) {
+        const region = floodFillMask(shade, width, height, { x: Math.round(cx), y: Math.round(cy) }, cutoff);
+        for (let i = 0; i < mask.length; i++) {
+            mask[i] *= region[i];
+        }
+    }
+    if (feather > 0) {
+        blurMask(mask, width, height, feather);
     }
     return { mask, center: { x: cx, y: cy }, radii: { x: rx, y: ry } };
 }
@@ -436,7 +498,14 @@ export async function drawTspPortrait(drawingConfig, renderContext) {
     });
 
     const edges = computeEdgeMap(raster.gray, raster.width, raster.height);
-    const { mask } = buildHeadMask(raster.gray, raster.width, raster.height, config.headTightness);
+    const { mask } = buildHeadMask(
+        raster.gray,
+        raster.width,
+        raster.height,
+        config.headTightness,
+        config.maskThreshold,
+        config.maskFeather
+    );
     const density = buildDensityMap(raster.gray, edges, mask, config.shadeWeight, config.edgeWeight);
 
     const rng = createSeededRandom(config.seed);
@@ -580,6 +649,28 @@ const tspPortraitControls = [
         description: 'Shrink the head mask to exclude more background'
     },
     {
+        id: 'maskThreshold',
+        label: 'Mask Threshold',
+        target: 'drawingData.maskThreshold',
+        inputType: 'range',
+        min: TSP_LIMITS.maskThreshold.min,
+        max: TSP_LIMITS.maskThreshold.max,
+        step: 0.05,
+        default: TSP_LIMITS.maskThreshold.default,
+        description: 'Minimum shading needed to be considered part of the head region'
+    },
+    {
+        id: 'maskFeather',
+        label: 'Mask Feather',
+        target: 'drawingData.maskFeather',
+        inputType: 'range',
+        min: TSP_LIMITS.maskFeather.min,
+        max: TSP_LIMITS.maskFeather.max,
+        step: 1,
+        default: TSP_LIMITS.maskFeather.default,
+        description: 'Blur the head mask edges to smooth sampling near the silhouette'
+    },
+    {
         id: 'seed',
         label: 'Random Seed',
         target: 'drawingData.seed',
@@ -614,6 +705,8 @@ const tspPortraitDefinition = attachControls(defineDrawing({
                 smoothingWindow: TSP_LIMITS.smoothingWindow.default,
                 twoOptPasses: TSP_LIMITS.twoOptPasses.default,
                 headTightness: TSP_LIMITS.headTightness.default,
+                maskThreshold: TSP_LIMITS.maskThreshold.default,
+                maskFeather: TSP_LIMITS.maskFeather.default,
                 matchPhotoAspectRatio: true,
                 seed: TSP_LIMITS.seed.default,
                 line: {
