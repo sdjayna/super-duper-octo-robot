@@ -8,7 +8,7 @@ install: $(VENV)/bin/python3 node_modules
 	npm run build:drawings
 
 $(VENV)/bin/python3:
-	python3 -m venv $(VENV) --without-scm-ignore-files
+	python3 -m venv $(VENV)
 	$(PIP) install --upgrade pip
 	$(PIP) install -r requirements.txt
 	$(PIP) install "https://cdn.evilmadscientist.com/dl/ad/public/AxiDraw_API.zip"
@@ -50,7 +50,14 @@ manifest:
 	npm run build:drawings
 
 dev: install
-	@bash -c 'PATH=$(VENV)/bin:$$PATH; npm run watch:drawings & \
+	@bash -c 'PORT=8000; \
+	EXISTING=$$(lsof -ti tcp:$$PORT 2>/dev/null || true); \
+	if [ -n "$$EXISTING" ]; then \
+		echo "make dev: stopping processes on port $$PORT ($$EXISTING)"; \
+		kill $$EXISTING 2>/dev/null || true; \
+		sleep 1; \
+	fi; \
+	PATH=$(VENV)/bin:$$PATH; npm run watch:drawings & \
 	WATCH_PID=$$!; \
 	trap "kill $$WATCH_PID 2>/dev/null || true" EXIT; \
 	PATH=$(VENV)/bin:$$PATH PYTHONPATH=. $(PYTHON) server/server_runner.py'
